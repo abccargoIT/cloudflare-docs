@@ -36,6 +36,8 @@ export default [
 			".github/",
 			// Generated at prebuild/predev by bin/fetch-skills.ts (gitignored).
 			"skills/",
+			// Standalone static site, not part of the docs app.
+			"food-canto/",
 		],
 	},
 	{

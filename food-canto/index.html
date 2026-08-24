@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+	<title>FOOD CANTO — Made Fresh, Just for Your Order</title>
+	<meta name="description" content="FOOD CANTO is a premium home kitchen. Freshly prepared homemade food, cakes, sweets, pickles and masala — pre-order only, minimum 15 portions, pickup and nearby delivery." />
+	<meta name="theme-color" content="#fbf8f2" />
+	<link rel="canonical" href="https://foodcanto.example/" />
+
+	<!-- Social previews -->
+	<meta property="og:type" content="website" />
+	<meta property="og:site_name" content="FOOD CANTO" />
+	<meta property="og:title" content="FOOD CANTO — Made Fresh, Just for Your Order" />
+	<meta property="og:description" content="Homemade food, cakes, sweets, pickles and masala from a family kitchen. Pre-order only — prepared fresh for your confirmed order." />
+	<meta property="og:url" content="https://foodcanto.example/" />
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content="FOOD CANTO — Made Fresh, Just for Your Order" />
+	<meta name="twitter:description" content="Homemade food, cakes, sweets, pickles and masala from a family kitchen. Pre-order only." />
+
+	<!-- Typography: Fraunces (display serif) + Inter (reading sans) -->
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+	<link rel="stylesheet" href="css/styles.css" />
+
+	<script type="application/ld+json">
+	{
+		"@context": "https://schema.org",
+		"@type": "FoodEstablishment",
+		"name": "FOOD CANTO",
+		"slogan": "Made Fresh, Just for Your Order.",
+		"description": "Family home kitchen preparing homemade food, cakes, sweets, pickles and masala on a pre-order basis, with pickup and nearby delivery.",
+		"servesCuisine": ["Homemade", "South Asian"],
+		"areaServed": "United Arab Emirates",
+		"acceptsReservations": "True",
+		"url": "https://foodcanto.example/"
+	}
+	</script>
+</head>
+<body>
+	<!-- ================= SVG icon system ================= -->
+	<svg class="svg-defs" aria-hidden="true" focusable="false">
+		<defs>
+			<symbol id="i-leaf" viewBox="0 0 24 24">
+				<path d="M20 4c-9 0-15 4.5-15 12 0 2 .6 3.4 1.2 4C7 14 11 9.5 16.5 7.5 12 10.5 8.5 15 7.6 19.6c.8.3 1.6.4 2.4.4C17 20 20.5 13 20 4Z" />
+			</symbol>
+			<symbol id="i-chili" viewBox="0 0 24 24">
+				<path d="M18.5 3.5c.3-1 1.5-1.5 2.5-1 -.3 1.2-1 2-2.1 2.4C19.6 6.6 19 9 17 12c-3.2 4.8-8.6 8-12.6 8-.9 0-1.4-1-.8-1.7C7 14.5 11.6 9.6 16.6 6c.5-.4 1-.9 1.3-1.5l.6-1Z" />
+			</symbol>
+			<symbol id="i-anise" viewBox="0 0 24 24">
+				<path d="M12 3l1.2 4.2L17 5l-1.6 4L19.8 10l-3.6 2.2 2.4 3.6-4.2-.8L13 19.4l-1-4.2-4 1.6 1.8-3.9L6 10.8l4.2-1L9 5.6l3 1.6Zm0 7a2 2 0 1 1 0 4 2 2 0 0 1 0-4Z" />
+			</symbol>
+			<symbol id="i-plate" viewBox="0 0 24 24">
+				<path d="M12 3a9 9 0 1 1 0 18 9 9 0 0 1 0-18Zm0 3a6 6 0 1 0 0 12 6 6 0 0 0 0-12Zm0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7Z" />
+			</symbol>
+			<symbol id="i-wok" viewBox="0 0 24 24">
+				<path d="M2 10h20c-.3 5-4.5 9-10 9S2.3 15 2 10Zm3.5-4.8 1 1.8-1.9 1.1-1-1.8 1.9-1.1Zm5.4-1.9.6 2-2.1.6-.6-2 2.1-.6Zm5.7.7 2 .7-.7 2-2-.7.7-2Z" />
+			</symbol>
+			<symbol id="i-cake" viewBox="0 0 24 24">
+				<path d="M12 2c.8 1 1.5 2 1.5 3A1.5 1.5 0 0 1 12 6.6 1.5 1.5 0 0 1 10.5 5c0-1 .7-2 1.5-3ZM6 9h12a2 2 0 0 1 2 2v2c-1.2 0-1.6 1.2-3 1.2S15.4 13 14 13s-1.6 1.2-3 1.2S9.4 13 8 13s-1.6 1.2-3 1.2H4v-3.2a2 2 0 0 1 2-2Zm-2 7.4c1.7 0 2-1.2 4-1.2s2 1.2 4 1.2 2-1.2 4-1.2 2.3 1.2 4 1.2V21H4v-4.6Z" />
+			</symbol>
+			<symbol id="i-sweet" viewBox="0 0 24 24">
+				<path d="M12 6.5 17.5 10v6.5L12 20l-5.5-3.5V10L12 6.5Zm0-4 2 2.7-2 1.4-2-1.4 2-2.7Z" />
+			</symbol>
+			<symbol id="i-jar" viewBox="0 0 24 24">
+				<path d="M8 3h8v2.5H8V3Zm-1 4h10c.6 1 1 2.4 1 4v7a3 3 0 0 1-3 3H9a3 3 0 0 1-3-3v-7c0-1.6.4-3 1-4Zm2 4v6c1-.8 2-2.6 2-4.2L9 11Zm6 .5-2 1.6c0 1.5.9 3 2 3.9v-5.5Z" />
+			</symbol>
+			<symbol id="i-mortar" viewBox="0 0 24 24">
+				<path d="M19.8 3.2c.9.9.8 2.3-.2 3.2l-4 3.6H4c0 4.6 3.1 8 8 8s8-3.4 8-8h1v-1h-5l3.6-3.9c.8-.9 2.2-1 3.2-.1l-3-1.8ZM4 20h16v1.5H4V20Z" />
+			</symbol>
+			<symbol id="i-platter" viewBox="0 0 24 24">
+				<path d="M12 5a8 8 0 0 1 8 7H4a8 8 0 0 1 8-7Zm-10 8.5h20V15H2v-1.5ZM12 3.8a1.2 1.2 0 1 1 0-2.4 1.2 1.2 0 0 1 0 2.4Z" />
+			</symbol>
+			<symbol id="i-note" viewBox="0 0 24 24">
+				<path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Zm8 1.5V8h4.5L14 3.5ZM8 12h8v1.5H8V12Zm0 4h8v1.5H8V16Z" />
+			</symbol>
+			<symbol id="i-arrow" viewBox="0 0 24 24">
+				<path d="M4 11h13.2l-4.6-4.6L14 5l7 7-7 7-1.4-1.4 4.6-4.6H4v-2Z" />
+			</symbol>
+			<symbol id="i-wa" viewBox="0 0 24 24">
+				<path d="M12 2a10 10 0 0 1 8.6 15.1L22 22l-5-1.3A10 10 0 1 1 12 2Zm-3.1 5.4c-.3 0-.6.1-.8.4-.9 1-.9 2.5-.1 4 .9 1.6 2.5 3.3 4.6 4.3 1.6.8 3 .9 3.9.3.5-.3.8-.9.8-1.5 0-.3-.2-.5-.4-.6l-1.9-.9c-.3-.1-.6-.1-.8.2l-.5.6c-.2.2-.4.2-.6.1a7.6 7.6 0 0 1-3.2-3c-.1-.2-.1-.4.1-.6l.6-.6c.2-.2.3-.5.2-.8l-.9-1.9c-.1-.3-.4-.4-.7-.4l-.3.4Z" />
+			</symbol>
+		</defs>
+	</svg>
+
+	<!-- ================= Header ================= -->
+	<header class="site-header" data-header>
+		<div class="header-inner">
+			<a class="brand" href="#home" aria-label="FOOD CANTO — home">
+				<span class="brand-mark" aria-hidden="true"><svg><use href="#i-leaf" /></svg></span>
+				<span class="brand-word">FOOD <em>CANTO</em></span>
+			</a>
+			<nav class="main-nav" aria-label="Primary">
+				<a href="#home">Home</a>
+				<a href="#our-food">Our Food</a>
+				<a href="#party-orders">Party Orders</a>
+				<a href="#masala">Masala</a>
+				<a href="#pickles">Pickles</a>
+				<a href="#classes">Classes</a>
+				<a href="#about">About</a>
+				<a href="#contact">Contact</a>
+			</nav>
+			<a class="btn btn-solid header-cta" href="#contact" data-magnetic>
+				<span class="btn-label">Order / Enquire</span>
+				<svg class="btn-arrow" aria-hidden="true"><use href="#i-arrow" /></svg>
+			</a>
+			<button class="nav-toggle" data-nav-toggle aria-expanded="false" aria-controls="mobile-menu" aria-label="Open menu">
+				<span></span><span></span>
+			</button>
+		</div>
+	</header>
+
+	<!-- Mobile fullscreen menu -->
+	<div class="mobile-menu" id="mobile-menu" data-mobile-menu aria-hidden="true">
+		<nav aria-label="Mobile">
+			<a href="#home" style="--i:0">Home</a>
+			<a href="#our-food" style="--i:1">Our Food</a>
+			<a href="#party-orders" style="--i:2">Party Orders</a>
+			<a href="#masala" style="--i:3">Masala</a>
+			<a href="#pickles" style="--i:4">Pickles</a>
+			<a href="#classes" style="--i:5">Classes</a>
+			<a href="#about" style="--i:6">About</a>
+			<a href="#contact" style="--i:7">Contact</a>
+		</nav>
+		<p class="mobile-menu-note">Minimum order 15 · Pre-order only<br />Pickup &amp; nearby delivery</p>
+	</div>
+
+	<main id="home">
+		<!-- ================= 1 · Hero ================= -->
+		<section class="hero" aria-labelledby="hero-title">
+			<div class="hero-inner">
+				<div class="hero-copy">
+					<p class="eyebrow intro-item" style="--d:0">
+						<svg class="eyebrow-leaf" aria-hidden="true"><use href="#i-leaf" /></svg>
+						Home kitchen · Family recipes
+					</p>
+					<h1 class="hero-title" id="hero-title">
+						<span class="line-mask intro-item" style="--d:1"><span>Made fresh,</span></span>
+						<span class="line-mask intro-item" style="--d:2"><span><em>just for</em> your order.</span></span>
+					</h1>
+					<p class="hero-sub intro-item" style="--d:3">
+						FOOD CANTO cooks homemade food for families, gatherings and
+						celebrations — nothing waits on a shelf, because nothing is made
+						until your order is confirmed.
+					</p>
+					<div class="hero-ctas intro-item" style="--d:4">
+						<a class="btn btn-solid" href="#our-food" data-magnetic>
+							<span class="btn-label">Explore Our Food</span>
+							<svg class="btn-arrow" aria-hidden="true"><use href="#i-arrow" /></svg>
+						</a>
+						<a class="btn btn-ghost" href="#contact" data-magnetic>
+							<span class="btn-label">Order / Enquire</span>
+						</a>
+					</div>
+					<ul class="hero-badges intro-item" style="--d:5">
+						<li>Minimum order 15</li>
+						<li>Pre-order only</li>
+						<li>Pickup &amp; nearby delivery</li>
+					</ul>
+				</div>
+
+				<!-- Layered plate composition (photography slot: hero-main) -->
+				<div class="hero-visual intro-item" style="--d:2" data-parallax="-0.06">
+					<div class="plate" data-photo-slot="hero-main" role="img" aria-label="A freshly plated homemade meal, garnished with herbs">
+						<div class="plate-rim"></div>
+						<div class="plate-food"></div>
+						<svg class="plate-garnish g1" aria-hidden="true"><use href="#i-leaf" /></svg>
+						<svg class="plate-garnish g2" aria-hidden="true"><use href="#i-chili" /></svg>
+						<svg class="plate-garnish g3" aria-hidden="true"><use href="#i-anise" /></svg>
+					</div>
+					<svg class="plate-ring-text" viewBox="0 0 300 300" aria-hidden="true">
+						<defs>
+							<path id="ring-path" d="M150,150 m-128,0 a128,128 0 1,1 256,0 a128,128 0 1,1 -256,0" />
+						</defs>
+						<text><textPath href="#ring-path">MADE FRESH · JUST FOR YOUR ORDER · FOOD CANTO · HOME KITCHEN ·&#160;</textPath></text>
+					</svg>
+					<svg class="float-ing f1" data-parallax="0.14" aria-hidden="true"><use href="#i-leaf" /></svg>
+					<svg class="float-ing f2" data-parallax="0.22" aria-hidden="true"><use href="#i-chili" /></svg>
+					<svg class="float-ing f3" data-parallax="0.09" aria-hidden="true"><use href="#i-anise" /></svg>
+				</div>
+			</div>
+			<div class="hero-arc" aria-hidden="true"></div>
+		</section>
+
+		<!-- Ticker -->
+		<div class="ticker" aria-hidden="true" data-ticker>
+			<div class="ticker-track">
+				<span>Homemade</span><i>·</i><span>Small-batch</span><i>·</i><span>Pre-order</span><i>·</i><span>Fresh to your date</span><i>·</i><span>Family kitchen</span><i>·</i>
+			</div>
+		</div>
+
+		<!-- ================= 2 · Story ================= -->
+		<section class="story section" id="about" aria-labelledby="story-title">
+			<div class="section-inner story-grid">
+				<div class="story-visual" data-reveal="clip-right" data-photo-slot="story-kitchen">
+					<figure class="photo photo-story" role="img" aria-label="Hands folding spices into a pot in a warm home kitchen">
+						<svg class="photo-icon" aria-hidden="true"><use href="#i-mortar" /></svg>
+						<figcaption>Ground, folded and simmered at home — the week you order.</figcaption>
+					</figure>
+					<div class="story-chip" data-reveal="fade-up" data-reveal-delay="3">
+						<strong data-count="15">15</strong>
+						<span>portions minimum —<br />that's one good table.</span>
+					</div>
+				</div>
+				<div class="story-copy">
+					<p class="eyebrow" data-reveal="fade-up">Our kitchen</p>
+					<h2 class="section-title" id="story-title" data-reveal="lines">
+						Cooked at home. Started <em>after</em> you order.
+					</h2>
+					<p data-reveal="fade-up" data-reveal-delay="1">
+						FOOD CANTO began the way most good food does — one family kitchen,
+						recipes passed down by hand, and neighbours asking for "just one
+						more tray". We still cook exactly that way.
+					</p>
+					<p data-reveal="fade-up" data-reveal-delay="2">
+						We take orders in advance, buy ingredients for your date, and cook
+						in small batches with the kind of attention only a home kitchen can
+						afford. Fresh isn't a claim here; it's the schedule.
+					</p>
+					<ul class="story-points" data-reveal="stagger">
+						<li><svg aria-hidden="true"><use href="#i-leaf" /></svg> Homemade &amp; small-batch</li>
+						<li><svg aria-hidden="true"><use href="#i-anise" /></svg> Quality whole ingredients</li>
+						<li><svg aria-hidden="true"><use href="#i-plate" /></svg> Pre-order, made-to-date</li>
+						<li><svg aria-hidden="true"><use href="#i-note" /></svg> Personal attention, every order</li>
+					</ul>
+				</div>
+			</div>
+		</section>
+
+		<!-- ================= 3 · Categories ================= -->
+		<section class="categories section section-tint" id="our-food" aria-labelledby="food-title">
+			<div class="section-inner">
+				<div class="section-head">
+					<div>
+						<p class="eyebrow" data-reveal="fade-up">Our food</p>
+						<h2 class="section-title" id="food-title" data-reveal="lines">What would you like us to <em>make?</em></h2>
+					</div>
+					<p class="section-lede" data-reveal="fade-up" data-reveal-delay="1">
+						Every category below is cooked to order. Don't see your dish?
+						Ask — special orders are half of what we do.
+					</p>
+				</div>
+				<div class="category-grid" data-categories data-reveal="stagger-cards"></div>
+			</div>
+		</section>
+
+		<!-- ================= 4 · How ordering works ================= -->
+		<section class="how section" id="how-it-works" aria-labelledby="how-title">
+			<div class="section-inner">
+				<div class="section-head">
+					<div>
+						<p class="eyebrow" data-reveal="fade-up">Simple by design</p>
+						<h2 class="section-title" id="how-title" data-reveal="lines">How ordering <em>works</em></h2>
+					</div>
+					<p class="section-lede" data-reveal="fade-up" data-reveal-delay="1">
+						Because everything is made fresh for a confirmed order, we cook from
+						<strong>15 portions</strong> and by <strong>pre-order only</strong> —
+						it's how your food arrives hours old, not days.
+					</p>
+				</div>
+				<ol class="steps" data-steps></ol>
+			</div>
+		</section>
+
+		<!-- ================= 5 · Party & celebration orders ================= -->
+		<section class="party section section-deep" id="party-orders" aria-labelledby="party-title">
+			<div class="section-inner party-grid">
+				<div class="party-copy">
+					<p class="eyebrow" data-reveal="fade-up">Feeding a crowd</p>
+					<h2 class="section-title" id="party-title" data-reveal="lines">Party &amp; celebration <em>orders</em></h2>
+					<p data-reveal="fade-up" data-reveal-delay="1">
+						Trays for the whole table — birthdays, family parties, small events
+						and religious celebrations. Tell us the occasion, the headcount and
+						the date; we'll plan the menu with you and cook it fresh that morning.
+					</p>
+					<ul class="occasion-tags" data-occasions data-reveal="stagger"></ul>
+					<a class="btn btn-light" href="#contact" data-magnetic data-reveal="fade-up" data-reveal-delay="3">
+						<span class="btn-label">Plan a Party Order</span>
+						<svg class="btn-arrow" aria-hidden="true"><use href="#i-arrow" /></svg>
+					</a>
+				</div>
+				<div class="party-visual" data-reveal="clip-left" data-photo-slot="party-spread">
+					<figure class="photo photo-party" role="img" aria-label="A generous spread of homemade party trays ready for pickup">
+						<svg class="photo-icon" aria-hidden="true"><use href="#i-platter" /></svg>
+						<figcaption>One kitchen, one morning, one very full table.</figcaption>
+					</figure>
+				</div>
+			</div>
+		</section>
+
+		<!-- ================= 6 · Masala ================= -->
+		<section class="masala section" id="masala" aria-labelledby="masala-title">
+			<div class="section-inner">
+				<div class="section-head">
+					<div>
+						<p class="eyebrow eyebrow-spice" data-reveal="fade-up">FOOD CANTO Masala</p>
+						<h2 class="section-title" id="masala-title" data-reveal="lines">The blends behind <em>our food</em></h2>
+					</div>
+					<p class="section-lede" data-reveal="fade-up" data-reveal-delay="1">
+						Whole spices, roasted and stone-ground in small runs — the same jars
+						we cook from, sealed for your shelf.
+					</p>
+				</div>
+				<div class="masala-grid" data-masala data-reveal="stagger-cards"></div>
+			</div>
+		</section>
+
+		<!-- ================= 7 · Pickles & homemade pantry ================= -->
+		<section class="pantry section section-tint" id="pickles" aria-labelledby="pantry-title">
+			<div class="section-inner">
+				<div class="section-head">
+					<div>
+						<p class="eyebrow" data-reveal="fade-up">Pickles &amp; pantry</p>
+						<h2 class="section-title" id="pantry-title" data-reveal="lines">Homemade, <em>jarred</em> &amp; boxed</h2>
+					</div>
+					<p class="section-lede" data-reveal="fade-up" data-reveal-delay="1">
+						Pickles, sweets and snacks made in the same kitchen — small runs,
+						honest labels, and nothing you couldn't watch us make.
+					</p>
+				</div>
+				<div class="pantry-grid" data-pantry data-reveal="stagger-cards"></div>
+			</div>
+		</section>
+
+		<!-- ================= 8 · Online classes ================= -->
+		<section class="classes section" id="classes" aria-labelledby="classes-title">
+			<div class="section-inner">
+				<div class="section-head">
+					<div>
+						<p class="eyebrow" data-reveal="fade-up">Learn with us</p>
+						<h2 class="section-title" id="classes-title" data-reveal="lines">FOOD CANTO <em>online classes</em></h2>
+					</div>
+					<p class="section-lede" data-reveal="fade-up" data-reveal-delay="1">
+						Live, cook-along classes from our kitchen to yours. Small groups,
+						real questions, and recipes you'll actually repeat.
+					</p>
+				</div>
+				<div class="class-grid" data-classes data-reveal="stagger-cards"></div>
+			</div>
+		</section>
+
+		<!-- ================= 9 · Contact / enquiry ================= -->
+		<section class="contact section section-deep" id="contact" aria-labelledby="contact-title">
+			<div class="section-inner contact-grid">
+				<div class="contact-copy">
+					<p class="eyebrow" data-reveal="fade-up">Order / enquire</p>
+					<h2 class="section-title" id="contact-title" data-reveal="lines">Tell us about <em>your table</em></h2>
+					<p data-reveal="fade-up" data-reveal-delay="1">
+						Send your requirement and we'll reply with a menu, price and pickup
+						or delivery plan. Orders start at 15 portions and are confirmed
+						before we cook.
+					</p>
+					<a class="wa-link" data-wa-link href="#" data-reveal="fade-up" data-reveal-delay="2">
+						<svg aria-hidden="true"><use href="#i-wa" /></svg>
+						Message us on WhatsApp
+					</a>
+				</div>
+				<form class="enquiry-form" data-enquiry-form data-reveal="fade-up" data-reveal-delay="1" novalidate>
+					<div class="field-row">
+						<label class="field">
+							<span>Your name</span>
+							<input name="name" type="text" autocomplete="name" required maxlength="80" />
+						</label>
+						<label class="field">
+							<span>Phone / WhatsApp</span>
+							<input name="phone" type="tel" autocomplete="tel" required maxlength="20" />
+						</label>
+					</div>
+					<div class="field-row">
+						<label class="field">
+							<span>What should we make?</span>
+							<input name="food" type="text" placeholder="e.g. Beef dry fry + ghee rice" required maxlength="120" />
+						</label>
+					</div>
+					<div class="field-row">
+						<label class="field field-small">
+							<span>Portions (min 15)</span>
+							<input name="quantity" type="number" min="15" step="1" value="15" required />
+						</label>
+						<label class="field field-small">
+							<span>Needed by</span>
+							<input name="date" type="date" required />
+						</label>
+					</div>
+					<div class="field-row">
+						<label class="field">
+							<span>Anything else? <small>(occasion, delivery area…)</small></span>
+							<textarea name="message" rows="3" maxlength="600"></textarea>
+						</label>
+					</div>
+					<button class="btn btn-light btn-submit" type="submit" data-magnetic>
+						<span class="btn-label">Send Enquiry via WhatsApp</span>
+						<svg class="btn-arrow" aria-hidden="true"><use href="#i-arrow" /></svg>
+					</button>
+					<p class="form-note">Opens WhatsApp with your enquiry pre-filled — nothing is stored on this site.</p>
+					<p class="form-error" data-form-error role="alert" hidden></p>
+				</form>
+			</div>
+		</section>
+	</main>
+
+	<!-- ================= Footer ================= -->
+	<footer class="site-footer">
+		<div class="footer-inner">
+			<a class="brand" href="#home">
+				<span class="brand-mark" aria-hidden="true"><svg><use href="#i-leaf" /></svg></span>
+				<span class="brand-word">FOOD <em>CANTO</em></span>
+			</a>
+			<p class="footer-tag">Made Fresh, Just for Your Order.</p>
+			<nav class="footer-nav" aria-label="Footer">
+				<a href="#our-food">Our Food</a>
+				<a href="#party-orders">Party Orders</a>
+				<a href="#masala">Masala</a>
+				<a href="#pickles">Pickles</a>
+				<a href="#classes">Classes</a>
+				<a href="#contact">Contact</a>
+			</nav>
+			<p class="footer-fine">
+				Minimum order 15 · Pre-order only · Pickup &amp; nearby delivery<br />
+				© <span data-year>2026</span> FOOD CANTO. A family home kitchen.
+			</p>
+		</div>
+	</footer>
+
+	<!-- Sticky mobile action bar -->
+	<div class="sticky-bar" data-sticky-bar>
+		<a class="sticky-wa" data-wa-link href="#" aria-label="WhatsApp FOOD CANTO">
+			<svg aria-hidden="true"><use href="#i-wa" /></svg>
+		</a>
+		<a class="btn btn-solid sticky-cta" href="#contact">
+			<span class="btn-label">Order / Enquire</span>
+		</a>
+	</div>
+
+	<noscript>
+		<style>[data-reveal],.intro-item{opacity:1 !important;transform:none !important}</style>
+		<p style="text-align:center;padding:1rem">Menus load with JavaScript enabled — or simply message FOOD CANTO on WhatsApp to order.</p>
+	</noscript>
+
+	<script src="js/data.js"></script>
+	<script src="js/app.js"></script>
+</body>
+</html>
