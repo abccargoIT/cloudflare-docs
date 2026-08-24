@@ -388,7 +388,7 @@
 
 	/* ---------- Boot ---------- */
 
-	document.addEventListener("DOMContentLoaded", () => {
+	const boot = () => {
 		renderCategories();
 		renderSteps();
 		renderOccasions();
@@ -407,5 +407,11 @@
 		initCounters();
 		initMobileMenu();
 		initEnquiryForm();
-	});
+	};
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", boot);
+	} else {
+		boot();
+	}
 })();
