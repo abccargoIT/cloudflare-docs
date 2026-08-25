@@ -210,11 +210,11 @@ window.FOODCANTO = {
 			"A dedicated FOOD CANTO cooking community created for women who want to learn, cook and share together — live online sessions, small groups, and recipes you'll actually repeat.",
 		heroImg: {
 			slot: "hero-ladies",
-			alt: "A woman cooking at her home stove with a pot on the hob and fresh lemons beside her",
+			alt: "A class preparation table laid out with fresh vegetables, herbs and jarred ingredients",
 		},
 		communityImgs: [
 			{ slot: "ladies-community", alt: "A shared table of homemade dishes seen from above, hands reaching in to serve" },
-			{ slot: "ladies-online", alt: "A woman smiling at a tablet during an online session at her table" },
+			{ slot: "ladies-online", alt: "A tablet showing a recipe propped in a kitchen beside wooden spoons and fresh limes" },
 		],
 		classes: [
 			{
