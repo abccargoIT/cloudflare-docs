@@ -680,11 +680,30 @@ body.is-loaded .logo-hero-word {
 	padding: var(--space-gutter);
 	background: var(--food-deep);
 	clip-path: circle(0% at calc(100% - 2.5rem) 2.5rem);
-	transition: clip-path 650ms var(--ease-swift);
+	/* visibility keeps closed-menu links out of the tab order; its 0s
+	   transition is delayed so the closing clip animation still plays. */
+	visibility: hidden;
+	transition:
+		clip-path 650ms var(--ease-swift),
+		visibility 0s 650ms;
 }
 
 .mobile-menu.is-open {
 	clip-path: circle(150% at calc(100% - 2.5rem) 2.5rem);
+	visibility: visible;
+	transition:
+		clip-path 650ms var(--ease-swift),
+		visibility 0s;
+}
+
+/* While the menu is open the header (and its close toggle) must sit above
+   the overlay — the toggle's own z-index cannot escape the header's
+   stacking context. */
+body.menu-open .site-header {
+	z-index: 60;
+	background: transparent;
+	box-shadow: none;
+	backdrop-filter: none;
 }
 
 .mobile-menu nav {

@@ -413,6 +413,7 @@
 
 		const setOpen = (open) => {
 			menu.classList.toggle("is-open", open);
+			document.body.classList.toggle("menu-open", open);
 			menu.setAttribute("aria-hidden", String(!open));
 			toggle.setAttribute("aria-expanded", String(open));
 			toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
@@ -483,6 +484,38 @@
 		});
 	}
 
+	// Card CTAs carry context: clicking a class or category link lands on
+	// the enquiry form with the right intent and details pre-selected.
+	function initEnquiryPrefill() {
+		const form = $("[data-enquiry-form]");
+		if (!form) return;
+		const apply = (intent, detail) => {
+			form.elements.interest.value = intent;
+			if (detail) form.elements.food.value = detail;
+			form.elements.interest.dispatchEvent(new Event("change"));
+		};
+		document.addEventListener("click", (e) => {
+			const classLink = e.target.closest("[data-class]");
+			if (classLink) {
+				const k = DATA.ladiesModule.classes.find(
+					(c) => c.id === classLink.getAttribute("data-class"),
+				);
+				apply("Ladies cooking class", k ? k.title : "");
+				return;
+			}
+			const catLink = e.target.closest("[data-category]");
+			if (catLink) {
+				const c = DATA.categories.find(
+					(x) => x.id === catLink.getAttribute("data-category"),
+				);
+				apply(
+					c && c.id === "party-foods" ? "Party order" : "Food order",
+					c ? c.name : "",
+				);
+			}
+		});
+	}
+
 	/* ---------- Boot ---------- */
 
 	const boot = () => {
@@ -507,6 +540,7 @@
 		initCounters();
 		initMobileMenu();
 		initEnquiryForm();
+		initEnquiryPrefill();
 	};
 
 	if (document.readyState === "loading") {

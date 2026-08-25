@@ -76,7 +76,7 @@ window.FOODCANTO = {
 			href: "#ladies-classes",
 			img: {
 				slot: "entrance-ladies",
-				alt: "Several pairs of hands preparing fresh vegetables together at a rustic wooden table",
+				alt: "A prep board laid out with fresh vegetables, eggs and herbs, ready for a lesson",
 			},
 		},
 	],
@@ -213,7 +213,7 @@ window.FOODCANTO = {
 			alt: "A class preparation table laid out with fresh vegetables, herbs and jarred ingredients",
 		},
 		communityImgs: [
-			{ slot: "ladies-community", alt: "A shared table of homemade dishes seen from above, hands reaching in to serve" },
+			{ slot: "ladies-community", alt: "A homemade thali of curries and fresh breads, ready to share" },
 			{ slot: "ladies-online", alt: "A tablet showing a recipe propped in a kitchen beside wooden spoons and fresh limes" },
 		],
 		classes: [
