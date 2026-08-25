@@ -1,12 +1,13 @@
 /* ============================================================
-   FOOD CANTO — app.js
+   FOOD CANTO — app.js (v2 · three themes)
    ------------------------------------------------------------
-   1. Render      — builds cards/steps/tags from window.FOODCANTO
-   2. Motion      — intro, scroll reveals, parallax, magnetic,
-                    header behavior, ticker, counters
-   3. Interaction — mobile menu, sticky bar, enquiry → WhatsApp
-   All motion respects prefers-reduced-motion and uses only
-   transform/opacity/clip-path for 60fps-friendly animation.
+   1. Mark        — injects the inline SVG logo mark everywhere
+   2. Render      — builds every module's content from data.js
+   3. Motion      — intro + logo animation trigger, reveals,
+                    parallax, magnetic, header, ticker, counters
+   4. Interaction — mobile menu, module pills, enquiry → WhatsApp
+   All motion respects prefers-reduced-motion and animates only
+   transform/opacity/clip-path.
    ============================================================ */
 
 (function () {
@@ -35,7 +36,74 @@
 				})[c],
 		);
 
-	/* ---------- 1 · Render from data ---------- */
+	/* ---------- 1 · The FOOD CANTO mark ---------- */
+	// pathLength="1" lets CSS draw strokes with dasharray/dashoffset of 1.
+	const MARK_SVG = `
+	<svg class="mark-svg" viewBox="0 0 96 96" aria-hidden="true" focusable="false">
+		<g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+			<path class="m-bowl" pathLength="1" d="M18 54 a30 30 0 0 0 60 0" />
+			<path class="m-rim" pathLength="1" d="M13 54 H83" />
+			<path class="m-steam1" pathLength="1" d="M35 44 c-4 -6 4 -9 0 -16" />
+			<path class="m-steam2" pathLength="1" d="M61 44 c4 -6 -4 -9 0 -16" />
+			<path class="m-stem" pathLength="1" d="M48 46 V26" />
+		</g>
+		<path class="m-leaf" d="M48 28 C40 24 37 16 38 8 c8 1 14 6 15 14 -3 -5 -8 -8 -12 -9 4 3 7 7 8 12 z" />
+	</svg>`;
+
+	function injectMarks() {
+		$$("[data-mark]").forEach((el) => {
+			el.innerHTML = MARK_SVG;
+		});
+	}
+
+	/* ---------- Responsive image helper ---------- */
+	// Every slot ships as assets/img/<slot>-700.webp and -1400.webp.
+	// window.FOODCANTO_INLINE (set only by the single-file preview build)
+	// maps slots to data URIs so the page works without an asset server.
+	function img(image, { sizes = "(max-width: 64rem) 100vw, 50vw", eager = false } = {}) {
+		const s = esc(image.slot);
+		const inline = window.FOODCANTO_INLINE && window.FOODCANTO_INLINE[image.slot];
+		if (inline) {
+			return `<img src="${inline}" alt="${esc(image.alt)}" ${eager ? 'fetchpriority="high"' : 'loading="lazy" decoding="async"'} />`;
+		}
+		return `<img
+			src="assets/img/${s}-700.webp"
+			srcset="assets/img/${s}-700.webp 700w, assets/img/${s}-1400.webp 1400w"
+			sizes="${esc(sizes)}"
+			alt="${esc(image.alt)}"
+			${eager ? 'fetchpriority="high"' : 'loading="lazy" decoding="async"'} />`;
+	}
+
+	/* ---------- 2 · Render from data ---------- */
+
+	function renderHeroImages() {
+		const hero = $("[data-hero-img]");
+		if (hero) hero.innerHTML = img(DATA.hero.img, { eager: true });
+		const story = $("[data-story-img]");
+		if (story) story.innerHTML = img(DATA.story.img);
+	}
+
+	function renderWorlds() {
+		const grid = $("[data-worlds]");
+		if (!grid) return;
+		grid.innerHTML = DATA.modules
+			.map(
+				(m, i) => `
+			<a class="world world-${esc(m.id)}" href="${esc(m.href)}" style="--i:${i}">
+				${img(m.img, { sizes: "(max-width: 64rem) 100vw, 33vw" })}
+				<span class="world-body">
+					<span class="world-num">${esc(m.num)}</span>
+					<h3>${esc(m.name)}</h3>
+					<p>${esc(m.blurb)}</p>
+					<span class="card-cta">${esc(m.cta)}
+						<svg aria-hidden="true"><use href="#i-arrow" /></svg>
+					</span>
+				</span>
+			</a>`,
+			)
+			.join("");
+		grid.setAttribute("data-reveal", "stagger-cards");
+	}
 
 	function renderCategories() {
 		const grid = $("[data-categories]");
@@ -43,11 +111,9 @@
 		grid.innerHTML = DATA.categories
 			.map(
 				(c, i) => `
-			<a class="card tone-${esc(c.tone)}" href="#contact" style="--i:${i}"
-				 data-category="${esc(c.id)}" aria-label="${esc(c.name)} — enquire">
-				<div class="card-art" data-photo-slot="category-${esc(c.id)}">
-					<svg aria-hidden="true"><use href="#i-${esc(c.icon)}" /></svg>
-				</div>
+			<a class="card" href="#contact" style="--i:${i}" data-category="${esc(c.id)}"
+				 aria-label="${esc(c.name)} — enquire">
+				<div class="card-img">${img(c.img, { sizes: "(max-width: 64rem) 100vw, 25vw" })}</div>
 				<h3>${esc(c.name)}</h3>
 				<p>${esc(c.blurb)}</p>
 				<span class="card-cta">Enquire
@@ -56,6 +122,14 @@
 			</a>`,
 			)
 			.join("");
+	}
+
+	function renderSignature() {
+		const wrap = $("[data-signature]");
+		if (!wrap) return;
+		$(".signature-figure", wrap).innerHTML = `<div class="photo">${img(DATA.signature.img)}</div>`;
+		$("[data-sig-name]", wrap).textContent = DATA.signature.name;
+		$("[data-sig-blurb]", wrap).textContent = DATA.signature.blurb;
 	}
 
 	function renderSteps() {
@@ -73,25 +147,28 @@
 			.join("");
 	}
 
-	function renderOccasions() {
-		const list = $("[data-occasions]");
-		if (!list) return;
-		list.innerHTML = DATA.occasions
-			.map((o, i) => `<li style="--i:${i}">${esc(o)}</li>`)
-			.join("");
+	function renderParty() {
+		const tags = $("[data-occasions]");
+		if (tags)
+			tags.innerHTML = DATA.party.occasions
+				.map((o, i) => `<li style="--i:${i}">${esc(o)}</li>`)
+				.join("");
+		const fig = $("[data-party-img]");
+		if (fig) fig.innerHTML = img(DATA.party.img);
 	}
 
 	function renderMasala() {
+		const M = DATA.masalaModule;
+		const hero = $("[data-masala-hero]");
+		if (hero) hero.innerHTML = img(M.heroImg);
 		const grid = $("[data-masala]");
-		if (!grid) return;
-		grid.innerHTML = DATA.masala
-			.map(
-				(m, i) => `
-			<article class="card masala-card tone-spice" style="--i:${i}">
+		if (grid)
+			grid.innerHTML = M.products
+				.map(
+					(m, i) => `
+			<article class="card masala-card" style="--i:${i}">
 				${m.available ? "" : `<span class="badge-soon">Coming soon</span>`}
-				<div class="card-art" data-photo-slot="masala-${esc(m.id)}">
-					<svg aria-hidden="true"><use href="#i-mortar" /></svg>
-				</div>
+				<div class="card-img">${img(m.img, { sizes: "(max-width: 64rem) 100vw, 33vw" })}</div>
 				<h3>${esc(m.name)}</h3>
 				<p>${esc(m.blurb)}</p>
 				<p class="masala-usage">${esc(m.usage)}</p>
@@ -100,37 +177,32 @@
 					<strong>${esc(m.price)}</strong>
 				</div>
 			</article>`,
-			)
-			.join("");
+				)
+				.join("");
+		const strip = $("[data-ingredients]");
+		if (strip)
+			strip.innerHTML = M.ingredientImgs
+				.map(
+					(image, i) =>
+						`<figure class="photo" style="--i:${i}">${img(image, { sizes: "(max-width: 64rem) 100vw, 50vw" })}</figure>`,
+				)
+				.join("");
 	}
 
-	function renderPantry() {
-		const grid = $("[data-pantry]");
-		if (!grid) return;
-		grid.innerHTML = DATA.pantry
-			.map(
-				(p, i) => `
-			<article class="card tone-${esc(p.tone)}" style="--i:${i}">
-				<div class="card-art" data-photo-slot="pantry-${esc(p.id)}">
-					<svg aria-hidden="true"><use href="#i-${esc(p.icon)}" /></svg>
-				</div>
-				<span class="pantry-kind">${esc(p.kind)}</span>
-				<h3>${esc(p.name)}</h3>
-				<p>${esc(p.blurb)}</p>
-				<span class="pantry-price">${esc(p.price)}</span>
-			</article>`,
-			)
-			.join("");
-	}
-
-	function renderClasses() {
+	function renderLadies() {
+		const L = DATA.ladiesModule;
+		const hero = $("[data-ladies-hero]");
+		if (hero) hero.innerHTML = img(L.heroImg);
+		const pos = $("[data-ladies-positioning]");
+		if (pos) pos.textContent = L.positioning;
 		const grid = $("[data-classes]");
-		if (!grid) return;
-		grid.innerHTML = DATA.classes
-			.map(
-				(k, i) => `
+		if (grid)
+			grid.innerHTML = L.classes
+				.map(
+					(k, i) => `
 			<article class="card class-card" style="--i:${i}">
-				<span class="class-topic">${esc(k.topic)}</span>
+				<div class="card-img">${img(k.img, { sizes: "(max-width: 64rem) 100vw, 25vw" })}</div>
+				<span class="class-topic">${esc(k.topic)} · ${esc(k.mode)}</span>
 				<h3>${esc(k.title)}</h3>
 				<p>${esc(k.blurb)}</p>
 				<div class="class-meta">
@@ -142,8 +214,16 @@
 					<svg aria-hidden="true"><use href="#i-arrow" /></svg>
 				</a>
 			</article>`,
-			)
-			.join("");
+				)
+				.join("");
+		const community = $("[data-community-imgs]");
+		if (community)
+			community.innerHTML = L.communityImgs
+				.map(
+					(image, i) =>
+						`<figure class="photo" style="--i:${i}">${img(image, { sizes: "(max-width: 64rem) 100vw, 33vw" })}</figure>`,
+				)
+				.join("");
 	}
 
 	function renderMeta() {
@@ -160,10 +240,9 @@
 		});
 	}
 
-	/* ---------- 2 · Motion ---------- */
+	/* ---------- 3 · Motion ---------- */
 
 	function initIntro() {
-		// Two frames so initial styles are committed before transitioning.
 		requestAnimationFrame(() =>
 			requestAnimationFrame(() => document.body.classList.add("is-loaded")),
 		);
@@ -201,8 +280,7 @@
 		let raf = null;
 
 		const tick = () => {
-			// Lerp toward the real scroll position — this is what makes the
-			// parallax feel liquid instead of locked to the scrollbar.
+			// Lerp toward the real scroll position — liquid, never scroll-jacked.
 			current += (target - current) * 0.09;
 			for (const el of layers) {
 				const speed = parseFloat(el.getAttribute("data-parallax")) || 0;
@@ -251,7 +329,6 @@
 		const onScroll = () => {
 			const y = window.scrollY;
 			header.classList.toggle("is-scrolled", y > 24);
-			// Hide on decisive downward scroll, reveal on any upward intent.
 			if (y > 420 && y - lastY > 6) header.classList.add("is-hidden");
 			else if (lastY - y > 2 || y < 420) header.classList.remove("is-hidden");
 			lastY = y;
@@ -264,24 +341,31 @@
 	}
 
 	function initActiveNav() {
+		if (!("IntersectionObserver" in window)) return;
 		const links = $$(".main-nav a[href^='#']");
-		if (!links.length || !("IntersectionObserver" in window)) return;
-		const byId = new Map(
-			links.map((a) => [a.getAttribute("href").slice(1), a]),
+		const byId = new Map(links.map((a) => [a.getAttribute("href").slice(1), a]));
+		const pills = new Map(
+			$$("[data-pill]").map((a) => [a.getAttribute("href").slice(1), a]),
 		);
 		const io = new IntersectionObserver(
 			(entries) => {
 				for (const entry of entries) {
-					const link = byId.get(entry.target.id);
-					if (link && entry.isIntersecting) {
+					if (!entry.isIntersecting) continue;
+					const id = entry.target.id;
+					const link = byId.get(id);
+					if (link) {
 						links.forEach((a) => a.classList.remove("is-active"));
 						link.classList.add("is-active");
 					}
+					if (pills.has(id)) {
+						pills.forEach((a) => a.classList.remove("is-current"));
+						pills.get(id).classList.add("is-current");
+					}
 				}
 			},
-			{ rootMargin: "-40% 0px -50% 0px" },
+			{ rootMargin: "-35% 0px -55% 0px" },
 		);
-		byId.forEach((_, id) => {
+		new Set([...byId.keys(), ...pills.keys()]).forEach((id) => {
 			const section = document.getElementById(id);
 			if (section) io.observe(section);
 		});
@@ -290,14 +374,13 @@
 	function initTicker() {
 		const track = $("[data-ticker] .ticker-track");
 		if (!track) return;
-		// Duplicate content once so translateX(-50%) loops seamlessly.
 		track.innerHTML += track.innerHTML;
 	}
 
 	function initCounters() {
 		const els = $$("[data-count]");
-		if (!els.length) return;
-		if (reducedMotion || !("IntersectionObserver" in window)) return;
+		if (!els.length || reducedMotion || !("IntersectionObserver" in window))
+			return;
 		const io = new IntersectionObserver(
 			(entries) => {
 				for (const entry of entries) {
@@ -321,7 +404,7 @@
 		els.forEach((el) => io.observe(el));
 	}
 
-	/* ---------- 3 · Interaction ---------- */
+	/* ---------- 4 · Interaction ---------- */
 
 	function initMobileMenu() {
 		const toggle = $("[data-nav-toggle]");
@@ -353,29 +436,43 @@
 		const form = $("[data-enquiry-form]");
 		if (!form) return;
 		const errorEl = $("[data-form-error]", form);
+		const interest = form.elements.interest;
+		const qtyField = form.elements.quantity;
+		const dateField = form.elements.date;
+
+		const isFoodOrder = () =>
+			/food|party/i.test(interest.value || "Food order");
+
+		const syncFields = () => {
+			const food = isFoodOrder();
+			qtyField.required = food;
+			dateField.required = food;
+			$("[data-food-fields]", form).style.display = food ? "" : "none";
+		};
+		interest.addEventListener("change", syncFields);
+		syncFields();
 
 		form.addEventListener("submit", (e) => {
 			e.preventDefault();
 			errorEl.hidden = true;
-
 			if (!form.reportValidity()) return;
-			const fd = new FormData(form);
-			const qty = parseInt(fd.get("quantity"), 10);
-			if (Number.isNaN(qty) || qty < DATA.brand.minOrder) {
-				errorEl.textContent = `Orders start at ${DATA.brand.minOrder} portions — that's one good table!`;
-				errorEl.hidden = false;
-				return;
-			}
 
+			const fd = new FormData(form);
 			const lines = [
-				"Hello FOOD CANTO! I'd like to pre-order:",
+				`Hello FOOD CANTO! I'm interested in: ${fd.get("interest")}`,
 				"",
-				`• Food: ${fd.get("food")}`,
-				`• Portions: ${qty}`,
-				`• Needed by: ${fd.get("date")}`,
-				`• Name: ${fd.get("name")}`,
-				`• Phone: ${fd.get("phone")}`,
+				`• Details: ${fd.get("food")}`,
 			];
+			if (isFoodOrder()) {
+				const qty = parseInt(fd.get("quantity"), 10);
+				if (Number.isNaN(qty) || qty < DATA.brand.minOrder) {
+					errorEl.textContent = `Food orders start at ${DATA.brand.minOrder} portions — that's one good table!`;
+					errorEl.hidden = false;
+					return;
+				}
+				lines.push(`• Portions: ${qty}`, `• Needed by: ${fd.get("date")}`);
+			}
+			lines.push(`• Name: ${fd.get("name")}`, `• Phone: ${fd.get("phone")}`);
 			const msg = String(fd.get("message") || "").trim();
 			if (msg) lines.push(`• Notes: ${msg}`);
 
@@ -389,12 +486,15 @@
 	/* ---------- Boot ---------- */
 
 	const boot = () => {
+		injectMarks();
+		renderHeroImages();
+		renderWorlds();
 		renderCategories();
+		renderSignature();
 		renderSteps();
-		renderOccasions();
+		renderParty();
 		renderMasala();
-		renderPantry();
-		renderClasses();
+		renderLadies();
 		renderMeta();
 
 		initIntro();

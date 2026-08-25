@@ -1,0 +1,179 @@
+[
+	{
+		"slot": "hero-food",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1585937421612-70a008356fbe",
+		"license": "Unsplash License"
+	},
+	{
+		"slot": "story-kitchen",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1528712306091-ed0763094c98",
+		"license": "Unsplash License"
+	},
+	{
+		"slot": "entrance-food",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1631452180519-c014fe946bc7",
+		"license": "Unsplash License"
+	},
+	{
+		"slot": "cat-main-dishes",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3AMeen_curry_2.JPG",
+		"artist": "Kalakki at Malayalam Wikipedia",
+		"license": "CC BY-SA 2.5"
+	},
+	{
+		"slot": "cat-beef-fry",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3AKerala_Beef_Fry.jpg",
+		"artist": "Solowomanwalks",
+		"license": "CC BY-SA 3.0"
+	},
+	{
+		"slot": "beef-feature",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3ATraditional_Beef_Ularthiyathu.JPG",
+		"artist": "Shobha Elizabeth John",
+		"license": "CC BY-SA 4.0"
+	},
+	{
+		"slot": "cat-cakes",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1578985545062-69928b1d9587",
+		"license": "Unsplash License"
+	},
+	{
+		"slot": "cat-sweets",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3ATwo_Gulab_Jamun_in_a_plate_01.jpg",
+		"artist": "Suyash.dwivedi",
+		"license": "CC BY-SA 4.0"
+	},
+	{
+		"slot": "cat-pickles",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3AIndian_traditional_mango_pickle.jpg",
+		"artist": "Kdansari07",
+		"license": "CC BY-SA 4.0"
+	},
+	{
+		"slot": "cat-party-foods",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3AOnam_Sadya_(20683).jpg",
+		"artist": "Athulvis",
+		"license": "CC BY-SA 4.0"
+	},
+	{
+		"slot": "cat-special",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1589302168068-964664d93dc0",
+		"license": "Unsplash License"
+	},
+	{
+		"slot": "party-hero",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3AOnam_Sadya_(12223).jpg",
+		"artist": "Athulvis",
+		"license": "CC BY-SA 4.0"
+	},
+	{
+		"slot": "hero-masala",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1596040033229-a9821ebd058d",
+		"license": "Unsplash License"
+	},
+	{
+		"slot": "entrance-masala",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1506368249639-73a05d6f6488",
+		"license": "Unsplash License"
+	},
+	{
+		"slot": "masala-garam",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3AGaram_Masala_1.jpg",
+		"artist": "Gaurav Dhwaj Khadka",
+		"license": "CC BY-SA 4.0"
+	},
+	{
+		"slot": "masala-chili",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3ADried_Korean_red_chillies.jpg",
+		"artist": "ally j",
+		"license": "CC0"
+	},
+	{
+		"slot": "masala-sambar",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3AIdli_Sambar-Noida-UP-SP004.jpg",
+		"artist": "Sutapa Pal",
+		"license": "CC BY-SA 4.0"
+	},
+	{
+		"slot": "masala-ingredients",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3AGaram_Masala.JPG",
+		"artist": "Miansari66",
+		"license": "Public domain"
+	},
+	{
+		"slot": "masala-macro",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3AGewuerze_004_2024_08_10.jpg",
+		"artist": "Friedrich Haag",
+		"license": "CC BY-SA 4.0"
+	},
+	{
+		"slot": "hero-ladies",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1556911220-e15b29be8c8f",
+		"license": "Unsplash License"
+	},
+	{
+		"slot": "entrance-ladies",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1507048331197-7d4ac70811cf",
+		"license": "Unsplash License"
+	},
+	{
+		"slot": "class-traditional",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3AVegetarian_thali_Karnataka_DSC0008.jpg",
+		"artist": "Maina Bosco",
+		"license": "CC BY-SA 4.0"
+	},
+	{
+		"slot": "class-baking",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1509440159596-0249088772ff",
+		"license": "Unsplash License"
+	},
+	{
+		"slot": "class-masala",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3AKundi-danda_(mortar_and_pestle)_2.jpg",
+		"artist": "Kavittaa",
+		"license": "CC BY 4.0"
+	},
+	{
+		"slot": "class-sweets",
+		"source": "Wikimedia Commons",
+		"ref": "https://commons.wikimedia.org/wiki/File%3ALaddu_preparation_for_Punjabi_wedding_06.jpg",
+		"artist": "Satdeep Gill",
+		"license": "CC BY-SA 4.0"
+	},
+	{
+		"slot": "ladies-community",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1547573854-74d2a71d0826",
+		"license": "Unsplash License"
+	},
+	{
+		"slot": "ladies-online",
+		"source": "Unsplash",
+		"ref": "https://unsplash.com/photos/1543269664-56d93c1b41a6",
+		"license": "Unsplash License"
+	}
+]

@@ -1,187 +1,150 @@
-# FOOD CANTO — Premium Home Kitchen Website
+# FOOD CANTO — One Brand, Three Experiences
 
 **Made Fresh, Just for Your Order.**
 
-A dependency-free, single-page premium website for FOOD CANTO — a family
-home kitchen offering pre-order homemade food, cakes, sweets, pickles,
-masala products, party/celebration orders and online cooking classes.
+A dependency-free premium website for FOOD CANTO — a family home kitchen —
+built as **one brand with three themed experiences**:
 
-No build step, no framework, no npm install. Open `index.html` in a
-browser, or deploy the `food-canto/` folder as-is to Cloudflare Pages,
-Workers Assets, or any static host.
+| Module | Theme | Palette |
+|---|---|---|
+| **Food & Orders** | Fresh · homemade · warm | Dark green `#163B2C` · fresh green `#2F6B48` · sage · cream `#F7F2E8` |
+| **FOOD CANTO Masala** | Spiced · earthy · artisanal | Spice brown `#4C291A` · saffron `#D79424` · chili `#A83B26` · sand `#F2E3C6` |
+| **Ladies Kitchen** | Elegant · welcoming · mature | Plum `#493243` · muted rose `#B77B82` · blush · champagne `#E8D8B7` |
+
+No build step, no framework. Open `index.html`, or deploy the folder as-is
+to Cloudflare Pages / Workers Assets / any static host.
 
 ```
 food-canto/
-├── index.html      # Document shell, all sections, SVG icon system, SEO/JSON-LD
-├── css/styles.css  # Design system + components + motion states + responsive
-└── js/
-    ├── data.js     # CONTENT LAYER — everything the kitchen edits lives here
-    └── app.js      # Rendering from data + motion runtime + interactions
+├── index.html          # Document, all sections, SEO + JSON-LD (business/product/course)
+├── css/styles.css      # Master tokens + three theme scopes + motion system
+├── js/
+│   ├── data.js         # CONTENT LAYER — dishes, products, classes, image map
+│   └── app.js          # Mark injection, rendering, motion runtime, WhatsApp enquiry
+└── assets/
+    ├── logo/           # Reworked FOOD CANTO logo family (9 SVGs, see below)
+    └── img/            # Real photography — 27 slots × 2 sizes (WebP) + ATTRIBUTIONS.json
 ```
 
-## Why no framework?
+## The logo system
 
-The master brief asks for the *smallest sensible stack*. This site has one
-page, no client-side routing, and no server state — a Next.js/React setup
-would add ~90 KB of framework to ship what 12 KB of hand-written JS does.
-The architecture is deliberately shaped so a later migration to
-Next.js/Astro is mechanical (see "Future scalability").
+A monoline **bowl + steam + leaf** mark ("made fresh, from our pot to your
+table") with a Fraunces wordmark. Generated as a brand family in
+`assets/logo/`:
 
----
+`primary.svg` (stacked + tagline) · `horizontal.svg` (header) ·
+`compact.svg` (mobile) · `icon.svg` / `favicon.svg` (mark only) ·
+`mono-white.svg` · `dark.svg` · `masala.svg` (FOOD CANTO **MASALA**) ·
+`ladies.svg` (FOOD CANTO **LADIES KITCHEN**).
 
-## A. Website architecture
+The mark is also injected inline (`[data-mark]` in `app.js`) so pages can
+recolor it per theme via `currentColor` + `--mark-leaf`.
 
-Single scrolling page with anchor navigation, in conversion order:
+**Animated logo** — the hero plays a ~2.6 s vector introduction: rim and
+bowl strokes draw in, steam rises, the stem grows and the leaf unfolds,
+then the wordmark reveals through a mask. Pure SVG + CSS
+(`pathLength="1"` dash animation) — no video, transparent background,
+responsive. The header mark plays a 0.7 s steam micro-animation on load
+and on hover. `prefers-reduced-motion` shows everything instantly.
 
-| # | Section | ID | Purpose |
-|---|---------|----|---------|
-| 1 | Cinematic hero | `#home` | Brand + tagline + primary CTAs + operating badges |
-| — | Ticker | — | Brand values strip, hero → story transition |
-| 2 | Story | `#about` | Trust: homemade, small-batch, made-after-you-order |
-| 3 | Food categories | `#our-food` | 8 category cards (extensible via data) |
-| 4 | How ordering works | `#how-it-works` | 5 steps; min-15/pre-order framed positively |
-| 5 | Party orders | `#party-orders` | Celebrations, occasions, party CTA |
-| 6 | Masala | `#masala` | Spice-toned product presentation (catalog-ready) |
-| 7 | Pickles & pantry | `#pickles` | Homemade products (ecommerce-ready cards) |
-| 8 | Online classes | `#classes` | Class cards with register CTA |
-| 9 | Contact / enquiry | `#contact` | WhatsApp deep link + structured enquiry form |
-| — | Footer + sticky mobile bar | — | Persistent conversion path |
+For packaging/social exports, note the standalone SVGs use live text
+(`Fraunces` with a Georgia fallback); outline the text when producing
+print-ready files.
 
-## B. UX journey
+## Image content map (all real photography)
 
-**Discover → trust → crave → understand → act.**
+Every image slot ships as `assets/img/<slot>-700.webp` + `<slot>-1400.webp`,
+rendered with `srcset` + lazy loading (hero is eager + `fetchpriority=high`).
+**Sources & licenses per slot: `assets/img/ATTRIBUTIONS.json`** (Unsplash
+License and Wikimedia Commons CC works; Commons entries carry artist +
+license and are credited in the site footer). Every candidate was visually
+reviewed for subject match before selection; mismatches (stock burgers,
+commercial packets, unrelated lifestyle) were rejected.
 
-1. Visitor lands (usually from WhatsApp/Instagram on mobile): hero states
-   *who* (home kitchen), *what* (fresh, made to order) and *how* (min 15,
-   pre-order, pickup/delivery) in the first viewport.
-2. Story section converts "home kitchen" from claim to narrative.
-3. Categories build appetite and let visitors self-select intent.
-4. "How ordering works" removes friction — the model's constraints are
-   presented as the *reason the food is fresh*, not as restrictions.
-5. Party / masala / pickles / classes each end in their own CTA.
-6. Every CTA lands on `#contact`, where the form composes a complete,
-   structured WhatsApp message (food, portions ≥ 15, date, name, phone).
-7. On mobile a sticky bar (WhatsApp + Order/Enquire) appears after the
-   hero, keeping conversion one thumb-tap away at all times.
+| Slot | Section | Subject |
+|---|---|---|
+| `hero-food` | Hero | Homemade curries + rice, warm overhead |
+| `story-kitchen` | Story | Hands cooking a steaming pan by a window |
+| `entrance-food/masala/ladies` | Three worlds | Curry kadai · spice spoons · hands prepping veg |
+| `cat-main-dishes` | Food · categories | Kerala fish curry in a clay pot |
+| `cat-beef-fry` / `beef-feature` | Food | Kerala beef dry fry (plated / dark editorial pan) |
+| `cat-cakes` / `cat-sweets` / `cat-pickles` | Food | Chocolate cake · gulab jamun · cut mango pickle |
+| `cat-party-foods` / `party-hero` | Food · party | Sadya on banana leaf · communal sadya service |
+| `cat-special` | Food | Biryani plate |
+| `hero-masala` | Masala hero | Whole + ground spices flat lay |
+| `masala-garam` / `masala-chili` / `masala-sambar` | Masala products | Ground garam masala pan · dried red chillies · idli-sambar |
+| `masala-ingredients` / `masala-macro` | Ingredient story | Whole nutmeg/cardamom/cinnamon · star anise macro |
+| `hero-ladies` | Ladies hero | Woman cooking at her home stove |
+| `class-traditional/baking/masala/sweets` | Class cards | Thali · artisan loaves · mortar & pestle · laddu batch |
+| `ladies-community` / `ladies-online` | Community | Shared table overhead · woman in online session |
 
-## C. Visual design system
+**To use FOOD CANTO's own photography** (always Priority 1): replace the
+two WebP files for a slot and update its `alt` in `js/data.js` — no other
+changes needed. Crops adapt via `object-fit: cover` + per-breakpoint aspect
+ratios (hero: 4/5 desktop column, 16/10 tablet, 4/5 small mobile).
 
-- **Palette** — white + fresh green with kitchen-warm neutrals:
-  cream `#FBF8F2` ground, greens `#2E7D4F → #0E2A1D` for brand/CTAs/deep
-  sections, spice `#B4531D`, gold `#D9A441`, citrus `#B8BF3A` as food
-  accents. Green is strategic (accents, CTAs, highlights) — food tones
-  dominate imagery.
-- **Typography** — [Fraunces](https://fonts.google.com/specimen/Fraunces)
-  (display serif, optical sizing) for hero/section/food titles;
-  [Inter](https://fonts.google.com/specimen/Inter) for reading text,
-  labels and buttons. Fluid `clamp()` scale from small mobile to 4K.
-- **Spacing / grid** — `--space-section` fluid 4.5–9 rem vertical rhythm;
-  76 rem content column; CSS grid with `auto-fill/minmax` card grids.
-- **Iconography** — one inline SVG symbol set (leaf, chili, star anise,
-  plate, wok, cake, jar, mortar, platter…), used for garnish, cards and UI.
-- **Photography direction** — every image position is a **photo slot**
-  (`data-photo-slot="hero-main"`, `category-cakes`, `masala-…`) currently
-  filled with art-directed gradient/SVG compositions. Replace each slot
-  with real photography (large, natural, warm, macro where possible) by
-  dropping an `<img>`/`background-image` into the slot — selectors and
-  aspect ratios are already in place. **No stock or AI restaurant imagery.**
+## Three-theme architecture
 
-## D. Motion design system
+Components read only `--t-*` tokens (`--t-bg`, `--t-surface`, `--t-primary`,
+`--t-secondary`, `--t-accent`, `--t-ink`, `--t-border`, `--t-tint`,
+`--t-deep`, `--mark-leaf`…). Each module rebinds them via
+`[data-theme="food|masala|ladies"]` — no hardcoded colors in components.
 
-One motion DNA, three tempos (tokens in `:root`):
+**Theme transitions** are gradual, never a hard switch: `.theme-bridge`
+bands interpolate the background from one world's palette to the next
+(cream → sand → blush), carrying parallax ingredient marks and an italic
+line of copy; module lockups re-introduce the brand in each world's colors.
 
-| Token | Value | Used for |
-|-------|-------|----------|
-| `--dur-micro` | 200 ms | hovers, taps, arrows, underlines |
-| `--dur-medium` | 550 ms | cards, reveals, menus |
-| `--dur-cine` | 1100 ms | hero intro, big section moments |
-| `--ease-soft` | `cubic-bezier(.22,1,.36,1)` | default — soft, weighted |
-| `--ease-swift` | `cubic-bezier(.55,0,.1,1)` | clips, menu, step dots |
+**Motion character per module** (same DNA, different accent):
+Food — soft & fluid (default tempo). Masala — grounded: shorter rise,
+quicker settle. Ladies — graceful: longer, calmer movement. Implemented by
+rebinding `--reveal-shift` / `--dur-medium` per theme scope.
 
-- **Scroll feel** — native scrolling is never hijacked. Fluidity comes
-  from *lerped parallax* (`initParallax`): layers ease toward the real
-  scroll position at 9 %/frame, giving the liquid feel without breaking
-  browser navigation or accessibility.
-- **Entrances** — a reveal vocabulary, no two adjacent sections alike:
-  `fade-up`, `lines` (masked hero lines), `clip-left/right` (image wipes),
-  `scale` (blur-to-focus), `stagger` / `stagger-cards`, plus bespoke step
-  choreography (dot pops after text). All IntersectionObserver-driven,
-  transform/opacity/clip-path only.
-- **Micro-interactions** — magnetic buttons (fine pointers only), button
-  fill-up transitions, arrow nudges, card lift + icon zoom, nav underline
-  origin-flip, occasion-tag inversions.
-- **Continuity** — hero plate → rotating ring text → green arc morphs into
-  the dark ticker band; section tints alternate cream/deep so the page
-  reads as one composition.
-- **Reduced motion** — `prefers-reduced-motion` collapses every
-  transition/animation and forces all content visible; JS additionally
-  skips parallax, magnetic and counters.
+## Motion system
 
-## E. Component / code architecture
+Tokens: `--dur-micro` 200 ms (hovers, taps) · `--dur-medium` ~550 ms
+(cards, reveals) · `--dur-cine` 1100 ms (hero) · logo intro ~2.6 s.
+One easing family (`--ease-soft`/`--ease-swift`). Reveal vocabulary:
+masked hero lines, clip wipes (left/right), blur-scale, staggered cards,
+step-dot choreography. Native scrolling is never hijacked — fluidity comes
+from lerped parallax. Full `prefers-reduced-motion` fallback (CSS + JS).
 
-- `js/data.js` — **content layer**: brand facts (min order, WhatsApp,
-  fulfilment), categories, ordering steps, occasions, masala products,
-  pantry items, classes. A CMS/API later only needs to return this shape.
-- `js/app.js` — render functions (one per collection) + motion runtime
-  (`initReveals`, `initParallax`, `initMagnetic`, `initHeader`, …) +
-  interactions (mobile menu, sticky bar, enquiry form → WhatsApp).
-- `css/styles.css` — tokens → base → components → sections → motion →
-  accessibility, in that order.
+## Conversion
 
-## F–G. Responsive behavior
+CTAs at every stage: Explore Our Food / Order · Enquire (hero), per-world
+CTAs, Pre-order It (signature), Plan a Party Order, Ask for a Jar (masala),
+Register Interest (classes). The enquiry form has an intent selector
+(Food / Party / Masala / Class); food intents enforce the 15-portion
+minimum and date, and every submission opens WhatsApp with a structured
+message. Mobile gets a sticky bar: **Food | Masala | Classes** module
+pills (current module highlighted in its theme color) + WhatsApp.
 
-Fluid-first with two structural breakpoints:
+## Performance, accessibility, SEO
 
-- **≤ 64 rem** — nav collapses to a circular-clip fullscreen menu with
-  staggered links; hero stacks (plate first); steps switch from a 5-across
-  horizontal timeline to a vertical rail; sticky conversion bar appears.
-- **≤ 40 rem** — single-column grids, full-width CTAs, stacked form rows,
-  smaller reveal distances (calmer motion on small screens).
-- **≥ 100 rem** — wider content column so large desktops don't feel empty.
+- ~27 optimized WebP images (two responsive sizes each), lazy below the
+  fold, preloaded hero; inline SVG logo/icons; zero JS/CSS dependencies.
+- Animations use only transform/opacity/clip-path; one self-suspending rAF
+  loop for parallax.
+- Semantic landmarks, one `h1`, keyboard/Escape support, focus-visible,
+  alt text on every image, `<noscript>` fallback, 44 px+ touch targets.
+- SEO: per-area copy (homemade food, party orders, homemade masala, ladies
+  cooking classes), Open Graph/Twitter with real food image, JSON-LD graph:
+  `FoodEstablishment` + `Product` (Masala) + `Course` (Ladies classes).
 
-Touch targets ≥ 44 px, `safe-area-inset` respected on the sticky bar.
+## Go-live checklist
 
-## H. Performance
-
-- Zero JS/CSS dependencies; ~12 KB JS + ~18 KB CSS + system-cached fonts.
-- No images to load yet — all visuals are CSS gradients + inline SVG.
-- Animations use only compositor-friendly properties; parallax runs a
-  single rAF loop that self-suspends when settled.
-- Fonts load via `preconnect` + `display=swap`; scripts are parsed after
-  content; observers unobserve after firing.
-
-## I. QA & accessibility checklist
-
-- [x] Semantic landmarks, single `h1`, no skipped heading levels
-- [x] Keyboard: focus-visible rings, Escape closes menu, logical order
-- [x] `prefers-reduced-motion` fully honored (CSS + JS)
-- [x] Form: native validation + min-order guard + `role="alert"` errors
-- [x] All decorative SVG `aria-hidden`; photo slots carry `role="img"` + labels
-- [x] `<noscript>` fallback keeps content visible and points to WhatsApp
-- [x] SEO: meta description, canonical, Open Graph, Twitter card,
-      `FoodEstablishment` JSON-LD
-
-## Go-live checklist (for the kitchen)
-
-1. In `js/data.js` set `brand.whatsapp` to the real number
-   (country code + digits, e.g. `9715XXXXXXXX`) and the real email.
-2. Replace `https://foodcanto.example/` in `index.html` (canonical,
-   OG, JSON-LD) with the real domain.
-3. Drop real photography into the `data-photo-slot` positions.
-4. Adjust prices/products/classes in `data.js` — no HTML edits needed.
+1. `js/data.js` → set the real WhatsApp number and email.
+2. `index.html` → replace `https://foodcanto.example/` (canonical, OG, JSON-LD).
+3. Replace interim photography with FOOD CANTO's own shots (see image map);
+   the footer attribution line can then be removed.
+4. Prices/products/classes: edit `js/data.js` only.
 
 ## Future scalability
 
-The data-shape is the contract. Planned growth maps cleanly:
-
-- **CMS** — serve `FOODCANTO` as JSON from any headless CMS; `app.js`
-  render functions become the component templates.
-- **Ecommerce** — `masala`/`pantry` items already carry id/price/
-  availability; add cart state + a checkout endpoint (Workers + Stripe).
-- **Classes** — add booking/payment per class id; cards already isolate
-  registration CTAs.
-- **Forms hardening** — when moving from WhatsApp deep links to a server
-  endpoint: validate server-side, rate limit (Turnstile fits naturally),
-  and keep secrets in environment variables — never in this repo.
-- **Framework migration** — each `render*` function is one component;
-  sections are self-contained; tokens move to Tailwind theme config.
+The data shape is the contract: masala/pantry products carry
+id/price/weight/availability (ecommerce-ready), classes carry full
+scheduling metadata (booking-ready). A CMS/API only needs to serve the
+`FOODCANTO` object. Forms currently deep-link to WhatsApp; when moving to a
+server endpoint, add server-side validation, rate limiting (Turnstile),
+and keep secrets in environment variables. Each `render*` function maps
+1:1 to a future framework component; theme tokens map to a Tailwind theme.

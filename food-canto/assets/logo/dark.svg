@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 72" role="img" aria-label="FOOD CANTO">
+
+	<g transform="translate(0,-6) scale(0.78)">
+	<g fill="none" stroke="#0E2A1D" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+		<path class="m-bowl" d="M18 54 a30 30 0 0 0 60 0" />
+		<path class="m-rim" d="M13 54 H83" />
+		<path class="m-steam1" d="M35 44 c-4 -6 4 -9 0 -16" />
+		<path class="m-steam2" d="M61 44 c4 -6 -4 -9 0 -16" />
+		<path class="m-stem" d="M48 46 V26" />
+	</g>
+	<path class="m-leaf" fill="#0E2A1D" d="M48 28 C40 24 37 16 38 8 c8 1 14 6 15 14 -3 -5 -8 -8 -12 -9 4 3 7 7 8 12 z" /></g>
+	<text x="82" y="46" text-anchor="start" font-family="Fraunces, Georgia, serif" font-weight="600" font-size="28" letter-spacing="1" fill="#0E2A1D">FOOD C<tspan font-style="italic">ANTO</tspan></text>
+</svg>
