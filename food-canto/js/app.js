@@ -41,13 +41,13 @@
 	const MARK_SVG = `
 	<svg class="mark-svg" viewBox="0 0 96 96" aria-hidden="true" focusable="false">
 		<g fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
-			<path class="m-bowl" pathLength="1" d="M18 54 a30 30 0 0 0 60 0" />
-			<path class="m-rim" pathLength="1" d="M13 54 H83" />
-			<path class="m-steam1" pathLength="1" d="M35 44 c-4 -6 4 -9 0 -16" />
-			<path class="m-steam2" pathLength="1" d="M61 44 c4 -6 -4 -9 0 -16" />
-			<path class="m-stem" pathLength="1" d="M48 46 V26" />
+			<path class="m-bowl" pathLength="1" d="M22 56 a27 20 0 0 0 52 0" />
+			<path class="m-rim" pathLength="1" d="M8 56 H88" />
+			<path class="m-steam1" pathLength="1" d="M36 46 c-3 -5 3 -8 0 -14" />
+			<path class="m-steam2" pathLength="1" d="M60 46 c3 -5 -3 -8 0 -14" />
+			<path class="m-stem" pathLength="1" d="M48 46 c-3 -5 3 -9 0 -16" />
 		</g>
-		<path class="m-leaf" d="M48 28 C40 24 37 16 38 8 c8 1 14 6 15 14 -3 -5 -8 -8 -12 -9 4 3 7 7 8 12 z" />
+		<path class="m-leaf" d="M66 27 c1 -2 3 -4 6 -5 1 -8 7 -13 15 -14 0 8 -6 14 -14 15 -2 1 -4 2 -5 4 z" />
 	</svg>`;
 
 	function injectMarks() {
