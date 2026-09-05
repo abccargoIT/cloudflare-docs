@@ -421,6 +421,89 @@ change, affected assets, expected result, risk, rollback and verification.
   charges for template messages. Both must be confirmed against current price
   lists before approval.
 
+## 14a. Change of direction: replacing Freshworks for WhatsApp
+
+Recorded 2026-09-05, on the Head of IT's instruction. This section supersedes the
+build-versus-buy position taken earlier in this plan.
+
+### Position
+
+ABC Cargo runs Freshworks today (Freshdesk with Freshchat) with roughly 40 active
+users, roles already separated by region, and a large conversation history. The
+decision is **not** to connect WhatsApp to Freshworks. It is to build ABC Cargo's own
+customer communication platform and move the three WhatsApp numbers onto it.
+
+The scope therefore widens from an integration layer to a product in its own right,
+benchmarked against the Freshdesk and Freshchat feature surface and the respond.io
+working model. The prototype at `demo/platform.html` shows the intended shape:
+shared inbox, contacts, broadcasts, automations, reports and an admin surface.
+
+### The constraint that governs the move
+
+A WhatsApp phone number can be connected to **one** platform at a time. There is no
+period in which both Freshworks and the new platform receive messages on the same
+number. Each number is a discrete cutover with a before and an after.
+
+### What moves and what does not
+
+| Item                                        | Moves to the new platform | Note                                     |
+| ------------------------------------------- | ------------------------- | ---------------------------------------- |
+| The phone numbers themselves                | Yes                       | The WABA is ABC Cargo's own              |
+| Approved message templates                  | Yes                       | Re-approval is not normally required     |
+| Messaging limits and quality rating         | Yes                       | Tied to the number, not the platform     |
+| Green tick, if held                         | Yes                       | Tied to the business                     |
+| **Conversation history held in Freshworks** | **No**                    | Stays in Freshworks                      |
+| **Contact records held in Freshworks**      | **No**                    | Must be exported first                   |
+| Canned responses, SLA policies, automations | No                        | Rebuilt in the new platform              |
+| Reporting history                           | No                        | Export before the number is disconnected |
+
+### Pre-cutover requirements
+
+These must be complete before the first number is disconnected, because some are
+irreversible once access to the WhatsApp channel in Freshworks is removed.
+
+1. Export contacts, conversation history and reporting for the WhatsApp channel from
+   Freshworks, and verify the exports open and are complete.
+2. Record the current per-number quality rating and messaging limit, so any change
+   after the move is measurable.
+3. List the approved templates and confirm each is present on the WABA.
+4. Confirm which Meta App will own the webhook after the move, and that it is
+   subscribed to the ABC Cargo WABA.
+5. Agree what happens to Freshworks: whether it continues for email and ticketing, or
+   is retired entirely. This affects licence cost and the agent experience, and is a
+   commercial decision, not a technical one.
+
+### Sequenced cutover
+
+Move one number at a time, lowest volume first, so a problem affects the smallest
+group of customers. Suggested order: Region 3, then Region 2, then Dubai.
+
+For each number: freeze outbound campaigns, export, disconnect from Freshworks,
+connect to the new platform, verify inbound and outbound on internal test phones,
+then release to the regional team. Keep the previous number live until the current
+one is verified.
+
+### Honest assessment of effort
+
+Reaching feature parity with what Freshworks gives ABC Cargo today is a product
+build, not a configuration exercise. Phase 1 and 2 in section 8 deliver a working
+inbox for one number. Matching the wider surface — canned responses, CSAT, custom
+fields, SSO, reporting, exports, audit — is a programme measured in months, and it
+carries ongoing maintenance that a subscription currently absorbs.
+
+That is a legitimate trade for data ownership, cargo-system integration and removal of
+per-seat cost, and it is the Head of IT's decision to make. It is recorded here so the
+cost side is visible alongside the benefit, and so nobody is surprised later.
+
+### Risk introduced by this decision
+
+| Risk                                                 | Impact | Mitigation                                                                            |
+| ---------------------------------------------------- | ------ | ------------------------------------------------------------------------------------- |
+| Agents lose familiar tooling mid-shift               | High   | Cut over per region, train before each, keep the previous number live until verified  |
+| Historic conversations become unreachable            | High   | Export before disconnecting; keep Freshworks read-only for a defined retention period |
+| Feature gap at go-live against what agents use today | Medium | Agree the minimum acceptable feature set with supervisors before the first cutover    |
+| Single team owns the whole platform                  | Medium | Document and hand over properly; avoid one-person dependency                          |
+
 ## 15. Approval
 
 | Role       | Name                   | Decision | Date |
