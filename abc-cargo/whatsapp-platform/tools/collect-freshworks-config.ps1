@@ -14,11 +14,19 @@
     Compatible with Windows PowerShell 5.1.
 
 .PARAMETER FreshdeskDomain
-    Your Freshdesk subdomain only, e.g. "abccargo" for abccargo.freshdesk.com.
+    Freshdesk subdomain. Defaults to "abccargosupport", which was verified as
+    reachable (abccargosupport.freshdesk.com/api/v2 returns HTTP 401, i.e. the
+    endpoint is live and only needs a key).
 
-.PARAMETER FreshchatDomain
-    Your Freshchat subdomain only, e.g. "abccargo" for abccargo.freshchat.com.
-    Optional. Omit to skip the Freshchat section.
+.PARAMETER FreshchatApiUrl
+    The FULL Freshchat API base URL, ending in /v2. Optional; omit to skip the
+    Freshchat section.
+
+    Do not guess this. Every *.freshchat.com host answers 401 whether or not it is
+    your account, so an incorrect host cannot be told apart from a correct one.
+    Read the real value from Freshchat: Admin Settings > API Settings, which shows
+    both your API URL and the token. On Freshworks Neo organisations such as
+    abccargo-org.myfreshworks.com the chat API host is often region-specific.
 
 .PARAMETER OutputPath
     Folder to write the JSON files into. Created if it does not exist.
@@ -26,12 +34,11 @@
 .EXAMPLE
     # Recommended: set the keys as environment variables first, in the same window.
     $env:FRESHDESK_API_KEY = "<paste here, this window only>"
-    $env:FRESHCHAT_API_TOKEN = "<paste here, this window only>"
-    .\collect-freshworks-config.ps1 -FreshdeskDomain abccargo -FreshchatDomain abccargo -OutputPath C:\Temp\fw-config
+    .\collect-freshworks-config.ps1 -OutputPath C:\Temp\fw-config
 
 .EXAMPLE
-    # Or omit the variables and the script will prompt securely for each key.
-    .\collect-freshworks-config.ps1 -FreshdeskDomain abccargo -OutputPath C:\Temp\fw-config
+    # Including Freshchat, using the API URL shown in Freshchat Admin > API Settings.
+    .\collect-freshworks-config.ps1 -OutputPath C:\Temp\fw-config -FreshchatApiUrl https://abccargo-org.freshchat.com/v2
 
 .NOTES
     Read-only inspection. No live change is made. Requires an agent or admin API key
@@ -41,13 +48,13 @@
 
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $false)]
     [ValidatePattern('^[A-Za-z0-9-]+$')]
-    [string] $FreshdeskDomain,
+    [string] $FreshdeskDomain = 'abccargosupport',
 
     [Parameter(Mandatory = $false)]
-    [ValidatePattern('^[A-Za-z0-9-]*$')]
-    [string] $FreshchatDomain = '',
+    [ValidatePattern('^(https://[A-Za-z0-9.-]+/v2)?$')]
+    [string] $FreshchatApiUrl = '',
 
     [Parameter(Mandatory = $true)]
     [string] $OutputPath
@@ -106,7 +113,7 @@ $freshdeskKey = Get-SecretValue -EnvName 'FRESHDESK_API_KEY' -Prompt '  Freshdes
 if ([string]::IsNullOrWhiteSpace($freshdeskKey)) { throw 'A Freshdesk API key is required.' }
 
 $freshchatToken = ''
-if (-not [string]::IsNullOrWhiteSpace($FreshchatDomain)) {
+if (-not [string]::IsNullOrWhiteSpace($FreshchatApiUrl)) {
     $freshchatToken = Get-SecretValue -EnvName 'FRESHCHAT_API_TOKEN' -Prompt '  Freshchat API token (input hidden, press Enter to skip)'
 }
 
@@ -199,8 +206,8 @@ Write-Host ''
 
 # ---------------------------------------------------------------- freshchat
 
-if (-not [string]::IsNullOrWhiteSpace($FreshchatDomain) -and -not [string]::IsNullOrWhiteSpace($freshchatToken)) {
-    $fcBase = "https://$FreshchatDomain.freshchat.com/v2"
+if (-not [string]::IsNullOrWhiteSpace($FreshchatApiUrl) -and -not [string]::IsNullOrWhiteSpace($freshchatToken)) {
+    $fcBase = $FreshchatApiUrl.TrimEnd('/')
     $freshchatHeaders = @{ Authorization = "Bearer $freshchatToken"; Accept = 'application/json' }
     Write-Host "Freshchat  ($fcBase)" -ForegroundColor Yellow
 
@@ -211,7 +218,8 @@ if (-not [string]::IsNullOrWhiteSpace($FreshchatDomain) -and -not [string]::IsNu
 
     Write-Host ''
 } else {
-    Write-Host 'Freshchat  skipped (no domain or no token supplied)' -ForegroundColor DarkGray
+    Write-Host 'Freshchat  skipped (no -FreshchatApiUrl or no token supplied)' -ForegroundColor DarkGray
+    Write-Host '           Find the API URL in Freshchat > Admin Settings > API Settings.' -ForegroundColor DarkGray
     Write-Host ''
 }
 

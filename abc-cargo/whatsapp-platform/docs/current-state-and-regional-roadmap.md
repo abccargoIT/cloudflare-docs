@@ -231,6 +231,20 @@ The IT Department cannot read the tenant, so these must be exported or captured 
 someone with admin access. Items marked **blocking** stop the roadmap from being
 finalised; the rest can follow.
 
+### Confirmed tenant endpoints
+
+Supplied by the Head of IT on 2026-09-05 and verified by unauthenticated
+reachability check only. No credential was sent and no data was read.
+
+| Item                    | Value                           | Verification                                                                                                                                                                  |
+| ----------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Freshdesk               | `abccargosupport.freshdesk.com` | `/api/v2/agents` returns HTTP 401 — endpoint live, needs a key                                                                                                                |
+| Freshworks organisation | `abccargo-org.myfreshworks.com` | Returns HTTP 200 login page                                                                                                                                                   |
+| Freshchat API base      | **Not determined**              | Every `*.freshchat.com` host answers 401, so a correct host cannot be distinguished from an incorrect one. Read the real value from Freshchat → Admin Settings → API Settings |
+
+`tools/collect-freshworks-config.ps1` defaults to the confirmed Freshdesk domain
+and takes the Freshchat API base as an explicit parameter rather than guessing it.
+
 ### Blocking
 
 1. **SLA policies** — every policy, its targets, which groups and channels it applies
