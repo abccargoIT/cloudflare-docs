@@ -1,0 +1,32 @@
+{
+	"name": "abc-cargo-whatsapp-platform",
+	"version": "0.1.0",
+	"private": true,
+	"description": "ABC Cargo WhatsApp customer communication platform on Cloudflare Workers (Meta WhatsApp Business Platform Cloud API).",
+	"type": "module",
+	"scripts": {
+		"dev": "wrangler dev",
+		"deploy": "wrangler deploy",
+		"typecheck": "tsc --noEmit -p tsconfig.json",
+		"test": "node --test \"test/**/*.test.ts\"",
+		"lint": "eslint src test",
+		"format": "prettier --write \"**/*.{ts,json,jsonc,md}\"",
+		"format:check": "prettier --check \"**/*.{ts,json,jsonc,md}\"",
+		"db:migrate:local": "wrangler d1 migrations apply abc-whatsapp --local",
+		"db:migrate:remote": "wrangler d1 migrations apply abc-whatsapp --remote",
+		"cf-typegen": "wrangler types"
+	},
+	"devDependencies": {
+		"@cloudflare/workers-types": "^5.20260727.1",
+		"@eslint/js": "^9.39.4",
+		"@types/node": "^22.20.1",
+		"eslint": "^9.35.0",
+		"prettier": "^3.9.6",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.65.0",
+		"wrangler": "4.114.0"
+	},
+	"engines": {
+		"node": ">=22.18"
+	}
+}
