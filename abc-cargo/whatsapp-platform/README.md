@@ -28,6 +28,26 @@ Not implemented yet: the agent console user interface, agent login and
 roles (use Cloudflare Access in front of `/api/*`), AI-assisted drafting,
 reporting, and integration with ABC Cargo shipment systems.
 
+## Interactive demo
+
+`demo/index.html` is a self-contained simulation of the platform for people who want to see
+the behaviour rather than read about it. Open the file in a browser; it needs no build step,
+no server and no network access to Meta or Cloudflare.
+
+It shows three panes side by side: the customer's WhatsApp thread, the agent console, and a
+live trace of every stage the real pipeline runs, labelled with the source file that does the
+work. The controls change the conditions the platform actually reacts to.
+
+| Control         | What it demonstrates                                                              |
+| --------------- | --------------------------------------------------------------------------------- |
+| Business number | Region routing across the three WhatsApp numbers, each with its own working hours |
+| Simulated clock | The out-of-hours automatic reply, and the 24-hour service window expiring         |
+| Agents on shift | The "all agents busy" automatic reply and its cooldown                            |
+| Reset demo      | Returns the sample conversations to their starting state                          |
+
+The conversations, names and shipment references are sample data. Region 2 and Region 3 are
+placeholders until the number details are confirmed in WhatsApp Manager.
+
 ## Layout
 
 ```
