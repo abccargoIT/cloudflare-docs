@@ -1126,7 +1126,7 @@
 							id="chVol"
 							viewBox="0 0 620 250"
 							role="img"
-							aria-label="Daily conversation volume for Dubai, Region 2 and Region 3 over the last 14 days."
+							aria-label="Daily conversation volume for UAE, UK and KSA over the last 14 days."
 						></svg>
 					</div>
 					<div class="legend" id="lgVol"></div>
@@ -1180,10 +1180,18 @@
 
 		<section class="screen" id="sc-admin" aria-label="Admin">
 			<p class="note">
-				The configuration surface the platform needs to run without a developer.
-				Ticks mark what the current build already covers; the rest is the
-				roadmap.
+				UAE, UK and KSA each run their own number, working hours, groups and
+				SLA. Region is a first-class dimension in the platform, not a filter
+				applied afterwards. Ticks mark what the current build covers; the rest
+				is the roadmap.
 			</p>
+			<div class="panel">
+				<div class="phead">
+					<h2>Regional configuration</h2>
+					<span class="meta">separated per region</span>
+				</div>
+				<div class="tscroll" id="adRegions"></div>
+			</div>
 			<div class="mods" id="adMods"></div>
 		</section>
 	</div>
@@ -1200,30 +1208,46 @@
 		var REGIONS = [
 			{
 				id: "uae",
-				short: "Dubai",
+				short: "UAE",
 				label: "UAE · Dubai",
 				number: "+971 4 501 8800",
 				pnid: "109455012288471",
-				verified: true,
+				live: "Live in Freshchat today",
 				hours: "09:00–18:00 Mon–Sat",
+				tz: "Asia/Dubai",
+				groups: [
+					"UAE Sales Team",
+					"UAE Shipment Tracking",
+					"UAE Domestics Sales",
+				],
+				sla: { first: "15 min", next: "30 min", res: "8 working hours" },
+				agents: 13,
 			},
 			{
-				id: "r2",
-				short: "Region 2",
-				label: "Region 2",
-				number: "+971 6 000 0000",
+				id: "uk",
+				short: "UK",
+				label: "United Kingdom",
+				number: "+44 20 0000 0000",
 				pnid: "109455012288472",
-				verified: false,
-				hours: "08:30–17:30 Mon–Sat",
+				live: "Not yet connected",
+				hours: "09:00–18:00 Mon–Sat",
+				tz: "Europe/London",
+				groups: ["UK Customer Support", "UK After Sale Support"],
+				sla: { first: "15 min", next: "30 min", res: "8 working hours" },
+				agents: 12,
 			},
 			{
-				id: "r3",
-				short: "Region 3",
-				label: "Region 3",
-				number: "+971 2 000 0000",
+				id: "ksa",
+				short: "KSA",
+				label: "Saudi Arabia",
+				number: "+966 11 000 0000",
 				pnid: "109455012288473",
-				verified: false,
-				hours: "09:00–17:00 Mon–Fri",
+				live: "Not yet connected",
+				hours: "09:00–17:00 Sun–Thu",
+				tz: "Asia/Riyadh",
+				groups: ["KSA Sales Team"],
+				sla: { first: "30 min", next: "60 min", res: "1 working day" },
+				agents: 3,
 			},
 		];
 		var TEMPLATES = [
@@ -1420,7 +1444,7 @@
 			},
 			{
 				id: "c4",
-				region: "r2",
+				region: "uk",
 				name: "Ahmed Sultan",
 				wa: "971509903471",
 				assigned: null,
@@ -1439,14 +1463,14 @@
 						d: "out",
 						k: "auto",
 						who: "auto",
-						b: "Thank you for contacting ABC Cargo (Region 2). All our agents are with other customers. Your message is queued.",
+						b: "Thank you for contacting ABC Cargo (UK). All our agents are with other customers. Your message is queued.",
 						t: NOW - 108e6 + 5e3,
 					},
 				],
 			},
 			{
 				id: "c5",
-				region: "r3",
+				region: "ksa",
 				name: "Priya Nair",
 				wa: "971544470118",
 				assigned: null,
@@ -1499,7 +1523,7 @@
 				id: "c4",
 				name: "Ahmed Sultan",
 				wa: "971509903471",
-				region: "r2",
+				region: "uk",
 				stage: "Customer",
 				ship: 1,
 				last: "1d",
@@ -1509,7 +1533,7 @@
 				id: "c5",
 				name: "Priya Nair",
 				wa: "971544470118",
-				region: "r3",
+				region: "ksa",
 				stage: "Lead",
 				ship: 1,
 				last: "2h",
@@ -1544,7 +1568,7 @@
 			{
 				name: "Missing documents — customs hold",
 				tpl: "document_request",
-				region: "r2",
+				region: "uk",
 				aud: 36,
 				sent: 0,
 				del: 0,
@@ -1569,55 +1593,92 @@
 		var RULES = [
 			{
 				on: true,
-				name: "Route by business number",
-				grp: "Routing",
+				name: "Route tracking enquiries — UAE",
+				grp: "Routing · UAE",
 				when: "Inbound message received",
-				cond: ["number = Dubai"],
-				act: ["assign to group “UAE Support”"],
+				cond: ["message text contains “where is my”", "number = UAE"],
+				act: ["assign to group “UAE Shipment Tracking”"],
 			},
 			{
 				on: true,
-				name: "Shipment reference lookup",
-				grp: "Routing",
+				name: "Attach the shipment",
+				grp: "Routing · all regions",
 				when: "Inbound message received",
 				cond: ["body matches AWB pattern"],
-				act: ["attach shipment", "add label “tracking”"],
+				act: [
+					"look up shipment",
+					"attach to conversation",
+					"add label “tracking”",
+				],
+			},
+			{
+				on: true,
+				name: "Route sales enquiries — UAE",
+				grp: "Routing · UAE",
+				when: "Inbound message received",
+				cond: ["message text contains rate / quote / price", "number = UAE"],
+				act: ["assign to group “UAE Sales Team”"],
+			},
+			{
+				on: true,
+				name: "Route to UK support",
+				grp: "Routing · UK",
+				when: "Inbound message received",
+				cond: ["number = UK"],
+				act: [
+					"assign to group “UK Customer Support”",
+					"balance across available agents",
+				],
+			},
+			{
+				on: true,
+				name: "Route to KSA sales",
+				grp: "Routing · KSA",
+				when: "Inbound message received",
+				cond: ["number = KSA"],
+				act: ["assign to group “KSA Sales Team”"],
 			},
 			{
 				on: true,
 				name: "Out-of-hours acknowledgement",
-				grp: "Auto-reply",
+				grp: "Auto-reply · per region",
 				when: "Inbound message received",
-				cond: ["outside business hours", "no auto-reply in 12 h"],
-				act: ["send auto-reply", "set status pending"],
+				cond: ["outside that region’s business hours", "no auto-reply in 12 h"],
+				act: ["send auto-reply quoting regional hours", "set status pending"],
 			},
 			{
 				on: true,
 				name: "All agents busy",
-				grp: "Auto-reply",
+				grp: "Auto-reply · per region",
 				when: "Inbound message received",
-				cond: ["inside hours", "0 agents online"],
+				cond: ["inside hours", "0 agents online in region"],
 				act: ["send queue acknowledgement"],
 			},
 			{
 				on: true,
 				name: "Damage claim escalation",
-				grp: "Escalation",
+				grp: "Escalation · cross-region",
 				when: "Inbound message received",
 				cond: ["body contains damage / broken", "image attached"],
-				act: ["add label “claim”", "assign to supervisor", "notify #claims"],
+				act: [
+					"add label “claim”",
+					"assign to group “International Escalations”",
+				],
 			},
 			{
 				on: true,
-				name: "First response SLA — 15 minutes",
-				grp: "SLA",
+				name: "First response SLA breach warning",
+				grp: "SLA · per region",
 				when: "Conversation unanswered",
-				cond: ["open 15 min", "inside hours"],
-				act: ["warn supervisor", "raise priority"],
+				cond: [
+					"regional first-response target reached",
+					"inside regional hours",
+				],
+				act: ["warn regional supervisor", "raise priority"],
 			},
 			{
 				on: false,
-				name: "Re-engage before window closes",
+				name: "Re-engage before the window closes",
 				grp: "Retention",
 				when: "Service window 2 h from expiry",
 				cond: ["unresolved", "no agent reply"],
@@ -2387,18 +2448,18 @@
 			lineChart(
 				"chVol",
 				[
-					{ name: "Dubai", color: "var(--s1)", data: VOL.dubai },
-					{ name: "Region 2", color: "var(--s2)", data: VOL.r2 },
-					{ name: "Region 3", color: "var(--s3)", data: VOL.r3 },
+					{ name: "UAE", color: "var(--s1)", data: VOL.dubai },
+					{ name: "UK", color: "var(--s2)", data: VOL.r2 },
+					{ name: "KSA", color: "var(--s3)", data: VOL.r3 },
 				],
 				{ step: 20, unit: "", direct: true },
 			);
 			var lg = document.getElementById("lgVol");
 			lg.innerHTML = "";
 			[
-				["Dubai", "var(--s1)"],
-				["Region 2", "var(--s2)"],
-				["Region 3", "var(--s3)"],
+				["UAE", "var(--s1)"],
+				["UK", "var(--s2)"],
+				["KSA", "var(--s3)"],
 			].forEach(function (p) {
 				var s = el("span");
 				var i = el("i", "swatch");
@@ -2419,7 +2480,7 @@
 			var t = document.getElementById("rpTable");
 			t.innerHTML = "";
 			var hd = t.createTHead().insertRow();
-			["Day", "Dubai", "Region 2", "Region 3", "Median first response"].forEach(
+			["Day", "UAE", "UK", "KSA", "Median first response"].forEach(
 				function (h) {
 					var e = document.createElement("th");
 					e.textContent = h;
@@ -2444,6 +2505,59 @@
 
 		/* ---------------- admin ---------------- */
 		function rAdmin() {
+			var rc = document.getElementById("adRegions");
+			if (rc) {
+				rc.innerHTML = "";
+				var rt = document.createElement("table");
+				var rh = rt.createTHead().insertRow();
+				[
+					"Region",
+					"WhatsApp number",
+					"Working hours",
+					"Groups",
+					"First response",
+					"Resolution",
+					"Agents",
+					"Channel status",
+				].forEach(function (h) {
+					var e = document.createElement("th");
+					e.textContent = h;
+					rh.appendChild(e);
+				});
+				var rb = rt.createTBody();
+				REGIONS.forEach(function (r) {
+					var row = rb.insertRow();
+					var n = row.insertCell();
+					n.textContent = r.label;
+					n.style.fontFamily = "Archivo,sans-serif";
+					n.style.fontWeight = "600";
+					var num = row.insertCell();
+					num.className = "mono";
+					num.textContent = r.number;
+					row.insertCell().textContent = r.hours;
+					var g = row.insertCell();
+					g.className = "sub";
+					g.textContent = r.groups.join(", ");
+					var f = row.insertCell();
+					f.className = "mono";
+					f.textContent = r.sla.first;
+					var rs = row.insertCell();
+					rs.className = "mono";
+					rs.textContent = r.sla.res;
+					var a = row.insertCell();
+					a.className = "mono";
+					a.textContent = String(r.agents);
+					var st = row.insertCell();
+					st.appendChild(
+						el(
+							"span",
+							"pill " + (r.live.indexOf("Live") === 0 ? "warn" : "flat"),
+							r.live,
+						),
+					);
+				});
+				rc.appendChild(rt);
+			}
 			var box = document.getElementById("adMods");
 			box.innerHTML = "";
 			ADMIN.forEach(function (g) {
