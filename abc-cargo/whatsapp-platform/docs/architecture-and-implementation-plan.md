@@ -504,6 +504,67 @@ cost side is visible alongside the benefit, and so nobody is surprised later.
 | Feature gap at go-live against what agents use today | Medium | Agree the minimum acceptable feature set with supervisors before the first cutover    |
 | Single team owns the whole platform                  | Medium | Document and hand over properly; avoid one-person dependency                          |
 
+## 14b. Standing instruction: no live change before the management demonstration
+
+Recorded 2026-09-05 on the Head of IT's instruction.
+
+### The instruction
+
+All preparation is to be completed offline. **No ABC Cargo customer number, Meta
+asset, Freshworks setting or production system is to be touched** until the whole
+build is finished and has been demonstrated to Management. Go-live approval is
+sought at that demonstration, and not before.
+
+### What this changes in the plan
+
+A formal gate is inserted between building the platform and the first regional
+cutover. Section 8 phases are re-read as follows:
+
+| Stage                        | Live change permitted | Gate                                   |
+| ---------------------------- | --------------------- | -------------------------------------- |
+| Baseline and exports         | No                    | —                                      |
+| Build the platform           | No                    | —                                      |
+| **Management demonstration** | **No**                | **Go-live approval requested here**    |
+| KSA cutover                  | Yes, once approved    | Verified before the region is released |
+| UAE cutover                  | Yes, once approved    | Verified before the region is released |
+| UK cutover                   | Yes, once approved    | Verified before the region is released |
+| Consolidation                | Yes                   | —                                      |
+
+The nine live-change approval points in section 11 remain in force and are not
+replaced by the demonstration gate. The gate is an additional control, not a
+substitute: even after Management approves go-live in principle, each individual
+live action still requires the Head of IT's approval at the time it is performed.
+
+### Building without touching anything live
+
+The build is proven against a Meta test number and internal test handsets. That is
+sufficient to exercise every mechanism in the platform: webhook signature checks,
+the queue, the 24-hour window, automatic replies, templates, media capture,
+assignment, SLA measurement and reporting. Nothing about that work requires an ABC
+Cargo customer number.
+
+Agents continue working in Freshworks throughout, unaffected.
+
+### The demonstration
+
+Prepared as `demo/management-briefing.html`, with the two working prototypes it
+links to. The briefing sets out the ask, the current-state evidence, the proposed
+platform, the schedule with the gate marked, an honest cost framework where IT has
+no visibility of licence figures, and the risk controls.
+
+Suggested demonstration sequence is in section 04 of that briefing.
+
+### What is presented for approval at the gate
+
+1. The platform running end to end on a test number.
+2. Evidence that the Freshworks export is complete and verified.
+3. The minimum acceptable feature set, agreed with regional supervisors beforehand.
+4. The per-region cutover runbook, including rollback.
+5. Confirmation of the decision on retaining or retiring Freshworks.
+
+If approval is withheld, nothing has changed. Freshworks continues exactly as it
+does today and the platform waits.
+
 ## 15. Approval
 
 | Role       | Name                   | Decision | Date |
