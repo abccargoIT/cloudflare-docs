@@ -211,10 +211,51 @@ inbound webhook selects the region, as modelled in `src/regions.ts`.
 **All three numbers must be migrated, each with its own cutover window.** There is no
 region that can be built fresh and proved before touching production traffic.
 
-Still to be captured from the **Configure** action on each row: the Meta phone number
-id, the business hours calendar attached to the number, the assignment behaviour, and
-the template and greeting settings. Quality rating and messaging limit are not shown
-here and must come from the Meta WhatsApp Manager.
+### 3.9 Per-number channel configuration
+
+Read from **Configure** on each of the three rows. Identical structure, different
+values.
+
+| Setting                | +966548454866       | +971800916       | +447388800000       |
+| ---------------------- | ------------------- | ---------------- | ------------------- |
+| Trigger a bot          | On                  | On               | On                  |
+| Bot                    | `ABC Cargo KSA`     | `ABC Cargo`      | `ABC Cargo UK`      |
+| Bot runs               | Both, inside and outside business hours | Both | Both |
+| Assign group           | On — `KSA Sales Team` | On — `UAE Sales Team` | On — `UK Customer Support` |
+| CSAT survey on resolve | Off                 | Off              | Off                 |
+| Threading interval     | Locked — "Default threading interval cannot be changed for a bot-mapped topic" | Locked | Locked |
+
+Four findings follow, in order of consequence.
+
+**A bot answers first on every number, at every hour.** Each number is fronted by its
+own bot, set to run both inside and outside business hours, and the conversation
+reaches the assigned group only after the bot hands over. The bot is therefore the
+customer's actual first contact 24 hours a day, and the agent group is the second
+line. This is a substantially larger surface than the plan previously assumed: the
+new platform must reproduce three bot conversation flows, not only inbound routing
+and assignment. The flows themselves are not visible on this screen and must be
+exported from the Bots section. This moves bot flows from "useful, not urgent" to
+blocking — see section 5.
+
+**Regional separation is complete and consistent.** Bot, group and topic are all
+distinct per number, with no shared component between regions. The separation the
+Head of IT asked to preserve already exists end to end, and the new platform's
+region resolution in `src/regions.ts` reproduces it exactly.
+
+**UK routes to support; UAE and KSA route to sales.** `UK Customer Support` against
+`UAE Sales Team` and `KSA Sales Team` is not a naming inconsistency — it is a
+different destination for the same channel. WhatsApp enquiries in UAE and KSA land
+on a sales group, in the UK on a support group. Whether that is deliberate is a
+business question for the Head of IT and is listed in section 7.
+
+**No customer satisfaction measurement exists on WhatsApp.** CSAT is off on all
+three numbers, so there is no CSAT baseline for the channel and none can be
+reconstructed after the fact. Two consequences: the new platform cannot be compared
+against a historical satisfaction figure, and CSAT is a genuine improvement the new
+platform can introduce rather than a feature it must match.
+
+The Meta phone number id is **not** exposed on this screen. It, together with the
+quality rating and messaging limit, must come from Meta WhatsApp Manager.
 
 ## 4. The regional model for the new platform
 
@@ -286,26 +327,31 @@ and takes the Freshchat API base as an explicit parameter rather than guessing i
 3. **All chat assignment rules** — full conditions and actions, in execution order,
    not only the three WhatsApp UAE rules.
 4. **`Business Classification` values** — the full permitted value list.
-5. **WhatsApp channel configuration** — the three connected numbers are now known
-   (section 3.8). Still outstanding: the Meta phone number id behind each, the
-   per-number Configure settings, and the current quality rating and messaging
-   limit from Meta WhatsApp Manager.
+5. **WhatsApp channel configuration** — the three connected numbers (section 3.8)
+   and their per-number Configure settings (section 3.9) are now captured. Still
+   outstanding: the Meta phone number id behind each number, and the current
+   quality rating and messaging limit, both from Meta WhatsApp Manager.
 6. **Message templates** — every approved template, its category, language and body.
+7. **Bot conversation flows** — the full flow for `ABC Cargo KSA`, `ABC Cargo` and
+   `ABC Cargo UK`: every node, message, input, branch and handover condition. Each
+   bot answers first on its number 24 hours a day (section 3.9), so the new platform
+   cannot go live on a number without an equivalent flow. Promoted to blocking after
+   the Configure screens were read.
 
 ### Needed before the first cutover
 
-7. Contact export for WhatsApp contacts, with custom fields.
-8. Conversation history export for the WhatsApp channel, per region.
-9. Canned responses.
-10. Group membership — which agent sits in which group.
-11. Role permission detail for the six roles that carry users.
-12. Reporting baseline — current volumes, first response and resolution times per
+8. Contact export for WhatsApp contacts, with custom fields.
+9. Conversation history export for the WhatsApp channel, per region.
+10. Canned responses.
+11. Group membership — which agent sits in which group.
+12. Role permission detail for the six roles that carry users.
+13. Reporting baseline — current volumes, first response and resolution times per
     region, so the new platform can be measured against the old one.
 
 ### Useful, not urgent
 
-13. Freddy AI bot flows, if any are live on WhatsApp.
-14. CSAT survey configuration and current scores.
+14. CSAT survey configuration. Confirmed off on all three WhatsApp numbers
+    (section 3.9), so there is no WhatsApp CSAT history to export.
 15. Ticket forms and ticket fields, if WhatsApp conversations convert to tickets.
 
 ## 6. Roadmap
@@ -356,6 +402,11 @@ decision on retiring or retaining Freshworks.
 4. What is the real ABC Cargo tracking reference format?
 5. Which system holds shipment status, and does it expose an API?
 6. Is the rule named `DRAFT-DO NOT ACTIVATE` supposed to be enabled?
+7. Is it intended that WhatsApp routes to a **sales** group in UAE and KSA but a
+   **support** group in the UK (section 3.9)? The new platform should reproduce the
+   intended destination, not the inherited one.
+8. Should CSAT be introduced on WhatsApp in the new platform? It is off on all three
+   numbers today, so this is a new capability rather than a migration item.
 
 ## 8. Status
 
