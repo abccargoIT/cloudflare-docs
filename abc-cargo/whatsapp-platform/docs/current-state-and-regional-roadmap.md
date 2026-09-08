@@ -41,6 +41,11 @@ A WhatsApp source of that form only exists once a number is connected as a chann
 own platform is therefore a migration of a running service, with customers actively
 messaging it, and not a greenfield connection.
 
+The Channels screen then confirmed the wider position: **all three regional numbers
+are connected and enabled**, not the UAE number alone. See section 3.8. Every region
+is therefore a live cutover, and the sequencing in section 6 is a sequence of three
+production migrations rather than one migration and two new builds.
+
 This raises the stakes of the cutover sequencing in section 14a of the
 implementation plan, and makes the pre-cutover export in section 5 mandatory rather
 than advisable.
@@ -184,6 +189,33 @@ reverse, so the smallest population is exposed to the first migration.
 - Channels configured in Freshdesk: Portals, Email, Widgets, Facebook, Phone,
   Freshchat, Feedback Form, WhatsApp
 
+### 3.8 WhatsApp channel — connected numbers
+
+Seen in **Admin Settings > Channels > WhatsApp**. All three are toggled enabled.
+
+| WhatsApp number | Topic name              | Region (inferred from dialling code) | State   |
+| --------------- | ----------------------- | ------------------------------------ | ------- |
+| +966548454866   | `WHATSAPP_+966548454866` | KSA                                  | Enabled |
+| +971800916      | `WHATSAPP_+971800916`    | UAE                                  | Enabled |
+| +447388800000   | `WHATSAPP_+447388800000` | UK                                   | Enabled |
+
+Two things follow from this screen.
+
+**The topic name is the routing key.** Freshchat exposes each connected number to
+the rules engine as a topic of the form `WHATSAPP_<number>`, which is exactly the
+value the UAE assignment rules in section 3.4 match on. Regional separation in
+Freshworks today is therefore achieved by matching the inbound number, and nothing
+else. The new platform reproduces this directly: the Meta phone number id on the
+inbound webhook selects the region, as modelled in `src/regions.ts`.
+
+**All three numbers must be migrated, each with its own cutover window.** There is no
+region that can be built fresh and proved before touching production traffic.
+
+Still to be captured from the **Configure** action on each row: the Meta phone number
+id, the business hours calendar attached to the number, the assignment behaviour, and
+the template and greeting settings. Quality rating and messaging limit are not shown
+here and must come from the Meta WhatsApp Manager.
+
 ## 4. The regional model for the new platform
 
 Each region is a separate operating unit. The platform must treat region as a
@@ -254,8 +286,10 @@ and takes the Freshchat API base as an explicit parameter rather than guessing i
 3. **All chat assignment rules** — full conditions and actions, in execution order,
    not only the three WhatsApp UAE rules.
 4. **`Business Classification` values** — the full permitted value list.
-5. **WhatsApp channel configuration** — which numbers are connected, their phone
-   number ids, and their current quality rating and messaging limit.
+5. **WhatsApp channel configuration** — the three connected numbers are now known
+   (section 3.8). Still outstanding: the Meta phone number id behind each, the
+   per-number Configure settings, and the current quality rating and messaging
+   limit from Meta WhatsApp Manager.
 6. **Message templates** — every approved template, its category, language and body.
 
 ### Needed before the first cutover
