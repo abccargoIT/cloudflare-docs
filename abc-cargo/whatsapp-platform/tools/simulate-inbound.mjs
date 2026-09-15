@@ -76,7 +76,8 @@ const SCENARIOS = [
 		from: "971555986003",
 		name: "Meera Raghavan",
 		text: "Hello, how much to send 40 kg from Sharjah to Chennai?",
-		expect: "A sales lead is created, even though this person has never written before.",
+		expect:
+			"A sales lead is created, even though this person has never written before.",
 	},
 	{
 		key: "claim",
@@ -203,7 +204,9 @@ async function runScenario(scenario) {
 	console.log(`\n${line()}`);
 	console.log(`SCENARIO: ${scenario.key}`);
 	console.log(line());
-	console.log(`Customer writes to ${regionById[scenario.region].displayNumber}:`);
+	console.log(
+		`Customer writes to ${regionById[scenario.region].displayNumber}:`,
+	);
 	console.log(`  "${scenario.text}"`);
 	console.log(`\nExpected: ${scenario.expect}`);
 
@@ -233,8 +236,12 @@ async function runScenario(scenario) {
 	}
 
 	console.log(`\nWhat the platform did:`);
-	console.log(`  Customer   ${view.customer.display_name} (${view.customer.region_id})`);
-	console.log(`  Leads      ${describe(view.leads, (l) => `${l.ref} · ${l.stage}`)}`);
+	console.log(
+		`  Customer   ${view.customer.display_name} (${view.customer.region_id})`,
+	);
+	console.log(
+		`  Leads      ${describe(view.leads, (l) => `${l.ref} · ${l.stage}`)}`,
+	);
 	console.log(
 		`  Tickets    ${describe(view.tickets, (t) => `${t.ref} · ${t.type} · due ${short(t.resolution_due_at)}`)}`,
 	);
@@ -243,7 +250,9 @@ async function runScenario(scenario) {
 	);
 	console.log(`\n  Timeline (newest first):`);
 	for (const a of view.activities.slice(0, 5)) {
-		console.log(`    ${short(a.occurred_at)}  ${a.kind.padEnd(10)} ${a.summary}`);
+		console.log(
+			`    ${short(a.occurred_at)}  ${a.kind.padEnd(10)} ${a.summary}`,
+		);
 	}
 }
 
@@ -285,7 +294,9 @@ async function main() {
 			? SCENARIOS.filter((s) => wanted.includes(s.key))
 			: SCENARIOS;
 		if (chosen.length === 0) {
-			fail(`No such scenario. Available: ${SCENARIOS.map((s) => s.key).join(", ")}`);
+			fail(
+				`No such scenario. Available: ${SCENARIOS.map((s) => s.key).join(", ")}`,
+			);
 		}
 		for (const scenario of chosen) await runScenario(scenario);
 	}
