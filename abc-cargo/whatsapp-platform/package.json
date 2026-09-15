@@ -13,6 +13,7 @@
 		"format": "prettier --write \"**/*.{ts,js,mjs,json,jsonc,md}\"",
 		"format:check": "prettier --check \"**/*.{ts,js,mjs,json,jsonc,md}\"",
 		"simulate": "node tools/simulate-inbound.mjs",
+		"build:tester": "node tools/build-tester.mjs",
 		"db:seed:local": "wrangler d1 execute abc-whatsapp --local --file=tools/seed-local.sql",
 		"db:migrate:local": "wrangler d1 migrations apply abc-whatsapp --local",
 		"db:migrate:remote": "wrangler d1 migrations apply abc-whatsapp --remote",

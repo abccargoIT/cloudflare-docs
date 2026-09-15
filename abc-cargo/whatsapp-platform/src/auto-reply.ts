@@ -21,17 +21,21 @@ export interface AutoReplyInput {
 }
 
 /**
- * Placeholder pattern: two to four letters followed by up to three groups of
- * digits, which may be separated by a dash or a space. Customers write the
- * same reference as ABC-471-88210, ABC 471 88210 or ABC47188210, and all
- * three have to reach the same shipment.
+ * Placeholder pattern: two to four letters, optionally a second dashed letter
+ * group, then up to three groups of digits separated by a dash or a space.
+ *
+ * It has to match every way a customer writes the same reference —
+ * ABC-471-88210, ABC 471 88210, ABC47188210 — and also the regional form the
+ * platform itself issues, ABC-UAE-088210. The second letter group is allowed
+ * only after a dash, so an ordinary phrase such as "ABC team 123456" does not
+ * fold the word into a reference.
  *
  * Replace with the exact ABC Cargo AWB / tracking format before go-live; the
  * total digit bounds below are the second half of the guard and should be
  * tightened at the same time.
  */
 export const DEFAULT_TRACKING_PATTERN =
-	/\b[A-Z]{2,4}(?:[- ]?\d{2,12}){1,3}\b/gi;
+	/\b[A-Z]{2,4}(?:-[A-Z]{2,4})?(?:[- ]?\d{2,12}){1,3}\b/gi;
 
 /** Total digits a candidate must carry to be treated as a reference. */
 export const TRACKING_MIN_DIGITS = 6;

@@ -28,6 +28,19 @@ test("extracts and normalises tracking references", () => {
 	assert.deepEqual(extractTrackingNumbers(undefined), []);
 });
 
+test("matches the reference formats the platform itself issues", () => {
+	// Booking references are minted as ABC-<region>-<sequence>; the extractor
+	// has to recognise the whole thing, not just the tail.
+	assert.deepEqual(extractTrackingNumbers("where is ABC-UAE-088210"), [
+		"ABCUAE088210",
+	]);
+	assert.deepEqual(extractTrackingNumbers("ABC-KSA-030488 please"), [
+		"ABCKSA030488",
+	]);
+	// Grouped digits, the way a customer often types an airway bill.
+	assert.deepEqual(extractTrackingNumbers("ABC-471-88210"), ["ABC47188210"]);
+});
+
 test("outside-hours reply mentions hours and the reference", () => {
 	const text = buildAutoReply({
 		region,

@@ -1,0 +1,1169 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>Engage Message Tester</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+		/>
+		<style>
+			:root {
+				color-scheme: light;
+				--paper: #f4f1ee;
+				--card: #ffffff;
+				--sunk: #ebe6e2;
+				--ink: #17120f;
+				--ink-2: #56504b;
+				--ink-3: #8a827c;
+				--rule: #ddd6d0;
+				--rule-soft: #eae4df;
+				--brand: #c1121f;
+				--brand-ink: #8c0d17;
+				--brand-wash: #fbeced;
+				--uae: #2a78d6;
+				--ksa: #eb6834;
+				--uk: #1baf7a;
+				--good: #0ca30c;
+				--warn: #fab219;
+				--critical: #d03b3b;
+				--ui: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+				--narrow: "Archivo Narrow", "Archivo", system-ui, sans-serif;
+				--mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+			}
+
+			@media (prefers-color-scheme: dark) {
+				:root:not([data-theme="light"]) {
+					color-scheme: dark;
+					--paper: #100e0d;
+					--card: #1b1917;
+					--sunk: #232020;
+					--ink: #f3efec;
+					--ink-2: #b6aea8;
+					--ink-3: #8a827c;
+					--rule: #302c29;
+					--rule-soft: #262322;
+					--brand: #ef4352;
+					--brand-ink: #ff6b76;
+					--brand-wash: #2c1417;
+					--uae: #3987e5;
+					--ksa: #d95926;
+					--uk: #199e70;
+				}
+			}
+
+			:root[data-theme="dark"] {
+				color-scheme: dark;
+				--paper: #100e0d;
+				--card: #1b1917;
+				--sunk: #232020;
+				--ink: #f3efec;
+				--ink-2: #b6aea8;
+				--ink-3: #8a827c;
+				--rule: #302c29;
+				--rule-soft: #262322;
+				--brand: #ef4352;
+				--brand-ink: #ff6b76;
+				--brand-wash: #2c1417;
+				--uae: #3987e5;
+				--ksa: #d95926;
+				--uk: #199e70;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				background: var(--paper);
+				color: var(--ink);
+				font-family: var(--ui);
+				font-size: 15px;
+				line-height: 1.5;
+				padding: 24px 20px 56px;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			.wrap {
+				max-width: 900px;
+				margin: 0 auto;
+				display: grid;
+				gap: 18px;
+			}
+
+			header h1 {
+				margin: 0 0 4px;
+				font-size: 25px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				text-wrap: balance;
+			}
+
+			header p {
+				margin: 0;
+				color: var(--ink-2);
+				max-width: 62ch;
+			}
+
+			.mark {
+				display: inline-flex;
+				align-items: center;
+				gap: 9px;
+				margin-bottom: 12px;
+			}
+
+			.mark i {
+				width: 30px;
+				height: 30px;
+				border-radius: 7px;
+				background: var(--brand);
+				color: #fff;
+				display: grid;
+				place-items: center;
+				font-family: var(--narrow);
+				font-weight: 700;
+				font-size: 12px;
+				font-style: normal;
+			}
+
+			.mark b {
+				font-size: 15px;
+			}
+
+			.mark span {
+				color: var(--ink-3);
+				font-weight: 400;
+				font-size: 13px;
+			}
+
+			.card {
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-radius: 11px;
+				padding: 16px 17px;
+			}
+
+			.eyebrow {
+				font-family: var(--narrow);
+				font-weight: 600;
+				font-size: 11px;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+				display: block;
+				margin-bottom: 8px;
+			}
+
+			textarea {
+				width: 100%;
+				min-height: 84px;
+				padding: 11px 13px;
+				border: 1px solid var(--rule);
+				border-radius: 8px;
+				background: var(--paper);
+				color: var(--ink);
+				font: inherit;
+				resize: vertical;
+			}
+
+			textarea:focus-visible,
+			button:focus-visible,
+			select:focus-visible {
+				outline: 2px solid var(--brand);
+				outline-offset: 2px;
+			}
+
+			.row {
+				display: flex;
+				gap: 9px;
+				align-items: center;
+				flex-wrap: wrap;
+				margin-top: 11px;
+			}
+
+			label.inline {
+				font-size: 13px;
+				color: var(--ink-2);
+			}
+
+			select {
+				padding: 7px 10px;
+				border: 1px solid var(--rule);
+				border-radius: 7px;
+				background: var(--card);
+				color: var(--ink);
+				font: inherit;
+				font-size: 13px;
+			}
+
+			button {
+				font: inherit;
+				cursor: pointer;
+				border-radius: 7px;
+				border: 1px solid var(--rule);
+				background: var(--card);
+				color: var(--ink);
+				padding: 8px 13px;
+				font-size: 13.5px;
+			}
+
+			button:hover {
+				border-color: var(--ink-3);
+			}
+
+			button.primary {
+				background: var(--brand);
+				border-color: var(--brand);
+				color: #fff;
+				font-weight: 600;
+			}
+
+			button.primary:hover {
+				background: var(--brand-ink);
+				border-color: var(--brand-ink);
+			}
+
+			.examples {
+				display: flex;
+				gap: 7px;
+				flex-wrap: wrap;
+			}
+
+			.examples button {
+				font-size: 12.5px;
+				padding: 5px 10px;
+				color: var(--ink-2);
+			}
+
+			.verdict {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				flex-wrap: wrap;
+				padding-bottom: 13px;
+				border-bottom: 1px solid var(--rule-soft);
+				margin-bottom: 13px;
+			}
+
+			.verdict .big {
+				font-size: 22px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+			}
+
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				padding: 3px 10px;
+				border-radius: 999px;
+				font-family: var(--narrow);
+				font-weight: 600;
+				font-size: 11.5px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				background: var(--sunk);
+				color: var(--ink-2);
+			}
+
+			.pill.on {
+				background: var(--brand);
+				color: #fff;
+			}
+
+			.pill.none {
+				background: transparent;
+				border: 1px dashed var(--rule);
+				color: var(--ink-3);
+			}
+
+			dl {
+				margin: 0;
+				display: grid;
+				grid-template-columns: 148px 1fr;
+				gap: 8px 14px;
+				font-size: 14px;
+			}
+
+			dt {
+				font-family: var(--narrow);
+				font-size: 11px;
+				font-weight: 600;
+				letter-spacing: 0.07em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+				padding-top: 2px;
+			}
+
+			dd {
+				margin: 0;
+			}
+
+			.mono {
+				font-family: var(--mono);
+				font-variant-numeric: tabular-nums;
+				font-size: 13px;
+			}
+
+			.muted {
+				color: var(--ink-2);
+			}
+
+			.bar {
+				height: 6px;
+				border-radius: 3px;
+				background: var(--sunk);
+				overflow: hidden;
+				max-width: 220px;
+			}
+
+			.bar i {
+				display: block;
+				height: 100%;
+				border-radius: 3px;
+				background: var(--brand);
+			}
+
+			.reply {
+				background: var(--sunk);
+				border-radius: 9px;
+				padding: 11px 13px;
+				font-size: 14px;
+				white-space: pre-wrap;
+			}
+
+			.note {
+				font-size: 13px;
+				color: var(--ink-2);
+				border-left: 3px solid var(--warn);
+				padding: 9px 12px;
+				background: var(--card);
+				border-radius: 0 8px 8px 0;
+			}
+
+			.note strong {
+				color: var(--ink);
+			}
+
+			footer {
+				font-size: 12.5px;
+				color: var(--ink-3);
+				text-align: center;
+			}
+
+			@media (max-width: 560px) {
+				dl {
+					grid-template-columns: 1fr;
+					gap: 3px 0;
+				}
+				dt {
+					padding-top: 8px;
+				}
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="wrap">
+			<header>
+				<div class="mark"><i>ABC</i><b>Engage</b> <span>Message Tester</span></div>
+				<h1>Type what a customer might write</h1>
+				<p>
+					This page runs the real decision rules from the platform — the same code
+					that will handle live messages. Nothing is sent anywhere. Nothing here
+					reaches WhatsApp, Meta, Freshworks or a customer. It works with no
+					internet connection.
+				</p>
+			</header>
+
+			<div class="card">
+				<span class="eyebrow">The customer's message</span>
+				<textarea id="msg" spellcheck="false">Hello, one carton of ABC-UAE-088210 arrived open and two shirts are missing</textarea>
+				<div class="row">
+					<label class="inline" for="region">Sent to</label>
+					<select id="region">
+						<option value="uae">UAE · +971800916</option>
+						<option value="ksa">KSA · +966548454866</option>
+						<option value="uk">UK · +447388800000</option>
+					</select>
+					<label class="inline" for="when">Arriving</label>
+					<select id="when">
+						<option value="now">Right now</option>
+						<option value="night">At 02:00, nobody working</option>
+						<option value="friday">Friday evening, office closed</option>
+					</select>
+					<button class="primary" id="go" type="button">See the decision</button>
+				</div>
+				<div class="row examples" id="examples"></div>
+			</div>
+
+			<div class="card" id="out"></div>
+
+			<div class="note">
+				<strong>What this proves and what it does not.</strong> It proves the
+				platform reads a message correctly and decides the right thing, using the
+				real rules and each region's own working hours. It does not prove delivery
+				from WhatsApp works, and the service targets shown are placeholders until
+				ABC Cargo's real policy is exported from Freshworks.
+			</div>
+
+			<footer>
+				Generated from the platform source. Regenerate with
+				<span class="mono">npm run build:tester</span>.
+			</footer>
+		</div>
+
+		<script type="module">
+			/* ==================================================================
+			   The block below is the platform's own decision code, compiled
+			   straight from the TypeScript source. It is not a re-implementation
+			   and cannot drift: regenerating this page rebuilds it from source.
+			   ================================================================== */
+
+			/*
+ * DO NOT EDIT THIS BLOCK.
+ * Compiled from the platform source by tools/build-tester.mjs:
+ *   src/business-hours.ts
+ *   src/auto-reply.ts
+ *   src/crm/types.ts
+ *   src/crm/intent.ts
+ *   src/crm/sla.ts
+ * Rebuild with: npm run build:tester
+ */
+
+/* ---------- src/business-hours.ts ---------- */
+const WEEKDAYS = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+};
+/** Local weekday and minutes-since-midnight for `now` in the given timezone. */
+function localClock(now, timezone) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: timezone,
+        weekday: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+    }).formatToParts(now);
+    const get = (type) => parts.find((p) => p.type === type)?.value ?? "";
+    const weekday = WEEKDAYS[get("weekday")] ?? 0;
+    const minutes = Number(get("hour")) * 60 + Number(get("minute"));
+    return { weekday, minutes };
+}
+function toMinutes(hhmm) {
+    const [h, m] = hhmm.split(":").map(Number);
+    return (h ?? 0) * 60 + (m ?? 0);
+}
+function isWithinBusinessHours(region, now = new Date()) {
+    const { weekday, minutes } = localClock(now, region.timezone);
+    const { days, start, end } = region.businessHours;
+    if (!days.includes(weekday))
+        return false;
+    return minutes >= toMinutes(start) && minutes < toMinutes(end);
+}
+
+/* ---------- src/auto-reply.ts ---------- */
+/**
+ * Placeholder pattern: two to four letters, optionally a second dashed letter
+ * group, then up to three groups of digits separated by a dash or a space.
+ *
+ * It has to match every way a customer writes the same reference —
+ * ABC-471-88210, ABC 471 88210, ABC47188210 — and also the regional form the
+ * platform itself issues, ABC-UAE-088210. The second letter group is allowed
+ * only after a dash, so an ordinary phrase such as "ABC team 123456" does not
+ * fold the word into a reference.
+ *
+ * Replace with the exact ABC Cargo AWB / tracking format before go-live; the
+ * total digit bounds below are the second half of the guard and should be
+ * tightened at the same time.
+ */
+const DEFAULT_TRACKING_PATTERN = /\b[A-Z]{2,4}(?:-[A-Z]{2,4})?(?:[- ]?\d{2,12}){1,3}\b/gi;
+/** Total digits a candidate must carry to be treated as a reference. */
+const TRACKING_MIN_DIGITS = 6;
+const TRACKING_MAX_DIGITS = 12;
+function extractTrackingNumbers(text, pattern = DEFAULT_TRACKING_PATTERN) {
+    if (!text)
+        return [];
+    const re = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
+    const found = new Set();
+    for (const match of text.matchAll(re)) {
+        const normalised = match[0].replace(/[- ]/g, "").toUpperCase();
+        const digits = normalised.replace(/\D/g, "").length;
+        // The pattern alone would accept "here 12"; the digit count is what
+        // separates a reference from an ordinary word next to a number.
+        if (digits < TRACKING_MIN_DIGITS || digits > TRACKING_MAX_DIGITS)
+            continue;
+        found.add(normalised);
+    }
+    return [...found];
+}
+function buildAutoReply(input) {
+    const greeting = input.contactName
+        ? `Hello ${input.contactName.trim()},`
+        : "Hello,";
+    const tracking = extractTrackingNumbers(input.inboundText, input.trackingPattern);
+    const lines = [greeting, ""];
+    lines.push(`Thank you for contacting ABC Cargo (${input.region.label}). This is an automated reply.`);
+    if (tracking.length > 0) {
+        lines.push("", `We have noted your shipment reference${tracking.length > 1 ? "s" : ""}: ${tracking.join(", ")}.`);
+        if (input.trackingUrl) {
+            lines.push(`You can check the latest status at ${input.trackingUrl}`);
+        }
+    }
+    if (input.reason === "outside-hours") {
+        const { days, start, end } = input.region.businessHours;
+        lines.push("", `Our ${input.region.label} customer service team is currently offline. Working hours are ${start} to ${end} (${input.region.timezone}) on ${describeDays(days)}.`, "A team member will reply as soon as we are back online.");
+    }
+    else {
+        lines.push("", "All our agents are currently assisting other customers. Your message has been queued and a team member will reply shortly.");
+    }
+    lines.push("", "Please include your shipment reference and a short description of your request so we can help you faster.");
+    return lines.join("\n");
+}
+const DAY_NAMES = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+];
+function describeDays(days) {
+    const sorted = [...new Set(days)].sort((a, b) => a - b);
+    if (sorted.length === 7)
+        return "all days";
+    if (sorted.length === 0)
+        return "no days";
+    const names = sorted.map((d) => DAY_NAMES[d] ?? String(d));
+    if (names.length === 1)
+        return names[0] ?? "";
+    return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}
+
+/* ---------- src/crm/types.ts ---------- */
+/**
+ * Domain types for the commercial and service side of ABC Cargo Engage:
+ * leads, quotations, bookings, tickets and calls, plus the activity stream
+ * that gives a customer one history across every channel and record.
+ */
+const LEAD_STAGES = [
+    "new",
+    "qualified",
+    "quoted",
+    "negotiating",
+    "won",
+    "lost",
+];
+const QUOTATION_STATUSES = [
+    "draft",
+    "sent",
+    "negotiating",
+    "accepted",
+    "lost",
+    "expired",
+];
+/**
+ * Shipment milestones in the order they occur. The index is the progress,
+ * so a milestone may never move backwards without an explicit correction.
+ */
+const MILESTONES = [
+    "booked",
+    "collected",
+    "departed",
+    "in_transit",
+    "arrived",
+    "cleared",
+    "delivered",
+];
+const TICKET_TYPES = [
+    "claim",
+    "delay",
+    "billing",
+    "documentation",
+    "delivery",
+    "general",
+];
+const TICKET_STATUSES = [
+    "open",
+    "pending",
+    "resolved",
+    "closed",
+];
+const TICKET_PRIORITIES = ["low", "normal", "high", "urgent"];
+const TRANSPORT_MODES = ["air", "sea_lcl", "sea_fcl", "road"];
+const CALL_DIRECTIONS = ["in", "out"];
+/** Every record kind that can appear on a customer's timeline. */
+const ACTIVITY_KINDS = [
+    "whatsapp",
+    "handover",
+    "call",
+    "lead",
+    "quotation",
+    "booking",
+    "milestone",
+    "ticket",
+    "note",
+];
+
+/* ---------- src/crm/intent.ts ---------- */
+/**
+ * Intent recognition for inbound customer messages.
+ *
+ * Rule based on purpose. The bot's behaviour has to be explainable to a
+ * supervisor and reproducible in a test, and a misrouted claim costs more
+ * than a missed classification. A model-assisted pass can be added in front
+ * of this without changing the contract: it returns the same Intent, and
+ * this remains the fallback when the model is unavailable or unsure.
+ *
+ * Arabic keywords are included because the KSA and UAE numbers receive a
+ * large share of Arabic messages.
+ */
+const INTENTS = [
+    "track",
+    "rate",
+    "claim",
+    "booking_change",
+    "billing",
+    "documentation",
+    "agent",
+    "greeting",
+    "unknown",
+];
+/**
+ * Claims sit at the top: routing a damage claim to a sales queue is the
+ * most expensive mistake this classifier can make.
+ */
+const RULES = [
+    {
+        intent: "claim",
+        weight: 100,
+        keywords: [
+            "claim",
+            "damaged",
+            "damage",
+            "broken",
+            "missing",
+            "lost item",
+            "stolen",
+            "complaint",
+            "شكوى",
+            "تالف",
+            "مفقود",
+            "مكسور",
+        ],
+    },
+    {
+        intent: "billing",
+        weight: 80,
+        keywords: [
+            "invoice",
+            "bill",
+            "overcharged",
+            "refund",
+            "payment",
+            "duty",
+            "customs charge",
+            "فاتورة",
+            "دفع",
+            "رسوم",
+        ],
+    },
+    {
+        intent: "booking_change",
+        weight: 70,
+        keywords: [
+            "change the address",
+            "change address",
+            "reschedule",
+            "cancel my booking",
+            "cancel booking",
+            "add a box",
+            "add one more",
+            "amend",
+            "تعديل",
+            "إلغاء",
+        ],
+    },
+    {
+        intent: "documentation",
+        weight: 60,
+        keywords: [
+            "invoice copy",
+            "commercial invoice",
+            "packing list",
+            "certificate",
+            "paperwork",
+            "documents",
+            "awb copy",
+            "مستندات",
+            "شهادة",
+        ],
+    },
+    {
+        intent: "rate",
+        weight: 50,
+        keywords: [
+            "rate",
+            "quote",
+            "quotation",
+            "price",
+            "how much",
+            "cost to send",
+            "charges to",
+            "سعر",
+            "عرض سعر",
+            "كم",
+            "تكلفة",
+        ],
+    },
+    {
+        intent: "track",
+        weight: 40,
+        keywords: [
+            "where is my",
+            "track",
+            "tracking",
+            "status",
+            "delivered",
+            "shipment update",
+            "any update",
+            "تتبع",
+            "اين شحنتي",
+            "أين شحنتي",
+            "حالة",
+        ],
+    },
+    {
+        intent: "agent",
+        weight: 30,
+        keywords: [
+            "talk to an agent",
+            "speak to someone",
+            "speak to a person",
+            "human",
+            "customer service",
+            "موظف",
+            "خدمة العملاء",
+        ],
+    },
+    {
+        intent: "greeting",
+        weight: 10,
+        keywords: [
+            "hi",
+            "hello",
+            "hey",
+            "good morning",
+            "good evening",
+            "مرحبا",
+            "السلام عليكم",
+        ],
+    },
+];
+/** Greetings only count when they are effectively the whole message. */
+const GREETING_MAX_WORDS = 3;
+function classifyIntent(text, trackingPattern = DEFAULT_TRACKING_PATTERN) {
+    const raw = (text ?? "").trim();
+    const references = extractReferences(raw, trackingPattern);
+    if (raw === "") {
+        return { intent: "unknown", confidence: 0, references, matched: null };
+    }
+    const haystack = raw.toLowerCase();
+    const words = haystack.split(/\s+/).filter(Boolean).length;
+    let best = null;
+    for (const rule of RULES) {
+        if (rule.intent === "greeting" && words > GREETING_MAX_WORDS)
+            continue;
+        for (const keyword of rule.keywords) {
+            if (!containsKeyword(haystack, keyword))
+                continue;
+            if (!best || rule.weight > best.rule.weight) {
+                best = { rule, keyword };
+            }
+            break;
+        }
+    }
+    // A bare reference with no other signal is a tracking request.
+    if (!best && references.length > 0) {
+        return { intent: "track", confidence: 0.75, references, matched: null };
+    }
+    if (!best) {
+        return { intent: "unknown", confidence: 0, references, matched: null };
+    }
+    let confidence = best.rule.weight / 100;
+    if (best.rule.intent === "track" && references.length > 0) {
+        confidence = Math.min(1, confidence + 0.4);
+    }
+    return {
+        intent: best.rule.intent,
+        confidence: Number(confidence.toFixed(2)),
+        references,
+        matched: best.keyword,
+    };
+}
+/**
+ * Word-boundary match for Latin keywords so "hi" does not fire inside
+ * "shipping". Arabic and multi-word phrases fall back to a substring test,
+ * which is correct for a script without the same boundary semantics.
+ */
+function containsKeyword(haystack, keyword) {
+    if (!/^[a-z0-9 ']+$/.test(keyword))
+        return haystack.includes(keyword);
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\/*__ENGINE__*/");
+    return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i").test(haystack);
+}
+/**
+ * Shipment references in a message. Delegates to the single extractor in
+ * auto-reply so the bot and the classifier can never disagree about what
+ * counts as a reference.
+ */
+function extractReferences(text, pattern = DEFAULT_TRACKING_PATTERN) {
+    return extractTrackingNumbers(text, pattern);
+}
+function outcomeFor(intent) {
+    switch (intent) {
+        case "rate":
+            return "lead";
+        case "claim":
+        case "billing":
+        case "documentation":
+        case "booking_change":
+            return "ticket";
+        case "track":
+        case "agent":
+        case "greeting":
+        case "unknown":
+            return null;
+    }
+}
+/** Ticket type for an intent that opens a ticket. */
+function ticketTypeFor(intent) {
+    switch (intent) {
+        case "claim":
+            return "claim";
+        case "billing":
+            return "billing";
+        case "documentation":
+            return "documentation";
+        case "booking_change":
+            return "delivery";
+        default:
+            return "general";
+    }
+}
+
+/* ---------- src/crm/sla.ts ---------- */
+/**
+ * Service targets measured in business minutes.
+ *
+ * A target counted in wall-clock time is unfair to a region and misleading
+ * to management: a ticket raised at 17:55 in the UK is not late at 09:05 the
+ * next morning. Every due date here is computed by walking the region's own
+ * business calendar, so the clock only runs while the team is open.
+ */
+
+const MINUTE = 60_000;
+const DAY_MINUTES = 1440;
+/** Guard against an unreachable target when a calendar has no working days. */
+const MAX_DAYS_SCANNED = 400;
+/**
+ * Defaults pending the SLA policy export from Freshworks. They are written
+ * here rather than scattered through the code so that replacing them with
+ * ABC Cargo's real policy is a single edit.
+ */
+const DEFAULT_TICKET_TARGETS = {
+    claim: { firstResponseMinutes: 30, resolutionMinutes: 8 * 60 },
+    delay: { firstResponseMinutes: 30, resolutionMinutes: 8 * 60 },
+    billing: { firstResponseMinutes: 120, resolutionMinutes: 24 * 60 },
+    documentation: { firstResponseMinutes: 120, resolutionMinutes: 24 * 60 },
+    delivery: { firstResponseMinutes: 60, resolutionMinutes: 12 * 60 },
+    general: { firstResponseMinutes: 120, resolutionMinutes: 24 * 60 },
+};
+/** Priority shortens the clock; it never lengthens it. */
+const PRIORITY_FACTOR = {
+    urgent: 0.25,
+    high: 0.5,
+    normal: 1,
+    low: 1,
+};
+/** First response target for a conversation, before any ticket exists. */
+const CONVERSATION_FIRST_RESPONSE_MINUTES = 5;
+function targetFor(type, priority, targets = DEFAULT_TICKET_TARGETS) {
+    const base = targets[type];
+    const factor = PRIORITY_FACTOR[priority];
+    return {
+        firstResponseMinutes: Math.max(5, Math.round(base.firstResponseMinutes * factor)),
+        resolutionMinutes: Math.max(15, Math.round(base.resolutionMinutes * factor)),
+    };
+}
+/**
+ * Adds business minutes to an instant, skipping closed hours and closed
+ * days in the region's own timezone.
+ *
+ * The walk is minute-accurate at the boundaries and day-accurate in between,
+ * so a 24-hour target on a 9-hour calendar lands on the correct day rather
+ * than the same evening.
+ */
+function addBusinessMinutes(region, from, minutes) {
+    if (!Number.isFinite(minutes) || minutes < 0) {
+        throw new Error("minutes must be a non-negative number");
+    }
+    const { days, start, end } = region.businessHours;
+    if (days.length === 0) {
+        throw new Error(`region ${region.id} has no working days; cannot compute a target`);
+    }
+    const openAt = toMinutes(start);
+    const closeAt = toMinutes(end);
+    if (closeAt <= openAt) {
+        throw new Error(`region ${region.id} business hours must end after they start`);
+    }
+    const dayCapacity = closeAt - openAt;
+    let cursor = new Date(from.getTime());
+    let remaining = minutes;
+    for (let guard = 0; guard <= MAX_DAYS_SCANNED; guard++) {
+        const { weekday, minutes: nowMinutes } = localClock(cursor, region.timezone);
+        if (!days.includes(weekday)) {
+            cursor = advanceToNextOpen(cursor, nowMinutes, openAt);
+            continue;
+        }
+        if (nowMinutes < openAt) {
+            // Before opening: jump forward to the opening bell, same day.
+            cursor = new Date(cursor.getTime() + (openAt - nowMinutes) * MINUTE);
+            continue;
+        }
+        if (nowMinutes >= closeAt) {
+            cursor = advanceToNextOpen(cursor, nowMinutes, openAt);
+            continue;
+        }
+        const availableToday = closeAt - nowMinutes;
+        if (remaining <= availableToday) {
+            return new Date(cursor.getTime() + remaining * MINUTE);
+        }
+        remaining -= availableToday;
+        // Move to closing time, then on to the next opening.
+        cursor = advanceToNextOpen(cursor, closeAt, openAt);
+        if (remaining > dayCapacity * MAX_DAYS_SCANNED)
+            break;
+    }
+    throw new Error(`could not place an SLA target for region ${region.id} within ${MAX_DAYS_SCANNED} days`);
+}
+/**
+ * Moves the cursor to the opening time of the following calendar day.
+ * `currentMinutes` is the local minute-of-day the cursor is sitting on.
+ */
+function advanceToNextOpen(cursor, currentMinutes, openAt) {
+    const toMidnight = DAY_MINUTES - currentMinutes;
+    return new Date(cursor.getTime() + (toMidnight + openAt) * MINUTE);
+}
+function ticketDueDates(region, type, priority, from = new Date(), targets) {
+    const target = targetFor(type, priority, targets);
+    return {
+        firstResponseDueAt: addBusinessMinutes(region, from, target.firstResponseMinutes).toISOString(),
+        resolutionDueAt: addBusinessMinutes(region, from, target.resolutionMinutes).toISOString(),
+    };
+}
+/** Milliseconds remaining against a due date; negative once it has passed. */
+function remainingMs(dueAt, now = new Date()) {
+    return Date.parse(dueAt) - now.getTime();
+}
+function isBreached(dueAt, now = new Date()) {
+    return remainingMs(dueAt, now) < 0;
+}
+
+
+			/* ------------------------------------------------ page wiring only */
+
+			const REGIONS = {
+				uae: {
+					id: "uae",
+					label: "UAE",
+					phoneNumberId: "1",
+					displayNumber: "+971800916",
+					timezone: "Asia/Dubai",
+					language: "en",
+					businessHours: { days: [0, 1, 2, 3, 4], start: "08:00", end: "18:00" },
+					colour: "var(--uae)",
+				},
+				ksa: {
+					id: "ksa",
+					label: "KSA",
+					phoneNumberId: "2",
+					displayNumber: "+966548454866",
+					timezone: "Asia/Riyadh",
+					language: "ar",
+					businessHours: { days: [0, 1, 2, 3, 4], start: "09:00", end: "18:00" },
+					colour: "var(--ksa)",
+				},
+				uk: {
+					id: "uk",
+					label: "UK",
+					phoneNumberId: "3",
+					displayNumber: "+447388800000",
+					timezone: "Europe/London",
+					language: "en",
+					businessHours: { days: [1, 2, 3, 4, 5], start: "09:00", end: "17:00" },
+					colour: "var(--uk)",
+				},
+			};
+
+			const EXAMPLES = [
+				"How much to send 40 kg to Chennai?",
+				"Where is my shipment ABC-UAE-088210?",
+				"My parcel arrived broken",
+				"Please send me the invoice copy",
+				"Can I change the delivery address?",
+				"أحتاج سعر شحن إلى مانيلا",
+				"الشحنة تالفة",
+				"hi",
+			];
+
+			const INTENT_LABEL = {
+				rate: "Asking for a price",
+				track: "Asking where a shipment is",
+				claim: "Complaining about damage or loss",
+				billing: "Querying an invoice or charge",
+				documentation: "Asking for paperwork",
+				booking_change: "Changing a booking",
+				agent: "Asking for a person",
+				greeting: "Just saying hello",
+				unknown: "Could not tell",
+			};
+
+			const TYPE_LABEL = {
+				claim: "Claim",
+				billing: "Billing",
+				documentation: "Documentation",
+				delivery: "Delivery",
+				general: "General",
+			};
+
+			const $ = (id) => document.getElementById(id);
+			const esc = (s) =>
+				String(s).replace(
+					/[&<>"]/g,
+					(c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+				);
+
+			/** Builds the "arriving" instant so closed-hours behaviour can be shown. */
+			function chosenTime(mode) {
+				const d = new Date();
+				if (mode === "night") {
+					d.setHours(2, 0, 0, 0);
+					return d;
+				}
+				if (mode === "friday") {
+					// Next Friday at 19:00 local.
+					const day = d.getDay();
+					d.setDate(d.getDate() + ((5 - day + 7) % 7));
+					d.setHours(19, 0, 0, 0);
+					return d;
+				}
+				return d;
+			}
+
+			function fmt(iso, timezone) {
+				try {
+					return new Intl.DateTimeFormat("en-GB", {
+						timeZone: timezone,
+						weekday: "short",
+						day: "2-digit",
+						month: "short",
+						hour: "2-digit",
+						minute: "2-digit",
+						hourCycle: "h23",
+					}).format(new Date(iso));
+				} catch {
+					return iso;
+				}
+			}
+
+			function run() {
+				const text = $("msg").value;
+				const region = REGIONS[$("region").value];
+				const at = chosenTime($("when").value);
+
+				const result = classifyIntent(text);
+				const outcome = outcomeFor(result.intent);
+				const open = isWithinBusinessHours(region, at);
+
+				let creates = `<span class="pill none">Nothing created</span>`;
+				let detail = "";
+
+				if (outcome === "lead") {
+					creates = `<span class="pill on">Sales lead created</span>`;
+					detail =
+						"<dt>Why</dt><dd>A price enquiry is captured as a lead straight away, so it is never lost because nobody was free.</dd>";
+				} else if (outcome === "ticket") {
+					const type = ticketTypeFor(result.intent);
+					const priority = type === "claim" ? "high" : "normal";
+					const due = ticketDueDates(region, type, priority, at);
+					creates = `<span class="pill on">${esc(TYPE_LABEL[type])} ticket created</span>`;
+					detail =
+						`<dt>Priority</dt><dd>${esc(priority)}</dd>` +
+						`<dt>Reply due by</dt><dd class="mono">${esc(fmt(due.firstResponseDueAt, region.timezone))}</dd>` +
+						`<dt>Resolve by</dt><dd class="mono">${esc(fmt(due.resolutionDueAt, region.timezone))}</dd>` +
+						`<dt>Why those times</dt><dd>Counted only during ${esc(region.label)} working hours (${esc(region.businessHours.start)}–${esc(region.businessHours.end)}, ${esc(region.timezone)}). The clock stops when the office closes.</dd>`;
+				} else if (result.intent === "track" && result.references.length) {
+					detail =
+						"<dt>Why nothing</dt><dd>This is a tracking question. The message is filed against the shipment; no ticket is raised. Not creating work is as important as creating it.</dd>";
+				}
+
+				const reply = open
+					? ""
+					: buildAutoReply({
+							region,
+							reason: "outside-hours",
+							inboundText: text,
+						});
+
+				const pct = Math.round(result.confidence * 100);
+
+				$("out").innerHTML =
+					`<div class="verdict">` +
+					`<span class="big">${esc(INTENT_LABEL[result.intent] ?? result.intent)}</span>` +
+					creates +
+					`</div>` +
+					`<dl>` +
+					`<dt>Confidence</dt><dd><div class="bar"><i style="width:${pct}%"></i></div><span class="muted mono">${pct}%</span></dd>` +
+					`<dt>Decided by</dt><dd>${result.matched ? `the words <span class="mono">"${esc(result.matched)}"</span>` : '<span class="muted">a shipment reference in the message</span>'}</dd>` +
+					`<dt>Shipment refs</dt><dd class="mono">${result.references.length ? esc(result.references.join(", ")) : '<span class="muted" style="font-family:var(--ui)">none found</span>'}</dd>` +
+					`<dt>Office</dt><dd>${open ? `<span style="color:var(--good)">Open</span>` : `<span style="color:var(--warn)">Closed</span>`} in ${esc(region.label)} at that moment</dd>` +
+					detail +
+					`</dl>` +
+					(reply
+						? `<div style="margin-top:14px"><span class="eyebrow">Automatic reply the customer receives</span><div class="reply">${esc(reply)}</div></div>`
+						: "");
+			}
+
+			$("examples").innerHTML = EXAMPLES.map(
+				(e) => `<button type="button" data-ex="${esc(e)}">${esc(e)}</button>`,
+			).join("");
+
+			$("examples").addEventListener("click", (event) => {
+				const example = event.target.closest("button");
+				if (!example) return;
+				$("msg").value = example.dataset.ex;
+				run();
+			});
+
+			$("go").addEventListener("click", run);
+			$("msg").addEventListener("keydown", (event) => {
+				if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) run();
+			});
+			$("region").addEventListener("change", run);
+			$("when").addEventListener("change", run);
+
+			run();
+		</script>
+	</body>
+</html>
