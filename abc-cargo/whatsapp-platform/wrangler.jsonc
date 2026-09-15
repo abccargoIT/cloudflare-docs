@@ -1,0 +1,65 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "abc-cargo-whatsapp-platform",
+	"main": "src/index.ts",
+	"compatibility_date": "2026-08-01",
+	"compatibility_flags": ["nodejs_compat"],
+	// Keep the workers.dev preview URL disabled. Attach a custom hostname
+	// (for example wa-api.<company-domain>) via a route before go-live so
+	// the Meta webhook callback URL is stable.
+	"workers_dev": false,
+	"observability": {
+		"enabled": true,
+	},
+	"vars": {
+		// Meta Graph API version. Confirm the current supported version in
+		// the Meta for Developers changelog before deploying.
+		"GRAPH_API_VERSION": "v21.0",
+		// One entry per WhatsApp phone number attached to the ABC Cargo WABA.
+		// phoneNumberId is the numeric "Phone number ID" shown in
+		// Meta Business Suite > WhatsApp Manager > Phone numbers.
+		// It is an identifier, not a secret. Replace every REPLACE_ME value.
+		"REGION_NUMBERS": "[{\"id\":\"uae\",\"label\":\"UAE\",\"phoneNumberId\":\"REPLACE_ME\",\"displayNumber\":\"+971XXXXXXXXX\",\"timezone\":\"Asia/Dubai\",\"language\":\"en\",\"businessHours\":{\"days\":[1,2,3,4,5,6],\"start\":\"09:00\",\"end\":\"18:00\"}},{\"id\":\"region-2\",\"label\":\"Region 2\",\"phoneNumberId\":\"REPLACE_ME\",\"displayNumber\":\"+XXXXXXXXXXX\",\"timezone\":\"Asia/Dubai\",\"language\":\"en\",\"businessHours\":{\"days\":[1,2,3,4,5,6],\"start\":\"09:00\",\"end\":\"18:00\"}},{\"id\":\"region-3\",\"label\":\"Region 3\",\"phoneNumberId\":\"REPLACE_ME\",\"displayNumber\":\"+XXXXXXXXXXX\",\"timezone\":\"Asia/Dubai\",\"language\":\"en\",\"businessHours\":{\"days\":[1,2,3,4,5,6],\"start\":\"09:00\",\"end\":\"18:00\"}}]",
+		// Hours after an automated reply before another one may be sent to
+		// the same customer while no agent is available.
+		"AUTO_REPLY_COOLDOWN_HOURS": "12",
+		// Public tracking page shown in automated replies. Optional.
+		"TRACKING_URL": "",
+	},
+	// Secrets are NOT stored here. Set them with `wrangler secret put <NAME>`:
+	//   WHATSAPP_ACCESS_TOKEN  - permanent System User token (whatsapp_business_messaging,
+	//                            whatsapp_business_management)
+	//   WHATSAPP_APP_SECRET    - Meta App secret, used to verify X-Hub-Signature-256
+	//   WHATSAPP_VERIFY_TOKEN  - random string entered in the Meta webhook configuration
+	//   INTERNAL_API_KEY       - bearer key for the /api/* agent endpoints
+	"durable_objects": {
+		"bindings": [{ "name": "CONVERSATION", "class_name": "Conversation" }],
+	},
+	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["Conversation"] }],
+	"queues": {
+		"producers": [
+			{ "binding": "WEBHOOK_QUEUE", "queue": "abc-whatsapp-webhooks" },
+		],
+		"consumers": [
+			{
+				"queue": "abc-whatsapp-webhooks",
+				"max_batch_size": 10,
+				"max_batch_timeout": 2,
+				"max_retries": 5,
+				"dead_letter_queue": "abc-whatsapp-webhooks-dlq",
+			},
+		],
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "abc-whatsapp",
+			// Fill in after `wrangler d1 create abc-whatsapp`.
+			"database_id": "REPLACE_AFTER_D1_CREATE",
+			"migrations_dir": "src/db/migrations",
+		},
+	],
+	"r2_buckets": [{ "binding": "MEDIA", "bucket_name": "abc-whatsapp-media" }],
+	// Optional: enable Workers AI for intent classification and reply drafting.
+	// "ai": { "binding": "AI" },
+}

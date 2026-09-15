@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<title>Engage Message Tester</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+		/>
+		<style>
+			:root {
+				color-scheme: light;
+				--paper: #f4f1ee;
+				--card: #ffffff;
+				--sunk: #ebe6e2;
+				--ink: #17120f;
+				--ink-2: #56504b;
+				--ink-3: #8a827c;
+				--rule: #ddd6d0;
+				--rule-soft: #eae4df;
+				--brand: #c1121f;
+				--brand-ink: #8c0d17;
+				--brand-wash: #fbeced;
+				--uae: #2a78d6;
+				--ksa: #eb6834;
+				--uk: #1baf7a;
+				--good: #0ca30c;
+				--warn: #fab219;
+				--critical: #d03b3b;
+				--ui: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+				--narrow: "Archivo Narrow", "Archivo", system-ui, sans-serif;
+				--mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+			}
+
+			@media (prefers-color-scheme: dark) {
+				:root:not([data-theme="light"]) {
+					color-scheme: dark;
+					--paper: #100e0d;
+					--card: #1b1917;
+					--sunk: #232020;
+					--ink: #f3efec;
+					--ink-2: #b6aea8;
+					--ink-3: #8a827c;
+					--rule: #302c29;
+					--rule-soft: #262322;
+					--brand: #ef4352;
+					--brand-ink: #ff6b76;
+					--brand-wash: #2c1417;
+					--uae: #3987e5;
+					--ksa: #d95926;
+					--uk: #199e70;
+				}
+			}
+
+			:root[data-theme="dark"] {
+				color-scheme: dark;
+				--paper: #100e0d;
+				--card: #1b1917;
+				--sunk: #232020;
+				--ink: #f3efec;
+				--ink-2: #b6aea8;
+				--ink-3: #8a827c;
+				--rule: #302c29;
+				--rule-soft: #262322;
+				--brand: #ef4352;
+				--brand-ink: #ff6b76;
+				--brand-wash: #2c1417;
+				--uae: #3987e5;
+				--ksa: #d95926;
+				--uk: #199e70;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			body {
+				margin: 0;
+				background: var(--paper);
+				color: var(--ink);
+				font-family: var(--ui);
+				font-size: 15px;
+				line-height: 1.5;
+				padding: 24px 20px 56px;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			.wrap {
+				max-width: 900px;
+				margin: 0 auto;
+				display: grid;
+				gap: 18px;
+			}
+
+			header h1 {
+				margin: 0 0 4px;
+				font-size: 25px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				text-wrap: balance;
+			}
+
+			header p {
+				margin: 0;
+				color: var(--ink-2);
+				max-width: 62ch;
+			}
+
+			.mark {
+				display: inline-flex;
+				align-items: center;
+				gap: 9px;
+				margin-bottom: 12px;
+			}
+
+			.mark i {
+				width: 30px;
+				height: 30px;
+				border-radius: 7px;
+				background: var(--brand);
+				color: #fff;
+				display: grid;
+				place-items: center;
+				font-family: var(--narrow);
+				font-weight: 700;
+				font-size: 12px;
+				font-style: normal;
+			}
+
+			.mark b {
+				font-size: 15px;
+			}
+
+			.mark span {
+				color: var(--ink-3);
+				font-weight: 400;
+				font-size: 13px;
+			}
+
+			.card {
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-radius: 11px;
+				padding: 16px 17px;
+			}
+
+			.eyebrow {
+				font-family: var(--narrow);
+				font-weight: 600;
+				font-size: 11px;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+				display: block;
+				margin-bottom: 8px;
+			}
+
+			textarea {
+				width: 100%;
+				min-height: 84px;
+				padding: 11px 13px;
+				border: 1px solid var(--rule);
+				border-radius: 8px;
+				background: var(--paper);
+				color: var(--ink);
+				font: inherit;
+				resize: vertical;
+			}
+
+			textarea:focus-visible,
+			button:focus-visible,
+			select:focus-visible {
+				outline: 2px solid var(--brand);
+				outline-offset: 2px;
+			}
+
+			.row {
+				display: flex;
+				gap: 9px;
+				align-items: center;
+				flex-wrap: wrap;
+				margin-top: 11px;
+			}
+
+			label.inline {
+				font-size: 13px;
+				color: var(--ink-2);
+			}
+
+			select {
+				padding: 7px 10px;
+				border: 1px solid var(--rule);
+				border-radius: 7px;
+				background: var(--card);
+				color: var(--ink);
+				font: inherit;
+				font-size: 13px;
+			}
+
+			button {
+				font: inherit;
+				cursor: pointer;
+				border-radius: 7px;
+				border: 1px solid var(--rule);
+				background: var(--card);
+				color: var(--ink);
+				padding: 8px 13px;
+				font-size: 13.5px;
+			}
+
+			button:hover {
+				border-color: var(--ink-3);
+			}
+
+			button.primary {
+				background: var(--brand);
+				border-color: var(--brand);
+				color: #fff;
+				font-weight: 600;
+			}
+
+			button.primary:hover {
+				background: var(--brand-ink);
+				border-color: var(--brand-ink);
+			}
+
+			.examples {
+				display: flex;
+				gap: 7px;
+				flex-wrap: wrap;
+			}
+
+			.examples button {
+				font-size: 12.5px;
+				padding: 5px 10px;
+				color: var(--ink-2);
+			}
+
+			.verdict {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				flex-wrap: wrap;
+				padding-bottom: 13px;
+				border-bottom: 1px solid var(--rule-soft);
+				margin-bottom: 13px;
+			}
+
+			.verdict .big {
+				font-size: 22px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+			}
+
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				padding: 3px 10px;
+				border-radius: 999px;
+				font-family: var(--narrow);
+				font-weight: 600;
+				font-size: 11.5px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				background: var(--sunk);
+				color: var(--ink-2);
+			}
+
+			.pill.on {
+				background: var(--brand);
+				color: #fff;
+			}
+
+			.pill.none {
+				background: transparent;
+				border: 1px dashed var(--rule);
+				color: var(--ink-3);
+			}
+
+			dl {
+				margin: 0;
+				display: grid;
+				grid-template-columns: 148px 1fr;
+				gap: 8px 14px;
+				font-size: 14px;
+			}
+
+			dt {
+				font-family: var(--narrow);
+				font-size: 11px;
+				font-weight: 600;
+				letter-spacing: 0.07em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+				padding-top: 2px;
+			}
+
+			dd {
+				margin: 0;
+			}
+
+			.mono {
+				font-family: var(--mono);
+				font-variant-numeric: tabular-nums;
+				font-size: 13px;
+			}
+
+			.muted {
+				color: var(--ink-2);
+			}
+
+			.bar {
+				height: 6px;
+				border-radius: 3px;
+				background: var(--sunk);
+				overflow: hidden;
+				max-width: 220px;
+			}
+
+			.bar i {
+				display: block;
+				height: 100%;
+				border-radius: 3px;
+				background: var(--brand);
+			}
+
+			.reply {
+				background: var(--sunk);
+				border-radius: 9px;
+				padding: 11px 13px;
+				font-size: 14px;
+				white-space: pre-wrap;
+			}
+
+			.note {
+				font-size: 13px;
+				color: var(--ink-2);
+				border-left: 3px solid var(--warn);
+				padding: 9px 12px;
+				background: var(--card);
+				border-radius: 0 8px 8px 0;
+			}
+
+			.note strong {
+				color: var(--ink);
+			}
+
+			footer {
+				font-size: 12.5px;
+				color: var(--ink-3);
+				text-align: center;
+			}
+
+			@media (max-width: 560px) {
+				dl {
+					grid-template-columns: 1fr;
+					gap: 3px 0;
+				}
+				dt {
+					padding-top: 8px;
+				}
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="wrap">
+			<header>
+				<div class="mark"><i>ABC</i><b>Engage</b> <span>Message Tester</span></div>
+				<h1>Type what a customer might write</h1>
+				<p>
+					This page runs the real decision rules from the platform — the same code
+					that will handle live messages. Nothing is sent anywhere. Nothing here
+					reaches WhatsApp, Meta, Freshworks or a customer. It works with no
+					internet connection.
+				</p>
+			</header>
+
+			<div class="card">
+				<span class="eyebrow">The customer's message</span>
+				<textarea id="msg" spellcheck="false">Hello, one carton of ABC-UAE-088210 arrived open and two shirts are missing</textarea>
+				<div class="row">
+					<label class="inline" for="region">Sent to</label>
+					<select id="region">
+						<option value="uae">UAE · +971800916</option>
+						<option value="ksa">KSA · +966548454866</option>
+						<option value="uk">UK · +447388800000</option>
+					</select>
+					<label class="inline" for="when">Arriving</label>
+					<select id="when">
+						<option value="now">Right now</option>
+						<option value="night">At 02:00, nobody working</option>
+						<option value="friday">Friday evening, office closed</option>
+					</select>
+					<button class="primary" id="go" type="button">See the decision</button>
+				</div>
+				<div class="row examples" id="examples"></div>
+			</div>
+
+			<div class="card" id="out"></div>
+
+			<div class="note">
+				<strong>What this proves and what it does not.</strong> It proves the
+				platform reads a message correctly and decides the right thing, using the
+				real rules and each region's own working hours. It does not prove delivery
+				from WhatsApp works, and the service targets shown are placeholders until
+				ABC Cargo's real policy is exported from Freshworks.
+			</div>
+
+			<footer>
+				Generated from the platform source. Regenerate with
+				<span class="mono">npm run build:tester</span>.
+			</footer>
+		</div>
+
+		<script type="module">
+			/* ==================================================================
+			   The block below is the platform's own decision code, compiled
+			   straight from the TypeScript source. It is not a re-implementation
+			   and cannot drift: regenerating this page rebuilds it from source.
+			   ================================================================== */
+
+			/*__ENGINE__*/
+
+			/* ------------------------------------------------ page wiring only */
+
+			const REGIONS = {
+				uae: {
+					id: "uae",
+					label: "UAE",
+					phoneNumberId: "1",
+					displayNumber: "+971800916",
+					timezone: "Asia/Dubai",
+					language: "en",
+					businessHours: { days: [0, 1, 2, 3, 4], start: "08:00", end: "18:00" },
+					colour: "var(--uae)",
+				},
+				ksa: {
+					id: "ksa",
+					label: "KSA",
+					phoneNumberId: "2",
+					displayNumber: "+966548454866",
+					timezone: "Asia/Riyadh",
+					language: "ar",
+					businessHours: { days: [0, 1, 2, 3, 4], start: "09:00", end: "18:00" },
+					colour: "var(--ksa)",
+				},
+				uk: {
+					id: "uk",
+					label: "UK",
+					phoneNumberId: "3",
+					displayNumber: "+447388800000",
+					timezone: "Europe/London",
+					language: "en",
+					businessHours: { days: [1, 2, 3, 4, 5], start: "09:00", end: "17:00" },
+					colour: "var(--uk)",
+				},
+			};
+
+			const EXAMPLES = [
+				"How much to send 40 kg to Chennai?",
+				"Where is my shipment ABC-UAE-088210?",
+				"My parcel arrived broken",
+				"Please send me the invoice copy",
+				"Can I change the delivery address?",
+				"أحتاج سعر شحن إلى مانيلا",
+				"الشحنة تالفة",
+				"hi",
+			];
+
+			const INTENT_LABEL = {
+				rate: "Asking for a price",
+				track: "Asking where a shipment is",
+				claim: "Complaining about damage or loss",
+				billing: "Querying an invoice or charge",
+				documentation: "Asking for paperwork",
+				booking_change: "Changing a booking",
+				agent: "Asking for a person",
+				greeting: "Just saying hello",
+				unknown: "Could not tell",
+			};
+
+			const TYPE_LABEL = {
+				claim: "Claim",
+				billing: "Billing",
+				documentation: "Documentation",
+				delivery: "Delivery",
+				general: "General",
+			};
+
+			const $ = (id) => document.getElementById(id);
+			const esc = (s) =>
+				String(s).replace(
+					/[&<>"]/g,
+					(c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+				);
+
+			/** Builds the "arriving" instant so closed-hours behaviour can be shown. */
+			function chosenTime(mode) {
+				const d = new Date();
+				if (mode === "night") {
+					d.setHours(2, 0, 0, 0);
+					return d;
+				}
+				if (mode === "friday") {
+					// Next Friday at 19:00 local.
+					const day = d.getDay();
+					d.setDate(d.getDate() + ((5 - day + 7) % 7));
+					d.setHours(19, 0, 0, 0);
+					return d;
+				}
+				return d;
+			}
+
+			function fmt(iso, timezone) {
+				try {
+					return new Intl.DateTimeFormat("en-GB", {
+						timeZone: timezone,
+						weekday: "short",
+						day: "2-digit",
+						month: "short",
+						hour: "2-digit",
+						minute: "2-digit",
+						hourCycle: "h23",
+					}).format(new Date(iso));
+				} catch {
+					return iso;
+				}
+			}
+
+			function run() {
+				const text = $("msg").value;
+				const region = REGIONS[$("region").value];
+				const at = chosenTime($("when").value);
+
+				const result = classifyIntent(text);
+				const outcome = outcomeFor(result.intent);
+				const open = isWithinBusinessHours(region, at);
+
+				let creates = `<span class="pill none">Nothing created</span>`;
+				let detail = "";
+
+				if (outcome === "lead") {
+					creates = `<span class="pill on">Sales lead created</span>`;
+					detail =
+						"<dt>Why</dt><dd>A price enquiry is captured as a lead straight away, so it is never lost because nobody was free.</dd>";
+				} else if (outcome === "ticket") {
+					const type = ticketTypeFor(result.intent);
+					const priority = type === "claim" ? "high" : "normal";
+					const due = ticketDueDates(region, type, priority, at);
+					creates = `<span class="pill on">${esc(TYPE_LABEL[type])} ticket created</span>`;
+					detail =
+						`<dt>Priority</dt><dd>${esc(priority)}</dd>` +
+						`<dt>Reply due by</dt><dd class="mono">${esc(fmt(due.firstResponseDueAt, region.timezone))}</dd>` +
+						`<dt>Resolve by</dt><dd class="mono">${esc(fmt(due.resolutionDueAt, region.timezone))}</dd>` +
+						`<dt>Why those times</dt><dd>Counted only during ${esc(region.label)} working hours (${esc(region.businessHours.start)}–${esc(region.businessHours.end)}, ${esc(region.timezone)}). The clock stops when the office closes.</dd>`;
+				} else if (result.intent === "track" && result.references.length) {
+					detail =
+						"<dt>Why nothing</dt><dd>This is a tracking question. The message is filed against the shipment; no ticket is raised. Not creating work is as important as creating it.</dd>";
+				}
+
+				const reply = open
+					? ""
+					: buildAutoReply({
+							region,
+							reason: "outside-hours",
+							inboundText: text,
+						});
+
+				const pct = Math.round(result.confidence * 100);
+
+				$("out").innerHTML =
+					`<div class="verdict">` +
+					`<span class="big">${esc(INTENT_LABEL[result.intent] ?? result.intent)}</span>` +
+					creates +
+					`</div>` +
+					`<dl>` +
+					`<dt>Confidence</dt><dd><div class="bar"><i style="width:${pct}%"></i></div><span class="muted mono">${pct}%</span></dd>` +
+					`<dt>Decided by</dt><dd>${result.matched ? `the words <span class="mono">"${esc(result.matched)}"</span>` : '<span class="muted">a shipment reference in the message</span>'}</dd>` +
+					`<dt>Shipment refs</dt><dd class="mono">${result.references.length ? esc(result.references.join(", ")) : '<span class="muted" style="font-family:var(--ui)">none found</span>'}</dd>` +
+					`<dt>Office</dt><dd>${open ? `<span style="color:var(--good)">Open</span>` : `<span style="color:var(--warn)">Closed</span>`} in ${esc(region.label)} at that moment</dd>` +
+					detail +
+					`</dl>` +
+					(reply
+						? `<div style="margin-top:14px"><span class="eyebrow">Automatic reply the customer receives</span><div class="reply">${esc(reply)}</div></div>`
+						: "");
+			}
+
+			$("examples").innerHTML = EXAMPLES.map(
+				(e) => `<button type="button" data-ex="${esc(e)}">${esc(e)}</button>`,
+			).join("");
+
+			$("examples").addEventListener("click", (event) => {
+				const example = event.target.closest("button");
+				if (!example) return;
+				$("msg").value = example.dataset.ex;
+				run();
+			});
+
+			$("go").addEventListener("click", run);
+			$("msg").addEventListener("keydown", (event) => {
+				if (event.key === "Enter" && (event.ctrlKey || event.metaKey)) run();
+			});
+			$("region").addEventListener("change", run);
+			$("when").addEventListener("change", run);
+
+			run();
+		</script>
+	</body>
+</html>

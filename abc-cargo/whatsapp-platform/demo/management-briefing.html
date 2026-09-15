@@ -1,0 +1,1149 @@
+<title>WhatsApp Platform Briefing</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+	rel="stylesheet"
+	href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap"
+/>
+<style>
+	:root {
+		--ground: #faf8f7;
+		--surface: #ffffff;
+		--surface-2: #f3efed;
+		--ink: #191210;
+		--ink-2: #4a403d;
+		--muted: #7b706c;
+		--line: #e4dcd9;
+		--line-strong: #cdc2be;
+		--accent: #c8102e;
+		--accent-ink: #ffffff;
+		--accent-soft: #fae9eb;
+		--ok: #1e7a4c;
+		--ok-soft: #e4f3ea;
+		--warn: #9c6100;
+		--warn-soft: #faf0de;
+		--uae: #2a78d6;
+		--uk: #eb6834;
+		--ksa: #1baf7a;
+		--grid: #ede7e4;
+		--shadow:
+			0 1px 2px rgba(25, 18, 16, 0.05), 0 10px 26px -18px rgba(25, 18, 16, 0.28);
+	}
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme="light"]) {
+			--ground: #141010;
+			--surface: #1e1817;
+			--surface-2: #2a2220;
+			--ink: #f5efed;
+			--ink-2: #cabfbb;
+			--muted: #968a86;
+			--line: #332b29;
+			--line-strong: #493e3b;
+			--accent: #ff5a6e;
+			--accent-ink: #1a0508;
+			--accent-soft: #3a1a1f;
+			--ok: #54c58c;
+			--ok-soft: #163024;
+			--warn: #e3a755;
+			--warn-soft: #332610;
+			--uae: #3987e5;
+			--uk: #d95926;
+			--ksa: #199e70;
+			--grid: #2e2523;
+			--shadow:
+				0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 30px -20px rgba(0, 0, 0, 0.9);
+		}
+	}
+	:root[data-theme="dark"] {
+		--ground: #141010;
+		--surface: #1e1817;
+		--surface-2: #2a2220;
+		--ink: #f5efed;
+		--ink-2: #cabfbb;
+		--muted: #968a86;
+		--line: #332b29;
+		--line-strong: #493e3b;
+		--accent: #ff5a6e;
+		--accent-ink: #1a0508;
+		--accent-soft: #3a1a1f;
+		--ok: #54c58c;
+		--ok-soft: #163024;
+		--warn: #e3a755;
+		--warn-soft: #332610;
+		--uae: #3987e5;
+		--uk: #d95926;
+		--ksa: #199e70;
+		--grid: #2e2523;
+		--shadow:
+			0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 30px -20px rgba(0, 0, 0, 0.9);
+	}
+	* {
+		box-sizing: border-box;
+	}
+	body {
+		margin: 0;
+		background: var(--ground);
+		color: var(--ink);
+		font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+		font-size: 16px;
+		line-height: 1.62;
+		-webkit-font-smoothing: antialiased;
+	}
+	h1,
+	h2,
+	h3,
+	.ui {
+		font-family: Archivo, "Arial Narrow", system-ui, sans-serif;
+		letter-spacing: -0.015em;
+		margin: 0;
+	}
+	.mono,
+	code {
+		font-family: "IBM Plex Mono", ui-monospace, monospace;
+		font-variant-numeric: tabular-nums;
+	}
+	p,
+	ul,
+	ol {
+		margin: 0;
+	}
+	a {
+		color: var(--accent);
+	}
+	:where(a, button):focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+		border-radius: 3px;
+	}
+
+	.page {
+		max-width: 1080px;
+		margin: 0 auto;
+		padding: 34px 24px 70px;
+		display: flex;
+		flex-direction: column;
+		gap: 36px;
+	}
+	.prose {
+		max-width: 70ch;
+	}
+
+	/* masthead */
+	.mast {
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+		border-bottom: 3px solid var(--ink);
+		padding-bottom: 20px;
+	}
+	.eyebrow {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 10px 16px;
+		align-items: center;
+		font-family: Archivo, sans-serif;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.12em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+	.eyebrow .rule {
+		flex: 1;
+		height: 1px;
+		background: var(--line-strong);
+		min-width: 20px;
+	}
+	.mast h1 {
+		font-size: clamp(28px, 4.2vw, 42px);
+		font-weight: 700;
+		line-height: 1.08;
+		text-wrap: balance;
+	}
+	.mast .stand {
+		font-size: 18px;
+		color: var(--ink-2);
+		max-width: 62ch;
+	}
+	.meta-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 28px;
+		font-size: 13.5px;
+		color: var(--muted);
+	}
+	.meta-row b {
+		color: var(--ink-2);
+		font-weight: 600;
+	}
+	.flag {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		padding: 6px 12px;
+		border: 1px solid var(--accent);
+		background: var(--accent-soft);
+		color: var(--accent);
+		border-radius: 3px;
+		font-family: Archivo, sans-serif;
+		font-size: 12px;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+	.flag::before {
+		content: "";
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--accent);
+	}
+
+	/* sections */
+	section {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+		scroll-margin-top: 20px;
+	}
+	.shead {
+		display: flex;
+		align-items: baseline;
+		gap: 14px;
+		border-bottom: 1px solid var(--line);
+		padding-bottom: 9px;
+	}
+	.snum {
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 13px;
+		color: var(--accent);
+		font-weight: 500;
+		flex: none;
+	}
+	.shead h2 {
+		font-size: 22px;
+		font-weight: 700;
+	}
+	h3 {
+		font-size: 16px;
+		font-weight: 700;
+		margin-top: 4px;
+	}
+
+	.callout {
+		border-left: 3px solid var(--accent);
+		background: var(--surface);
+		padding: 16px 20px;
+		border-radius: 0 4px 4px 0;
+		display: flex;
+		flex-direction: column;
+		gap: 9px;
+		box-shadow: var(--shadow);
+	}
+	.callout.calm {
+		border-left-color: var(--ok);
+	}
+	.callout .h {
+		font-family: Archivo, sans-serif;
+		font-weight: 700;
+		font-size: 15px;
+	}
+
+	.grid2 {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: 16px;
+	}
+	.card {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 5px;
+		padding: 17px 19px;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		box-shadow: var(--shadow);
+	}
+	.card h3 {
+		font-size: 14px;
+		font-weight: 700;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		color: var(--muted);
+		margin: 0;
+	}
+	.card .big {
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 30px;
+		font-weight: 500;
+		line-height: 1.05;
+	}
+	.card p {
+		font-size: 14.5px;
+		color: var(--ink-2);
+	}
+
+	.tbl {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 5px;
+		overflow: hidden;
+		box-shadow: var(--shadow);
+	}
+	.tscroll {
+		overflow-x: auto;
+	}
+	table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+	th {
+		text-align: left;
+		font-family: Archivo, sans-serif;
+		font-size: 10.5px;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--muted);
+		padding: 10px 16px;
+		background: var(--surface-2);
+		border-bottom: 1px solid var(--line);
+		white-space: nowrap;
+	}
+	td {
+		padding: 11px 16px;
+		border-bottom: 1px solid var(--line);
+		vertical-align: top;
+		font-size: 14.5px;
+	}
+	tr:last-child td {
+		border-bottom: none;
+	}
+	td.num {
+		font-family: "IBM Plex Mono", monospace;
+		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
+	}
+	.pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 2px 9px;
+		border-radius: 999px;
+		font-family: Archivo, sans-serif;
+		font-size: 11.5px;
+		font-weight: 600;
+		white-space: nowrap;
+	}
+	.pill::before {
+		content: "";
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background: currentColor;
+	}
+	.pill.ok {
+		background: var(--ok-soft);
+		color: var(--ok);
+	}
+	.pill.warn {
+		background: var(--warn-soft);
+		color: var(--warn);
+	}
+	.pill.hot {
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
+	.pill.flat {
+		background: var(--surface-2);
+		color: var(--muted);
+	}
+
+	ul.clean {
+		list-style: none;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 9px;
+	}
+	ul.clean li {
+		padding-left: 22px;
+		position: relative;
+		font-size: 15.5px;
+		color: var(--ink-2);
+	}
+	ul.clean li::before {
+		content: "";
+		position: absolute;
+		left: 4px;
+		top: 9px;
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--accent);
+	}
+	ul.clean.tick li::before {
+		content: "✓";
+		left: 0;
+		top: 0;
+		width: auto;
+		height: auto;
+		background: none;
+		color: var(--ok);
+		font-weight: 700;
+		font-size: 14px;
+	}
+
+	.chartbox {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 5px;
+		box-shadow: var(--shadow);
+		padding: 18px 20px 12px;
+	}
+	.chartbox h3 {
+		font-size: 12.5px;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--muted);
+		margin: 0 0 14px;
+	}
+	svg.tl {
+		display: block;
+		width: 100%;
+		height: auto;
+		overflow: visible;
+	}
+	.tl .band {
+		fill: var(--surface-2);
+	}
+	.tl .gl {
+		stroke: var(--grid);
+		stroke-width: 1;
+	}
+	.tl .ax {
+		fill: var(--muted);
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 11px;
+	}
+	.tl .ph {
+		fill: var(--ink);
+		font-family: Archivo, sans-serif;
+		font-size: 12.5px;
+		font-weight: 600;
+	}
+	.tl .dur {
+		fill: var(--muted);
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 10.5px;
+	}
+	.tl .gate {
+		stroke: var(--accent);
+		stroke-width: 2;
+		stroke-dasharray: 5 4;
+	}
+	.tl .gatelbl {
+		fill: var(--accent);
+		font-family: Archivo, sans-serif;
+		font-size: 11.5px;
+		font-weight: 700;
+	}
+	.legend {
+		display: flex;
+		gap: 18px;
+		flex-wrap: wrap;
+		padding: 12px 2px 2px;
+		font-size: 13.5px;
+		color: var(--ink-2);
+	}
+	.legend span {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+	}
+	.sw {
+		width: 12px;
+		height: 10px;
+		border-radius: 2px;
+		flex: none;
+	}
+
+	.linkrow {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 12px;
+	}
+	.linkcard {
+		flex: 1 1 260px;
+		border: 1px solid var(--line-strong);
+		border-radius: 5px;
+		padding: 14px 16px;
+		background: var(--surface);
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		text-decoration: none;
+		color: inherit;
+		transition: border-color 0.12s;
+	}
+	.linkcard:hover {
+		border-color: var(--accent);
+	}
+	.linkcard .t {
+		font-family: Archivo, sans-serif;
+		font-weight: 700;
+		font-size: 15px;
+		color: var(--accent);
+	}
+	.linkcard .d {
+		font-size: 14px;
+		color: var(--ink-2);
+	}
+	.note {
+		color: var(--muted);
+		font-size: 14px;
+	}
+	.foot {
+		border-top: 1px solid var(--line);
+		padding-top: 18px;
+		color: var(--muted);
+		font-size: 13.5px;
+		max-width: 80ch;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		* {
+			animation-duration: 0.01ms !important;
+			transition-duration: 0.01ms !important;
+		}
+	}
+</style>
+
+<div class="page">
+	<header class="mast">
+		<div class="eyebrow">
+			<span>ABC Cargo &middot; IT Department</span><span class="rule"></span
+			><span>Management briefing</span>
+		</div>
+		<h1>Bringing WhatsApp customer service in-house</h1>
+		<p class="stand">
+			A proposal to move ABC Cargo's three regional WhatsApp numbers from
+			Freshworks onto a platform we own, build and control &mdash; without
+			interrupting a single customer conversation.
+		</p>
+		<div class="meta-row">
+			<span><b>Prepared by</b> ABC Cargo IT Department</span>
+			<span><b>For</b> Management review</span>
+			<span><b>Date</b> 5 September 2026</span>
+			<span><b>Status</b> Proposal, no live change made</span>
+		</div>
+		<span class="flag">Nothing live has been touched</span>
+	</header>
+
+	<section id="ask">
+		<div class="shead">
+			<span class="snum">01</span>
+			<h2>What is being asked of Management</h2>
+		</div>
+		<div class="callout">
+			<span class="h">Approve the preparation work, not the go-live.</span>
+			<p>
+				This briefing asks for approval to <b>build and prove</b> the platform.
+				It does not ask for permission to switch any customer-facing number
+				today. A separate approval is requested later, only after Management has
+				seen the finished platform working in a demonstration.
+			</p>
+		</div>
+		<div class="grid2">
+			<div class="card">
+				<h3>Decision 1</h3>
+				<p>
+					<b>Proceed with the build.</b> Authorise the IT Department to
+					construct the platform and prove it against test numbers.
+				</p>
+			</div>
+			<div class="card">
+				<h3>Decision 2</h3>
+				<p>
+					<b>Confirm the demonstration gate.</b> No customer number moves until
+					Management has seen the platform demonstrated and signed off.
+				</p>
+			</div>
+			<div class="card">
+				<h3>Decision 3</h3>
+				<p>
+					<b>Decide the future of Freshworks.</b> Retired entirely, or retained
+					for email, phone and ticketing. This changes the licence saving
+					materially.
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<section id="why">
+		<div class="shead">
+			<span class="snum">02</span>
+			<h2>Why change anything</h2>
+		</div>
+		<p class="prose">
+			WhatsApp is where a large share of ABC Cargo's customers already ask where
+			their shipment is. Today those conversations run through Freshworks, and
+			three things limit what we can do with them.
+		</p>
+		<div class="grid2">
+			<div class="card">
+				<h3>Automation is barely used</h3>
+				<span class="big"
+					>2
+					<span style="font-size: 15px; color: var(--muted)"
+						>of 9 groups</span
+					></span
+				>
+				<p>
+					Only UK Customer Support and UAE Sales Team assign conversations
+					automatically. The other seven rely on an agent noticing the message,
+					which is the most likely cause of slow first replies.
+				</p>
+			</div>
+			<div class="card">
+				<h3>No link to shipment data</h3>
+				<span class="big">Manual</span>
+				<p>
+					An agent answering "where is my shipment" looks the reference up by
+					hand in another system. The most common question we receive is also
+					the least automated.
+				</p>
+			</div>
+			<div class="card">
+				<h3>Our customer data sits in a vendor</h3>
+				<span class="big">362K+</span>
+				<p>
+					Resolved conversations held in a platform we rent. We cannot query it
+					freely, and we cannot join it to our own cargo systems.
+				</p>
+			</div>
+		</div>
+		<p class="prose">
+			Owning the platform lets us answer the tracking question automatically,
+			notify customers the moment a shipment status changes, and keep the
+			conversation history alongside our own operational data.
+		</p>
+	</section>
+
+	<section id="what">
+		<div class="shead">
+			<span class="snum">03</span>
+			<h2>What we would build</h2>
+		</div>
+		<p class="prose">
+			A single platform for all three regions, with the same shape of tooling
+			our agents use today, plus the integration Freshworks cannot give us.
+		</p>
+		<div class="grid2">
+			<div class="card">
+				<h3>For agents</h3>
+				<ul class="clean tick">
+					<li>Shared inbox per region</li>
+					<li>
+						Customer, shipment and consent visible beside the conversation
+					</li>
+					<li>Automatic assignment and clear ownership</li>
+					<li>Templates for anything outside the 24-hour reply window</li>
+				</ul>
+			</div>
+			<div class="card">
+				<h3>For operations</h3>
+				<ul class="clean tick">
+					<li>
+						Shipment status changes trigger a WhatsApp update automatically
+					</li>
+					<li>Tracking questions answered without an agent</li>
+					<li>Delivery and document requests sent on real events</li>
+					<li>Each region keeps its own hours, groups and targets</li>
+				</ul>
+			</div>
+			<div class="card">
+				<h3>For management</h3>
+				<ul class="clean tick">
+					<li>Volume, response times and automation coverage per region</li>
+					<li>One consolidated view across UAE, UK and KSA</li>
+					<li>Full conversation history retained by ABC Cargo</li>
+					<li>No per-seat licence as the team grows</li>
+				</ul>
+			</div>
+		</div>
+	</section>
+
+	<section id="see">
+		<div class="shead">
+			<span class="snum">04</span>
+			<h2>See it working</h2>
+		</div>
+		<p class="prose">
+			Both of these run entirely in a browser against sample data. Neither
+			contacts Meta, Freshworks or any ABC Cargo system.
+		</p>
+		<div class="linkrow">
+			<a
+				class="linkcard"
+				href="https://claude.ai/code/artifact/a7b13439-58b8-4e4e-bbb7-4d219b9b7234"
+			>
+				<span class="t">The platform &rarr;</span>
+				<span class="d"
+					>Inbox, contacts, broadcasts, automation rules, reports and the admin
+					surface, with UAE, UK and KSA separated throughout.</span
+				>
+			</a>
+			<a
+				class="linkcard"
+				href="https://claude.ai/code/artifact/8f908d81-2cbf-4090-ad92-ab62b1b5f484"
+			>
+				<span class="t">How a message is handled &rarr;</span>
+				<span class="d"
+					>A customer sends a message and every step the platform runs is shown
+					as it happens, including the out-of-hours reply and the 24-hour window
+					closing.</span
+				>
+			</a>
+		</div>
+		<div class="callout calm">
+			<span class="h">Suggested walkthrough for the meeting</span>
+			<ul class="clean">
+				<li>
+					Open the platform on <b>Inbox</b> and show a tracking enquiry with the
+					shipment already attached.
+				</li>
+				<li>
+					Switch the number between <b>UAE, UK and KSA</b> to show each region
+					is genuinely separate.
+				</li>
+				<li>
+					Open <b>Admin</b> and show the regional configuration table: different
+					hours, groups and SLA per region.
+				</li>
+				<li>Open <b>Reports</b> for volume and response times by region.</li>
+				<li>
+					In the second demo, press <b>+24 hours</b> and show the reply box lock
+					itself, which is the Meta rule that governs the whole design.
+				</li>
+			</ul>
+		</div>
+	</section>
+
+	<section id="plan">
+		<div class="shead">
+			<span class="snum">05</span>
+			<h2>How it would be delivered</h2>
+		</div>
+		<p class="prose">
+			Nothing customer-facing changes until the platform is finished and
+			Management has seen it. After that, regions move one at a time, smallest
+			first, so the fewest customers are exposed to the first switch.
+		</p>
+
+		<div class="chartbox">
+			<h3>Indicative schedule &middot; approximately seven months</h3>
+			<svg
+				class="tl"
+				viewBox="0 0 900 300"
+				role="img"
+				aria-label="Schedule: baseline two weeks, platform build ten weeks, then a management demonstration and approval gate at week twelve, followed by KSA three weeks, UAE four weeks, UK five weeks and consolidation six weeks."
+			>
+				<g class="gl">
+					<line x1="200" y1="286" x2="880" y2="286"></line>
+					<line x1="200" y1="34" x2="200" y2="286"></line>
+					<line x1="290.7" y1="34" x2="290.7" y2="286"></line>
+					<line x1="381.3" y1="34" x2="381.3" y2="286"></line>
+					<line x1="562.7" y1="34" x2="562.7" y2="286"></line>
+					<line x1="653.3" y1="34" x2="653.3" y2="286"></line>
+					<line x1="744" y1="34" x2="744" y2="286"></line>
+					<line x1="834.7" y1="34" x2="834.7" y2="286"></line>
+				</g>
+				<g class="ax">
+					<text x="200" y="300" text-anchor="middle">wk 0</text>
+					<text x="290.7" y="300" text-anchor="middle">4</text>
+					<text x="381.3" y="300" text-anchor="middle">8</text>
+					<text x="472" y="300" text-anchor="middle">12</text>
+					<text x="562.7" y="300" text-anchor="middle">16</text>
+					<text x="653.3" y="300" text-anchor="middle">20</text>
+					<text x="744" y="300" text-anchor="middle">24</text>
+					<text x="834.7" y="300" text-anchor="middle">28</text>
+				</g>
+
+				<g>
+					<text class="ph" x="0" y="56">Baseline and exports</text>
+					<text class="dur" x="0" y="70">2 weeks &middot; no live change</text>
+					<rect
+						x="200"
+						y="42"
+						width="45.3"
+						height="20"
+						rx="3"
+						fill="var(--line-strong)"
+					></rect>
+
+					<text class="ph" x="0" y="94">Build the platform</text>
+					<text class="dur" x="0" y="108">
+						10 weeks &middot; no live change
+					</text>
+					<rect
+						x="245.3"
+						y="80"
+						width="226.7"
+						height="20"
+						rx="3"
+						fill="var(--ink-2)"
+					></rect>
+
+					<text class="ph" x="0" y="132">KSA go-live</text>
+					<text class="dur" x="0" y="146">
+						3 weeks &middot; 3 agents, 9 open
+					</text>
+					<rect
+						x="472"
+						y="118"
+						width="68"
+						height="20"
+						rx="3"
+						fill="var(--ksa)"
+					></rect>
+
+					<text class="ph" x="0" y="170">UAE go-live</text>
+					<text class="dur" x="0" y="184">
+						4 weeks &middot; 13 agents, 650 open
+					</text>
+					<rect
+						x="540"
+						y="156"
+						width="90.7"
+						height="20"
+						rx="3"
+						fill="var(--uae)"
+					></rect>
+
+					<text class="ph" x="0" y="208">UK go-live</text>
+					<text class="dur" x="0" y="222">
+						5 weeks &middot; 12 agents, 2K+ open
+					</text>
+					<rect
+						x="630.7"
+						y="194"
+						width="113.3"
+						height="20"
+						rx="3"
+						fill="var(--uk)"
+					></rect>
+
+					<text class="ph" x="0" y="246">Consolidation</text>
+					<text class="dur" x="0" y="260">
+						6 weeks &middot; reporting, SSO, retention
+					</text>
+					<rect
+						x="744"
+						y="232"
+						width="136"
+						height="20"
+						rx="3"
+						fill="var(--line-strong)"
+					></rect>
+				</g>
+
+				<line class="gate" x1="472" y1="14" x2="472" y2="286"></line>
+				<text class="gatelbl" x="478" y="20">
+					Management demonstration and approval
+				</text>
+			</svg>
+			<div class="legend">
+				<span
+					><i class="sw" style="background: var(--ink-2)"></i>Preparation,
+					nothing customer-facing</span
+				>
+				<span><i class="sw" style="background: var(--ksa)"></i>KSA</span>
+				<span><i class="sw" style="background: var(--uae)"></i>UAE</span>
+				<span><i class="sw" style="background: var(--uk)"></i>UK</span>
+				<span style="color: var(--accent); font-weight: 600"
+					>Dashed line: nothing goes live before this point</span
+				>
+			</div>
+		</div>
+
+		<div class="tbl">
+			<div class="tscroll">
+				<table>
+					<thead>
+						<tr>
+							<th>Stage</th>
+							<th>Duration</th>
+							<th>What happens</th>
+							<th>Customer impact</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td><b>Baseline and exports</b></td>
+							<td class="num">2 weeks</td>
+							<td>
+								Export the current Freshworks configuration and history. Confirm
+								shipment reference format and system access.
+							</td>
+							<td><span class="pill flat">None</span></td>
+						</tr>
+						<tr>
+							<td><b>Build the platform</b></td>
+							<td class="num">10 weeks</td>
+							<td>
+								Construct and test everything against test numbers only. Agents
+								keep working in Freshworks throughout.
+							</td>
+							<td><span class="pill flat">None</span></td>
+						</tr>
+						<tr>
+							<td><b>Management demonstration</b></td>
+							<td class="num">Gate</td>
+							<td>
+								Full working platform shown to Management. Go-live approval
+								requested here, and not before.
+							</td>
+							<td><span class="pill hot">Decision point</span></td>
+						</tr>
+						<tr>
+							<td><b>KSA go-live</b></td>
+							<td class="num">3 weeks</td>
+							<td>
+								Smallest region first. Three agents, nine open conversations.
+								Proves the platform on real traffic.
+							</td>
+							<td><span class="pill warn">Smallest region</span></td>
+						</tr>
+						<tr>
+							<td><b>UAE go-live</b></td>
+							<td class="num">4 weeks</td>
+							<td>
+								Thirteen agents. Tracking automation and shipment integration
+								prove their value here.
+							</td>
+							<td><span class="pill warn">Planned switch</span></td>
+						</tr>
+						<tr>
+							<td><b>UK go-live</b></td>
+							<td class="num">5 weeks</td>
+							<td>
+								Largest region, moved last, onto a platform already proven
+								twice.
+							</td>
+							<td><span class="pill warn">Planned switch</span></td>
+						</tr>
+						<tr>
+							<td><b>Consolidation</b></td>
+							<td class="num">6 weeks</td>
+							<td>
+								Cross-region reporting, single sign-on, retention policy,
+								handover documentation.
+							</td>
+							<td><span class="pill flat">None</span></td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<p class="note">
+			Durations are the IT Department's estimate for planning purposes. They are
+			not a commitment until the baseline exports in stage one are complete.
+		</p>
+	</section>
+
+	<section id="cost">
+		<div class="shead">
+			<span class="snum">06</span>
+			<h2>What it costs, honestly</h2>
+		</div>
+		<div class="callout">
+			<span class="h"
+				>The IT Department cannot see the licence figures, so none are invented
+				here.</span
+			>
+			<p>
+				The table below sets out what has to be compared. Finance holds the
+				Freshworks figures. Where a number is not known to IT, the row says so
+				rather than guessing.
+			</p>
+		</div>
+		<div class="tbl">
+			<div class="tscroll">
+				<table>
+					<thead>
+						<tr>
+							<th>Item</th>
+							<th>Today</th>
+							<th>After the change</th>
+							<th>Source of the figure</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>Agent licences, 40 users</td>
+							<td class="num">Freshworks subscription</td>
+							<td class="num">None</td>
+							<td>Finance to supply the current annual cost</td>
+						</tr>
+						<tr>
+							<td>WhatsApp message charges</td>
+							<td class="num">Paid to Meta</td>
+							<td class="num">Paid to Meta, unchanged</td>
+							<td>Charged per template message regardless of platform</td>
+						</tr>
+						<tr>
+							<td>Hosting and infrastructure</td>
+							<td class="num">Included in subscription</td>
+							<td class="num">Cloudflare usage</td>
+							<td>
+								Modest at this volume; to be confirmed against current pricing
+							</td>
+						</tr>
+						<tr>
+							<td>Build effort</td>
+							<td class="num">&mdash;</td>
+							<td class="num">One-off</td>
+							<td>
+								IT estimate: roughly seven months elapsed, one developer plus
+								part-time IT
+							</td>
+						</tr>
+						<tr>
+							<td>Ongoing maintenance</td>
+							<td class="num">Absorbed by the vendor</td>
+							<td class="num">Falls to ABC Cargo IT</td>
+							<td>A real and continuing cost, not a saving</td>
+						</tr>
+						<tr>
+							<td>Freshworks for email and ticketing</td>
+							<td class="num">In use</td>
+							<td class="num">Decision 3</td>
+							<td>
+								If retained, the licence saving is smaller than it first appears
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+		<p class="prose">
+			The case for this project is <b>capability and ownership</b> rather than
+			pure cost saving. Automatic shipment notifications and instant tracking
+			answers are worth more than the licence line, and they are not available
+			to us on the current setup. Management should weigh it on that basis.
+		</p>
+	</section>
+
+	<section id="risk">
+		<div class="shead">
+			<span class="snum">07</span>
+			<h2>Risks and how they are controlled</h2>
+		</div>
+		<div class="tbl">
+			<div class="tscroll">
+				<table>
+					<thead>
+						<tr>
+							<th>Risk</th>
+							<th>Severity</th>
+							<th>How it is controlled</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>A number is switched and customers cannot reach us</td>
+							<td><span class="pill hot">High</span></td>
+							<td>
+								One region at a time, smallest first, verified on internal
+								phones before the regional team is released to it
+							</td>
+						</tr>
+						<tr>
+							<td>Conversation history left behind in Freshworks</td>
+							<td><span class="pill hot">High</span></td>
+							<td>
+								Full export completed and verified before any number is
+								disconnected. This step is irreversible if skipped
+							</td>
+						</tr>
+						<tr>
+							<td>Agents lose familiar tooling</td>
+							<td><span class="pill warn">Medium</span></td>
+							<td>
+								Training per region before its switch; the platform mirrors the
+								working pattern agents already know
+							</td>
+						</tr>
+						<tr>
+							<td>Feature gap against Freshworks at go-live</td>
+							<td><span class="pill warn">Medium</span></td>
+							<td>
+								Minimum acceptable feature set agreed with supervisors before
+								the demonstration gate
+							</td>
+						</tr>
+						<tr>
+							<td>Maintenance depends on one person</td>
+							<td><span class="pill warn">Medium</span></td>
+							<td>
+								Documentation and handover are a funded part of the
+								consolidation stage, not an afterthought
+							</td>
+						</tr>
+						<tr>
+							<td>Meta suspends a number for poor quality</td>
+							<td><span class="pill flat">Low</span></td>
+							<td>
+								Only shipment-event messages are sent; opt-out is honoured;
+								quality rating monitored per number
+							</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</section>
+
+	<section id="next">
+		<div class="shead">
+			<span class="snum">08</span>
+			<h2>If approved, what happens next</h2>
+		</div>
+		<ul class="clean">
+			<li>
+				Freshworks configuration and conversation history are exported and
+				verified. <b>No live change.</b>
+			</li>
+			<li>
+				The platform is built and tested against test numbers only.
+				<b>No live change.</b>
+			</li>
+			<li>
+				Management is shown the finished platform and asked to approve go-live.
+				<b>Decision point.</b>
+			</li>
+			<li>
+				Only then does KSA move, followed by UAE and UK, one region at a time.
+			</li>
+		</ul>
+		<div class="callout calm">
+			<span class="h">The commitment this briefing makes</span>
+			<p>
+				No ABC Cargo customer number, Meta account or production system is
+				touched until every preparation step is complete and Management has
+				approved go-live in the demonstration. If approval is withheld, nothing
+				has changed and Freshworks continues exactly as it does today.
+			</p>
+		</div>
+	</section>
+
+	<p class="foot">
+		Prepared by the ABC Cargo IT Department for Management review. All figures
+		shown in the linked demonstrations are sample data. The regional
+		configuration described was transcribed from Freshworks administration
+		screens supplied by the Head of IT; no live system was accessed in preparing
+		this briefing. Licence and pricing figures are to be supplied by Finance and
+		Meta's published rates respectively.
+	</p>
+</div>
