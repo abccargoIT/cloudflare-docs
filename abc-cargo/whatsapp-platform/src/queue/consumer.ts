@@ -1,6 +1,7 @@
 import type { Env } from "../env.ts";
 import { Repository } from "../db/repo.ts";
 import { conversationIdFor } from "../conversation.ts";
+import { CrmService } from "../crm/service.ts";
 import type { WebhookQueueMessage } from "../whatsapp/webhook.ts";
 import {
 	findRegionByPhoneNumberId,
@@ -58,16 +59,32 @@ export async function processWebhookMessage(
 		(value.contacts ?? []).map((c) => [c.wa_id, c] as const),
 	);
 
+	const crm = new CrmService(env.DB);
+
 	for (const inbound of value.messages ?? []) {
-		const id = env.CONVERSATION.idFromName(
-			conversationIdFor(phoneNumberId, inbound.from),
+		const conversationId = conversationIdFor(phoneNumberId, inbound.from);
+		const stub = env.CONVERSATION.get(
+			env.CONVERSATION.idFromName(conversationId),
 		);
-		const stub = env.CONVERSATION.get(id);
 		await stub.handleInbound({
 			phoneNumberId,
 			contact: contactsByWaId.get(inbound.from),
 			message: inbound,
 			receivedAt: message.receivedAt,
+		});
+
+		// Classify the message and open whatever record it implies — a rate
+		// enquiry becomes a lead before an agent is free, a claim becomes a
+		// ticket with its clock already running. Storing the message in the
+		// Durable Object is idempotent by WhatsApp message id, so a retry
+		// after a failure here cannot duplicate the conversation entry.
+		await crm.handleInboundMessage({
+			waId: inbound.from,
+			profileName: contactsByWaId.get(inbound.from)?.profile?.name,
+			region,
+			conversationId,
+			text: inboundText(inbound),
+			occurredAt: waTimestampToIso(inbound.timestamp, message.receivedAt),
 		});
 	}
 
@@ -87,4 +104,37 @@ export async function processWebhookMessage(
 	for (const error of value.errors ?? []) {
 		console.error("webhook-level error from Meta", error);
 	}
+}
+
+/**
+ * The text a classifier should read. Interactive replies carry the customer's
+ * choice in their own fields, and a button press is as much a statement of
+ * intent as a typed sentence.
+ */
+function inboundText(message: {
+	text?: { body: string };
+	button?: { text: string };
+	interactive?: {
+		button_reply?: { title: string };
+		list_reply?: { title: string };
+	};
+	caption?: string;
+}): string | undefined {
+	return (
+		message.text?.body ??
+		message.interactive?.button_reply?.title ??
+		message.interactive?.list_reply?.title ??
+		message.button?.text ??
+		message.caption
+	);
+}
+
+/** WhatsApp sends Unix seconds as a string; fall back to our receive time. */
+function waTimestampToIso(
+	timestamp: string | undefined,
+	fallback: string,
+): string {
+	const seconds = Number(timestamp);
+	if (!Number.isFinite(seconds) || seconds <= 0) return fallback;
+	return new Date(seconds * 1000).toISOString();
 }

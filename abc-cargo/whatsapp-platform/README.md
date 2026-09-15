@@ -1,4 +1,4 @@
-# ABC Cargo WhatsApp customer communication platform
+# ABC Cargo Engage — customer communication and operations platform
 
 Starter implementation of a WhatsApp customer communication service for
 ABC Cargo, built on Cloudflare Workers and the Meta WhatsApp Business
@@ -23,10 +23,32 @@ the code only.
 | Persistence          | `src/db/`                    | D1 schema and repository (contacts, conversations, messages, audit)       |
 | Media                | `src/conversation.ts`        | Inbound media copied to R2 before Meta's short-lived link expires         |
 | Internal API         | `src/index.ts`               | Endpoints for an agent console: list, read, reply, assign, template       |
+| Intent recognition   | `src/crm/intent.ts`          | Rule-based, English and Arabic; claims outrank everything else            |
+| Leads and quotations | `src/crm/`                   | A rate enquiry becomes a lead before an agent is free                     |
+| Bookings             | `src/crm/lifecycle.ts`       | Milestones move forward only; a stalled shipment raises a ticket          |
+| Tickets and SLA      | `src/crm/sla.ts`             | Targets counted in business minutes on the region's own calendar          |
+| Customer 360         | `src/crm/service.ts`         | Every record writes one activity, so the timeline is complete by design   |
 
 Not implemented yet: the agent console user interface, agent login and
 roles (use Cloudflare Access in front of `/api/*`), AI-assisted drafting,
 reporting, and integration with ABC Cargo shipment systems.
+
+### How the commercial side hangs together
+
+Every inbound message is classified, and the classification decides what the
+platform creates:
+
+- a **rate enquiry** opens a **lead**, even at 02:00 with nobody online;
+- a **claim, billing query, documentation request or booking change** opens a
+  **ticket**, with first-response and resolution targets already computed in
+  business minutes for the owning region;
+- a message quoting a shipment reference is attached to that **booking**.
+
+Accepting a quotation wins its lead and creates the booking; recording a
+milestone returns the proactive message the customer should receive rather
+than sending it, so a retry cannot message the customer twice. A shipment
+that stops moving for longer than its milestone allows is swept into a delay
+ticket before the customer has to chase it.
 
 ## Interactive demo
 
@@ -60,7 +82,14 @@ src/
   auto-reply.ts         Rule-based automated replies
   queue/consumer.ts     Queue consumer: routes events to Durable Objects / D1
   whatsapp/             Cloud API client, webhook types, signature verification
-  db/repo.ts            D1 data access
+  crm/types.ts          Domain types for leads, quotations, bookings, tickets
+  crm/intent.ts         Intent recognition for inbound messages (en + ar)
+  crm/refs.ts           Human-readable references (L-, Q-, T-, ABC-XXX-)
+  crm/sla.ts            Business-minute clocks and per-region targets
+  crm/lifecycle.ts      Stage machines: leads, quotations, milestones, stalls
+  crm/repo.ts           D1 data access for the commercial objects
+  crm/service.ts        Orchestration; writes one activity per change
+  db/repo.ts            D1 data access for conversations
   db/migrations/        D1 schema
 test/                   Node test runner suites for the pure modules
 docs/                   Architecture and implementation plan
@@ -120,6 +149,31 @@ All `/api/*` routes require `Authorization: Bearer <INTERNAL_API_KEY>`.
 | POST   | `/api/conversations/:id/status` | `{ "status": "open\|pending\|resolved", "actor" }`     |
 | POST   | `/api/notifications/template`   | `{ "region", "to", "requestedBy", "template": {...} }` |
 | POST   | `/api/agents/:id/presence`      | `{ "status": "online\|away\|offline" }`                |
+
+Commercial and service routes:
+
+| Method | Path                            | Body or query                                      |
+| ------ | ------------------------------- | -------------------------------------------------- |
+| GET    | `/api/customers`                | query: `region`, `limit`                           |
+| GET    | `/api/customers/:id`            | Customer 360 in one call; query: `activities`      |
+| GET    | `/api/leads`                    | query: `region`, `customer`, `stage`, `open`       |
+| POST   | `/api/leads/:ref/stage`         | `{ "stage", "actor", "lostReason"? }`              |
+| GET    | `/api/quotations`               | query: `region`, `customer`, `status`              |
+| POST   | `/api/quotations`               | `{ "customerId", "region", "origin", ... }`        |
+| POST   | `/api/quotations/:ref/status`   | `{ "status", "actor", "sentChannel"? }`            |
+| POST   | `/api/quotations/:ref/booking`  | `{ "pieces"?, "weightKg"?, "actor"? }`             |
+| GET    | `/api/bookings`                 | query: `region`, `customer`, `milestone`, `active` |
+| GET    | `/api/bookings/:ref`            | —                                                  |
+| POST   | `/api/bookings/:ref/milestone`  | `{ "milestone", "occurredAt"?, "source"? }`        |
+| GET    | `/api/tickets`                  | query: `region`, `customer`, `status`, `type`      |
+| POST   | `/api/tickets`                  | `{ "customerId", "region", "type", "subject" }`    |
+| POST   | `/api/tickets/:ref/resolve`     | `{ "actor" }`                                      |
+| GET    | `/api/calls`                    | query: `region`, `customer`, `limit`               |
+| POST   | `/api/calls`                    | `{ "customerId", "region", "direction", ... }`     |
+| POST   | `/api/operations/sweep-stalled` | —                                                  |
+
+An invalid transition — a lead skipping qualification, a milestone moving
+backwards — returns HTTP 409 rather than silently corrupting the record.
 
 Conversation ids have the form `<phone_number_id>:<customer_wa_id>` and must
 be URL-encoded in paths.

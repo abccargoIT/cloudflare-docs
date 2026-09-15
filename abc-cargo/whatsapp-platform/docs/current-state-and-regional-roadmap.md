@@ -193,8 +193,8 @@ reverse, so the smallest population is exposed to the first migration.
 
 Seen in **Admin Settings > Channels > WhatsApp**. All three are toggled enabled.
 
-| WhatsApp number | Topic name              | Region (inferred from dialling code) | State   |
-| --------------- | ----------------------- | ------------------------------------ | ------- |
+| WhatsApp number | Topic name               | Region (inferred from dialling code) | State   |
+| --------------- | ------------------------ | ------------------------------------ | ------- |
 | +966548454866   | `WHATSAPP_+966548454866` | KSA                                  | Enabled |
 | +971800916      | `WHATSAPP_+971800916`    | UAE                                  | Enabled |
 | +447388800000   | `WHATSAPP_+447388800000` | UK                                   | Enabled |
@@ -216,14 +216,14 @@ region that can be built fresh and proved before touching production traffic.
 Read from **Configure** on each of the three rows. Identical structure, different
 values.
 
-| Setting                | +966548454866       | +971800916       | +447388800000       |
-| ---------------------- | ------------------- | ---------------- | ------------------- |
-| Trigger a bot          | On                  | On               | On                  |
-| Bot                    | `ABC Cargo KSA`     | `ABC Cargo`      | `ABC Cargo UK`      |
-| Bot runs               | Both, inside and outside business hours | Both | Both |
-| Assign group           | On — `KSA Sales Team` | On — `UAE Sales Team` | On — `UK Customer Support` |
-| CSAT survey on resolve | Off                 | Off              | Off                 |
-| Threading interval     | Locked — "Default threading interval cannot be changed for a bot-mapped topic" | Locked | Locked |
+| Setting                | +966548454866                                                                  | +971800916            | +447388800000              |
+| ---------------------- | ------------------------------------------------------------------------------ | --------------------- | -------------------------- |
+| Trigger a bot          | On                                                                             | On                    | On                         |
+| Bot                    | `ABC Cargo KSA`                                                                | `ABC Cargo`           | `ABC Cargo UK`             |
+| Bot runs               | Both, inside and outside business hours                                        | Both                  | Both                       |
+| Assign group           | On — `KSA Sales Team`                                                          | On — `UAE Sales Team` | On — `UK Customer Support` |
+| CSAT survey on resolve | Off                                                                            | Off                   | Off                        |
+| Threading interval     | Locked — "Default threading interval cannot be changed for a bot-mapped topic" | Locked                | Locked                     |
 
 Four findings follow, in order of consequence.
 

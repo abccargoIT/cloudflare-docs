@@ -21,10 +21,21 @@ export interface AutoReplyInput {
 }
 
 /**
- * Placeholder pattern: two to four letters followed by six to twelve digits.
- * Replace with the exact ABC Cargo AWB / tracking number format before go-live.
+ * Placeholder pattern: two to four letters followed by up to three groups of
+ * digits, which may be separated by a dash or a space. Customers write the
+ * same reference as ABC-471-88210, ABC 471 88210 or ABC47188210, and all
+ * three have to reach the same shipment.
+ *
+ * Replace with the exact ABC Cargo AWB / tracking format before go-live; the
+ * total digit bounds below are the second half of the guard and should be
+ * tightened at the same time.
  */
-export const DEFAULT_TRACKING_PATTERN = /\b[A-Z]{2,4}[- ]?\d{6,12}\b/gi;
+export const DEFAULT_TRACKING_PATTERN =
+	/\b[A-Z]{2,4}(?:[- ]?\d{2,12}){1,3}\b/gi;
+
+/** Total digits a candidate must carry to be treated as a reference. */
+export const TRACKING_MIN_DIGITS = 6;
+export const TRACKING_MAX_DIGITS = 12;
 
 export function extractTrackingNumbers(
 	text: string | undefined,
@@ -37,7 +48,12 @@ export function extractTrackingNumbers(
 	);
 	const found = new Set<string>();
 	for (const match of text.matchAll(re)) {
-		found.add(match[0].replace(/[- ]/g, "").toUpperCase());
+		const normalised = match[0].replace(/[- ]/g, "").toUpperCase();
+		const digits = normalised.replace(/\D/g, "").length;
+		// The pattern alone would accept "here 12"; the digit count is what
+		// separates a reference from an ordinary word next to a number.
+		if (digits < TRACKING_MIN_DIGITS || digits > TRACKING_MAX_DIGITS) continue;
+		found.add(normalised);
 	}
 	return [...found];
 }

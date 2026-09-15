@@ -14,6 +14,17 @@ import {
 import type { TemplateSendRequest } from "./whatsapp/types.ts";
 import { findRegionById, parseRegionConfig } from "./regions.ts";
 import { conversationIdFor, WindowClosedError } from "./conversation.ts";
+import { CrmService } from "./crm/service.ts";
+import { InvalidTransitionError } from "./crm/lifecycle.ts";
+import {
+	LEAD_STAGES,
+	MILESTONES,
+	QUOTATION_STATUSES,
+	TICKET_PRIORITIES,
+	TICKET_TYPES,
+	TICKET_STATUSES,
+	TRANSPORT_MODES,
+} from "./crm/types.ts";
 
 export { Conversation } from "./conversation.ts";
 
@@ -45,6 +56,9 @@ export default {
 			return json({ error: "Not found" }, 404);
 		} catch (error) {
 			if (error instanceof WindowClosedError) {
+				return json({ error: error.message }, 409);
+			}
+			if (error instanceof InvalidTransitionError) {
 				return json({ error: error.message }, 409);
 			}
 			console.error("unhandled error", {
@@ -304,7 +318,399 @@ async function handleApi(
 		return json({ ok: true });
 	}
 
+	const operations = await handleOperationsApi(request, url, env, segments);
+	if (operations) return operations;
+
 	return json({ error: "Not found" }, 404);
+}
+
+/**
+ * Routes for the commercial and service side: customers, leads, quotations,
+ * bookings, tickets and calls. Returns null when the path is not one of
+ * these, so the caller can fall through to its own 404.
+ */
+async function handleOperationsApi(
+	request: Request,
+	url: URL,
+	env: Env,
+	segments: string[],
+): Promise<Response | null> {
+	const [, resource, rawId, action] = segments;
+	const id = rawId ? decodeURIComponent(rawId) : undefined;
+	const crm = new CrmService(env.DB);
+	const repo = crm.repository;
+	const region = url.searchParams.get("region") ?? undefined;
+	const limit = Number(url.searchParams.get("limit") ?? "50");
+
+	/* ------------------------------------------------------------ customers */
+
+	if (resource === "customers" && !id && request.method === "GET") {
+		return json({
+			customers: await repo.listCustomers({ regionId: region, limit }),
+		});
+	}
+
+	// GET /api/customers/:id — everything Customer 360 shows, in one call.
+	if (resource === "customers" && id && !action && request.method === "GET") {
+		const view = await crm.customerView(
+			id,
+			Number(url.searchParams.get("activities") ?? "100"),
+		);
+		if (!view) return json({ error: "Not found" }, 404);
+		return json(view);
+	}
+
+	/* ---------------------------------------------------------------- leads */
+
+	if (resource === "leads" && !id && request.method === "GET") {
+		const stage = url.searchParams.get("stage");
+		return json({
+			leads: await repo.listLeads({
+				regionId: region,
+				customerId: url.searchParams.get("customer") ?? undefined,
+				stage: isOneOf(stage, LEAD_STAGES),
+				openOnly: url.searchParams.get("open") === "true",
+				limit,
+			}),
+		});
+	}
+
+	// POST /api/leads/:ref/stage   { stage, actor, lostReason? }
+	if (
+		resource === "leads" &&
+		id &&
+		action === "stage" &&
+		request.method === "POST"
+	) {
+		const body = await readJson<{
+			stage?: string;
+			actor?: string;
+			lostReason?: string;
+		}>(request);
+		const stage = isOneOf(body?.stage, LEAD_STAGES);
+		if (!stage) {
+			return json(
+				{ error: `stage must be one of ${LEAD_STAGES.join(", ")}` },
+				400,
+			);
+		}
+		const lead = await crm.advanceLead(
+			id,
+			stage,
+			body?.actor ?? "api",
+			body?.lostReason,
+		);
+		return json({ lead });
+	}
+
+	/* ----------------------------------------------------------- quotations */
+
+	if (resource === "quotations" && !id && request.method === "GET") {
+		const status = url.searchParams.get("status");
+		return json({
+			quotations: await repo.listQuotations({
+				regionId: region,
+				customerId: url.searchParams.get("customer") ?? undefined,
+				status: isOneOf(status, QUOTATION_STATUSES),
+				limit,
+			}),
+		});
+	}
+
+	// POST /api/quotations
+	if (resource === "quotations" && !id && request.method === "POST") {
+		const body = await readJson<{
+			leadRef?: string;
+			customerId?: string;
+			region?: string;
+			origin?: string;
+			destination?: string;
+			mode?: string;
+			chargeableKg?: number;
+			totalAmount?: number;
+			currency?: string;
+			validUntil?: string;
+			actor?: string;
+		}>(request);
+		const mode = isOneOf(body?.mode, TRANSPORT_MODES);
+		if (
+			!body?.customerId ||
+			!body.region ||
+			!body.origin ||
+			!body.destination ||
+			!mode ||
+			typeof body.totalAmount !== "number" ||
+			!body.currency
+		) {
+			return json(
+				{
+					error:
+						"customerId, region, origin, destination, mode, totalAmount and currency are required",
+				},
+				400,
+			);
+		}
+		const quotation = await crm.createQuotation({
+			leadIdOrRef: body.leadRef,
+			customerId: body.customerId,
+			regionId: body.region,
+			origin: body.origin,
+			destination: body.destination,
+			mode,
+			chargeableKg: body.chargeableKg ?? null,
+			totalAmount: body.totalAmount,
+			currency: body.currency,
+			validUntil: body.validUntil ?? null,
+			actor: body.actor ?? "api",
+		});
+		return json({ quotation }, 201);
+	}
+
+	// POST /api/quotations/:ref/status   { status, actor, sentChannel? }
+	if (
+		resource === "quotations" &&
+		id &&
+		action === "status" &&
+		request.method === "POST"
+	) {
+		const body = await readJson<{
+			status?: string;
+			actor?: string;
+			sentChannel?: string;
+		}>(request);
+		const status = isOneOf(body?.status, QUOTATION_STATUSES);
+		if (!status) {
+			return json(
+				{ error: `status must be one of ${QUOTATION_STATUSES.join(", ")}` },
+				400,
+			);
+		}
+		const quotation = await crm.moveQuotation({
+			quotationIdOrRef: id,
+			to: status,
+			actor: body?.actor ?? "api",
+			sentChannel: body?.sentChannel,
+		});
+		return json({ quotation });
+	}
+
+	// POST /api/quotations/:ref/booking   { pieces?, weightKg?, actor? }
+	if (
+		resource === "quotations" &&
+		id &&
+		action === "booking" &&
+		request.method === "POST"
+	) {
+		const body = await readJson<{
+			pieces?: number;
+			weightKg?: number;
+			actor?: string;
+		}>(request);
+		const booking = await crm.createBookingFromQuotation({
+			quotationIdOrRef: id,
+			pieces: body?.pieces ?? null,
+			weightKg: body?.weightKg ?? null,
+			actor: body?.actor ?? "api",
+		});
+		return json({ booking }, 201);
+	}
+
+	/* ------------------------------------------------------------- bookings */
+
+	if (resource === "bookings" && !id && request.method === "GET") {
+		const milestone = url.searchParams.get("milestone");
+		return json({
+			bookings: await repo.listBookings({
+				regionId: region,
+				customerId: url.searchParams.get("customer") ?? undefined,
+				milestone: isOneOf(milestone, MILESTONES),
+				undelivered: url.searchParams.get("active") === "true",
+				limit,
+			}),
+		});
+	}
+
+	if (resource === "bookings" && id && !action && request.method === "GET") {
+		const booking = await repo.getBooking(id);
+		if (!booking) return json({ error: "Not found" }, 404);
+		return json({ booking });
+	}
+
+	// POST /api/bookings/:ref/milestone   { milestone, occurredAt?, source?, actor? }
+	if (
+		resource === "bookings" &&
+		id &&
+		action === "milestone" &&
+		request.method === "POST"
+	) {
+		const body = await readJson<{
+			milestone?: string;
+			occurredAt?: string;
+			source?: string;
+			actor?: string;
+		}>(request);
+		const milestone = isOneOf(body?.milestone, MILESTONES);
+		if (!milestone) {
+			return json(
+				{ error: `milestone must be one of ${MILESTONES.join(", ")}` },
+				400,
+			);
+		}
+		const result = await crm.recordMilestone({
+			bookingIdOrRef: id,
+			milestone,
+			occurredAt: body?.occurredAt,
+			source: body?.source,
+			actor: body?.actor ?? "api",
+		});
+		// The proactive message is returned rather than sent here: the caller
+		// decides, and a retry of this request cannot send it twice.
+		return json(result);
+	}
+
+	/* -------------------------------------------------------------- tickets */
+
+	if (resource === "tickets" && !id && request.method === "GET") {
+		const status = url.searchParams.get("status");
+		const type = url.searchParams.get("type");
+		return json({
+			tickets: await repo.listTickets({
+				regionId: region,
+				customerId: url.searchParams.get("customer") ?? undefined,
+				status: isOneOf(status, TICKET_STATUSES),
+				type: isOneOf(type, TICKET_TYPES),
+				openOnly: url.searchParams.get("open") === "true",
+				limit,
+			}),
+		});
+	}
+
+	// POST /api/tickets   { customerId, region, type, subject, priority?, bookingId? }
+	if (resource === "tickets" && !id && request.method === "POST") {
+		const body = await readJson<{
+			customerId?: string;
+			region?: string;
+			type?: string;
+			subject?: string;
+			priority?: string;
+			bookingId?: string;
+			conversationId?: string;
+		}>(request);
+		const type = isOneOf(body?.type, TICKET_TYPES);
+		const priority = isOneOf(body?.priority, TICKET_PRIORITIES) ?? "normal";
+		if (!body?.customerId || !body.region || !type || !body.subject?.trim()) {
+			return json(
+				{ error: "customerId, region, type and subject are required" },
+				400,
+			);
+		}
+		const regionConfig = findRegionById(
+			parseRegionConfig(env.REGION_NUMBERS),
+			body.region,
+		);
+		if (!regionConfig) return json({ error: "Unknown region" }, 400);
+		const customer = await repo.getCustomer(body.customerId);
+		if (!customer) return json({ error: "Unknown customer" }, 400);
+
+		const ticket = await crm.openTicketIfNoneOpen({
+			customer,
+			region: regionConfig,
+			type,
+			subject: body.subject.trim(),
+			priority,
+			bookingId: body.bookingId ?? null,
+			conversationId: body.conversationId ?? null,
+		});
+		return json({ ticket }, 201);
+	}
+
+	// POST /api/tickets/:ref/resolve   { actor }
+	if (
+		resource === "tickets" &&
+		id &&
+		action === "resolve" &&
+		request.method === "POST"
+	) {
+		const body = await readJson<{ actor?: string }>(request);
+		const ticket = await crm.resolveTicket(id, body?.actor ?? "api");
+		return json({ ticket });
+	}
+
+	/* ---------------------------------------------------------------- calls */
+
+	if (resource === "calls" && !id && request.method === "GET") {
+		return json({
+			calls: await repo.listCalls({
+				regionId: region,
+				customerId: url.searchParams.get("customer") ?? undefined,
+				limit,
+			}),
+		});
+	}
+
+	// POST /api/calls
+	if (resource === "calls" && !id && request.method === "POST") {
+		const body = await readJson<{
+			customerId?: string;
+			region?: string;
+			direction?: string;
+			agentId?: string;
+			startedAt?: string;
+			durationSeconds?: number;
+			outcome?: string;
+			linkedType?: string;
+			linkedId?: string;
+		}>(request);
+		if (
+			!body?.customerId ||
+			!body.region ||
+			(body.direction !== "in" && body.direction !== "out")
+		) {
+			return json(
+				{ error: "customerId, region and direction (in|out) are required" },
+				400,
+			);
+		}
+		await crm.recordCall({
+			customerId: body.customerId,
+			regionId: body.region,
+			direction: body.direction,
+			agentId: body.agentId ?? null,
+			startedAt: body.startedAt ?? new Date().toISOString(),
+			durationSeconds: body.durationSeconds ?? 0,
+			outcome: body.outcome,
+			linkedType: body.linkedType,
+			linkedId: body.linkedId,
+		});
+		return json({ ok: true }, 201);
+	}
+
+	/* ------------------------------------------------------- stalled sweep */
+
+	// POST /api/operations/sweep-stalled — opens a ticket for each shipment
+	// that has gone quiet. Safe to call repeatedly; it will not duplicate.
+	if (
+		resource === "operations" &&
+		id === "sweep-stalled" &&
+		request.method === "POST"
+	) {
+		const regions = parseRegionConfig(env.REGION_NUMBERS);
+		const opened = await crm.sweepStalledBookings(regions);
+		return json({ opened: opened.length, tickets: opened });
+	}
+
+	return null;
+}
+
+/** Narrows a query or body value to one of a literal union. */
+function isOneOf<T extends string>(
+	value: unknown,
+	allowed: readonly T[],
+): T | undefined {
+	return typeof value === "string" &&
+		(allowed as readonly string[]).includes(value)
+		? (value as T)
+		: undefined;
 }
 
 // ------------------------------------------------------------------ helpers
