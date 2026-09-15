@@ -1,0 +1,2808 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, viewport-fit=cover"
+		/>
+		<title>ABC Cargo Engage</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+		/>
+		<style>
+			/* ============================================================
+			   ABC Cargo Engage — operations console prototype
+			   Palette: warm near-black ink on warm paper, ABC red accent.
+			   Region series colours are the validated categorical slots
+			   1-3 (blue / orange / aqua), all-pairs CVD-checked in both
+			   themes. Aqua sits under 3:1 on the light surface, so every
+			   series carries a direct label and a table view — the relief
+			   the palette check requires.
+			   ============================================================ */
+
+			:root {
+				color-scheme: light;
+
+				--paper: #f4f1ee;
+				--card: #ffffff;
+				--sunk: #ebe6e2;
+				--ink: #17120f;
+				--ink-2: #56504b;
+				--ink-3: #8a827c;
+				--rule: #ddd6d0;
+				--rule-soft: #eae4df;
+
+				--brand: #c1121f;
+				--brand-ink: #8c0d17;
+				--brand-wash: #fbeced;
+
+				--s-uae: #2a78d6;
+				--s-ksa: #eb6834;
+				--s-uk: #1baf7a;
+
+				--good: #0ca30c;
+				--warn: #fab219;
+				--serious: #ec835a;
+				--critical: #d03b3b;
+
+				--grid: #e6e0da;
+				--axis: #c9c1ba;
+
+				--shadow:
+					0 1px 2px rgba(23, 18, 15, 0.06),
+					0 8px 24px -12px rgba(23, 18, 15, 0.16);
+
+				--ui: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+				--narrow: "Archivo Narrow", "Archivo", system-ui, sans-serif;
+				--mono:
+					"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+			}
+
+			@media (prefers-color-scheme: dark) {
+				:root:not([data-theme="light"]) {
+					color-scheme: dark;
+
+					--paper: #100e0d;
+					--card: #1b1917;
+					--sunk: #232020;
+					--ink: #f3efec;
+					--ink-2: #b6aea8;
+					--ink-3: #8a827c;
+					--rule: #302c29;
+					--rule-soft: #262322;
+
+					--brand: #ef4352;
+					--brand-ink: #ff6b76;
+					--brand-wash: #2c1417;
+
+					--s-uae: #3987e5;
+					--s-ksa: #d95926;
+					--s-uk: #199e70;
+
+					--grid: #2a2725;
+					--axis: #3a3633;
+
+					--shadow:
+						0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 28px -14px rgba(0, 0, 0, 0.8);
+				}
+			}
+
+			:root[data-theme="dark"] {
+				color-scheme: dark;
+
+				--paper: #100e0d;
+				--card: #1b1917;
+				--sunk: #232020;
+				--ink: #f3efec;
+				--ink-2: #b6aea8;
+				--ink-3: #8a827c;
+				--rule: #302c29;
+				--rule-soft: #262322;
+
+				--brand: #ef4352;
+				--brand-ink: #ff6b76;
+				--brand-wash: #2c1417;
+
+				--s-uae: #3987e5;
+				--s-ksa: #d95926;
+				--s-uk: #199e70;
+
+				--grid: #2a2725;
+				--axis: #3a3633;
+
+				--shadow:
+					0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 28px -14px rgba(0, 0, 0, 0.8);
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			html,
+			body {
+				height: 100%;
+			}
+
+			body {
+				margin: 0;
+				background: var(--paper);
+				color: var(--ink);
+				font-family: var(--ui);
+				font-size: 14px;
+				line-height: 1.45;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			button {
+				font: inherit;
+				color: inherit;
+				background: none;
+				border: 0;
+				cursor: pointer;
+			}
+
+			:focus-visible {
+				outline: 2px solid var(--brand);
+				outline-offset: 2px;
+				border-radius: 3px;
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				* {
+					animation-duration: 0.001ms !important;
+					transition-duration: 0.001ms !important;
+				}
+			}
+
+			/* ---------- shared atoms ---------- */
+
+			.eyebrow {
+				font-family: var(--narrow);
+				font-weight: 600;
+				font-size: 11px;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+			}
+
+			.mono {
+				font-family: var(--mono);
+				font-variant-numeric: tabular-nums;
+			}
+
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				padding: 2px 8px;
+				border-radius: 999px;
+				font-family: var(--narrow);
+				font-weight: 600;
+				font-size: 11px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				white-space: nowrap;
+			}
+
+			.dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				flex: none;
+			}
+
+			.verified {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				font-family: var(--narrow);
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.07em;
+				text-transform: uppercase;
+				color: var(--good);
+			}
+
+			.btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 7px;
+				padding: 7px 13px;
+				border-radius: 6px;
+				border: 1px solid var(--rule);
+				background: var(--card);
+				font-weight: 500;
+				font-size: 13px;
+				white-space: nowrap;
+			}
+
+			.btn:hover {
+				border-color: var(--ink-3);
+			}
+
+			.btn-primary {
+				background: var(--brand);
+				border-color: var(--brand);
+				color: #fff;
+				font-weight: 600;
+			}
+
+			.btn-primary:hover {
+				background: var(--brand-ink);
+				border-color: var(--brand-ink);
+			}
+
+			/* ---------- shell ---------- */
+
+			.app {
+				display: grid;
+				grid-template-columns: 76px 1fr;
+				grid-template-rows: auto 1fr;
+				height: 100%;
+			}
+
+			.topbar {
+				grid-column: 1 / -1;
+				display: flex;
+				align-items: center;
+				gap: 18px;
+				padding: 0 16px 0 14px;
+				height: 54px;
+				background: var(--card);
+				border-bottom: 1px solid var(--rule);
+				position: sticky;
+				top: env(safe-area-inset-top, 0px);
+				z-index: 20;
+			}
+
+			.brand {
+				display: flex;
+				align-items: center;
+				gap: 9px;
+				flex: none;
+			}
+
+			.brand-mark {
+				width: 30px;
+				height: 30px;
+				border-radius: 7px;
+				background: var(--brand);
+				color: #fff;
+				display: grid;
+				place-items: center;
+				font-family: var(--narrow);
+				font-weight: 700;
+				font-size: 12px;
+				letter-spacing: 0.04em;
+			}
+
+			.brand-name {
+				font-weight: 700;
+				font-size: 15px;
+				letter-spacing: -0.01em;
+			}
+
+			.brand-name span {
+				font-weight: 400;
+				color: var(--ink-3);
+			}
+
+			.clocks {
+				display: flex;
+				gap: 2px;
+				margin-left: auto;
+				flex-wrap: wrap;
+			}
+
+			.clock {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				padding: 4px 9px;
+				border-radius: 5px;
+			}
+
+			.clock .tz {
+				font-family: var(--narrow);
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+			}
+
+			.clock .t {
+				font-family: var(--mono);
+				font-size: 12.5px;
+				font-variant-numeric: tabular-nums;
+			}
+
+			.clock.closed .t {
+				color: var(--ink-3);
+			}
+
+			.regionsel {
+				display: flex;
+				gap: 0;
+				border: 1px solid var(--rule);
+				border-radius: 7px;
+				overflow: hidden;
+			}
+
+			.regionsel button {
+				padding: 5px 11px;
+				font-family: var(--narrow);
+				font-weight: 600;
+				font-size: 11.5px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: var(--ink-2);
+				border-right: 1px solid var(--rule);
+			}
+
+			.regionsel button:last-child {
+				border-right: 0;
+			}
+
+			.regionsel button[aria-pressed="true"] {
+				background: var(--ink);
+				color: var(--paper);
+			}
+
+			/* ---------- nav rail ---------- */
+
+			.rail {
+				background: var(--card);
+				border-right: 1px solid var(--rule);
+				display: flex;
+				flex-direction: column;
+				align-items: stretch;
+				padding: 8px 0;
+				gap: 2px;
+				overflow-y: auto;
+			}
+
+			.nav {
+				display: grid;
+				justify-items: center;
+				gap: 4px;
+				padding: 9px 2px;
+				color: var(--ink-2);
+				position: relative;
+			}
+
+			.nav span {
+				font-family: var(--narrow);
+				font-size: 10px;
+				font-weight: 600;
+				letter-spacing: 0.055em;
+				text-transform: uppercase;
+			}
+
+			.nav:hover {
+				color: var(--ink);
+			}
+
+			.nav[aria-current="page"] {
+				color: var(--brand);
+			}
+
+			.nav[aria-current="page"]::before {
+				content: "";
+				position: absolute;
+				left: 0;
+				top: 6px;
+				bottom: 6px;
+				width: 3px;
+				background: var(--brand);
+				border-radius: 0 3px 3px 0;
+			}
+
+			.nav .badge {
+				position: absolute;
+				top: 5px;
+				right: 12px;
+				min-width: 17px;
+				height: 17px;
+				padding: 0 4px;
+				border-radius: 9px;
+				background: var(--critical);
+				color: #fff;
+				font-family: var(--mono);
+				font-size: 10px;
+				font-weight: 600;
+				display: grid;
+				place-items: center;
+			}
+
+			.main {
+				overflow: hidden;
+				min-width: 0;
+			}
+
+			.screen {
+				height: 100%;
+				overflow: auto;
+			}
+
+			.screen[hidden] {
+				display: none !important;
+			}
+
+			/* ---------- inbox ---------- */
+
+			.inbox {
+				display: grid;
+				grid-template-columns: 330px minmax(0, 1fr) 320px;
+				height: 100%;
+				overflow: hidden;
+			}
+
+			.col {
+				min-width: 0;
+				display: flex;
+				flex-direction: column;
+				overflow: hidden;
+			}
+
+			.col-queue {
+				border-right: 1px solid var(--rule);
+				background: var(--card);
+			}
+
+			.col-ctx {
+				border-left: 1px solid var(--rule);
+				background: var(--card);
+				overflow-y: auto;
+			}
+
+			.colhead {
+				display: flex;
+				align-items: baseline;
+				gap: 9px;
+				padding: 12px 14px 9px;
+				border-bottom: 1px solid var(--rule-soft);
+				flex: none;
+			}
+
+			.colhead h2 {
+				margin: 0;
+				font-size: 14px;
+				font-weight: 700;
+				letter-spacing: -0.01em;
+			}
+
+			.queue {
+				overflow-y: auto;
+				flex: 1;
+			}
+
+			.qrow {
+				display: grid;
+				grid-template-columns: 3px 1fr;
+				width: 100%;
+				text-align: left;
+				border-bottom: 1px solid var(--rule-soft);
+				gap: 0;
+			}
+
+			.qrow:hover .qbody {
+				background: var(--sunk);
+			}
+
+			.qrow[aria-selected="true"] .qbody {
+				background: var(--brand-wash);
+			}
+
+			.qstripe {
+				background: var(--sr);
+			}
+
+			.qbody {
+				padding: 10px 13px 11px;
+				display: grid;
+				gap: 4px;
+				min-width: 0;
+			}
+
+			.qtop {
+				display: flex;
+				align-items: center;
+				gap: 7px;
+				min-width: 0;
+			}
+
+			.qname {
+				font-weight: 600;
+				font-size: 13.5px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.qcode {
+				font-family: var(--narrow);
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.08em;
+				color: var(--sr);
+				flex: none;
+			}
+
+			.qtime {
+				margin-left: auto;
+				font-family: var(--mono);
+				font-size: 11px;
+				color: var(--ink-3);
+				flex: none;
+			}
+
+			.qmsg {
+				font-size: 12.5px;
+				color: var(--ink-2);
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+			}
+
+			.qmeta {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				flex-wrap: wrap;
+			}
+
+			/* ---------- thread ---------- */
+
+			.thread-head {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				padding: 11px 16px;
+				border-bottom: 1px solid var(--rule);
+				background: var(--card);
+				flex: none;
+				flex-wrap: wrap;
+			}
+
+			.avatar {
+				width: 34px;
+				height: 34px;
+				border-radius: 50%;
+				display: grid;
+				place-items: center;
+				font-family: var(--narrow);
+				font-weight: 700;
+				font-size: 12.5px;
+				color: #fff;
+				flex: none;
+			}
+
+			.thread {
+				flex: 1;
+				overflow-y: auto;
+				padding: 18px 16px 20px;
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+			}
+
+			.daymark {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				color: var(--ink-3);
+			}
+
+			.daymark::before,
+			.daymark::after {
+				content: "";
+				height: 1px;
+				background: var(--rule);
+				flex: 1;
+			}
+
+			.bubble {
+				max-width: min(560px, 82%);
+				padding: 9px 12px 8px;
+				border-radius: 12px;
+				font-size: 13.5px;
+				position: relative;
+			}
+
+			.bubble .stamp {
+				display: block;
+				margin-top: 4px;
+				font-family: var(--mono);
+				font-size: 10.5px;
+				color: var(--ink-3);
+			}
+
+			.b-in {
+				align-self: flex-start;
+				background: var(--sunk);
+				border-bottom-left-radius: 4px;
+			}
+
+			.b-bot {
+				align-self: flex-end;
+				background: var(--card);
+				border: 1px dashed var(--rule);
+				border-bottom-right-radius: 4px;
+			}
+
+			.b-agent {
+				align-self: flex-end;
+				background: var(--ink);
+				color: var(--paper);
+				border-bottom-right-radius: 4px;
+			}
+
+			.b-agent .stamp {
+				color: var(--ink-3);
+			}
+
+			.b-tmpl {
+				align-self: flex-end;
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-left: 3px solid var(--s-uae);
+				border-bottom-right-radius: 4px;
+			}
+
+			.botlabel {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				margin-bottom: 4px;
+			}
+
+			.quickreplies {
+				display: flex;
+				gap: 6px;
+				flex-wrap: wrap;
+				margin-top: 8px;
+				padding-top: 8px;
+				border-top: 1px solid var(--rule-soft);
+			}
+
+			.qr {
+				padding: 4px 10px;
+				border: 1px solid var(--rule);
+				border-radius: 999px;
+				font-size: 12px;
+				color: var(--ink-2);
+			}
+
+			.handover {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				align-self: stretch;
+				padding: 8px 12px;
+				border-radius: 8px;
+				background: var(--sunk);
+				border-left: 3px solid var(--brand);
+			}
+
+			.handover .txt {
+				font-size: 12.5px;
+				color: var(--ink-2);
+			}
+
+			/* composer */
+
+			.composer {
+				flex: none;
+				border-top: 1px solid var(--rule);
+				background: var(--card);
+				padding: 10px 14px 12px;
+				display: grid;
+				gap: 9px;
+			}
+
+			.composer-row {
+				display: flex;
+				align-items: center;
+				gap: 9px;
+				flex-wrap: wrap;
+			}
+
+			.fauxinput {
+				flex: 1;
+				min-width: 180px;
+				padding: 9px 12px;
+				border: 1px solid var(--rule);
+				border-radius: 8px;
+				color: var(--ink-3);
+				background: var(--paper);
+				font-size: 13.5px;
+			}
+
+			.locked {
+				display: flex;
+				align-items: flex-start;
+				gap: 10px;
+				padding: 10px 12px;
+				border-radius: 8px;
+				background: var(--brand-wash);
+				border: 1px solid color-mix(in srgb, var(--brand) 28%, transparent);
+			}
+
+			.locked h4 {
+				margin: 0 0 2px;
+				font-size: 13px;
+				font-weight: 700;
+			}
+
+			.locked p {
+				margin: 0;
+				font-size: 12.5px;
+				color: var(--ink-2);
+			}
+
+			/* ---------- context panel ---------- */
+
+			.ctx-sec {
+				padding: 13px 15px;
+				border-bottom: 1px solid var(--rule-soft);
+				display: grid;
+				gap: 9px;
+			}
+
+			.kv {
+				display: grid;
+				grid-template-columns: 96px 1fr;
+				gap: 6px 10px;
+				font-size: 12.5px;
+				align-items: baseline;
+			}
+
+			.kv dt {
+				font-family: var(--narrow);
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.07em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+			}
+
+			.kv dd {
+				margin: 0;
+			}
+
+			.ring-wrap {
+				display: flex;
+				align-items: center;
+				gap: 13px;
+			}
+
+			.ring-num {
+				font-family: var(--mono);
+				font-size: 21px;
+				font-weight: 600;
+				letter-spacing: -0.02em;
+				line-height: 1.1;
+			}
+
+			.track {
+				height: 6px;
+				border-radius: 3px;
+				background: var(--sunk);
+				overflow: hidden;
+			}
+
+			.track > i {
+				display: block;
+				height: 100%;
+				border-radius: 3px;
+			}
+
+			.timeline {
+				display: grid;
+				gap: 0;
+			}
+
+			.tl {
+				display: grid;
+				grid-template-columns: 14px 1fr;
+				gap: 10px;
+				padding-bottom: 11px;
+				position: relative;
+			}
+
+			.tl:not(:last-child)::before {
+				content: "";
+				position: absolute;
+				left: 6px;
+				top: 14px;
+				bottom: 0;
+				width: 1px;
+				background: var(--rule);
+			}
+
+			.tl i {
+				width: 13px;
+				height: 13px;
+				border-radius: 50%;
+				border: 2px solid var(--card);
+				margin-top: 2px;
+				z-index: 1;
+			}
+
+			.tl .t {
+				font-size: 12.5px;
+			}
+
+			.tl .s {
+				font-family: var(--mono);
+				font-size: 10.5px;
+				color: var(--ink-3);
+			}
+
+			/* ---------- generic page screens ---------- */
+
+			.page {
+				padding: 20px 22px 40px;
+				display: grid;
+				gap: 22px;
+				max-width: 1180px;
+			}
+
+			.page-head {
+				display: grid;
+				gap: 5px;
+			}
+
+			.page-head h1 {
+				margin: 0;
+				font-size: 22px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				text-wrap: balance;
+			}
+
+			.page-head p {
+				margin: 0;
+				color: var(--ink-2);
+				font-size: 13.5px;
+				max-width: 66ch;
+			}
+
+			.card {
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-radius: 10px;
+			}
+
+			.card-head {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 12px 15px;
+				border-bottom: 1px solid var(--rule-soft);
+				flex-wrap: wrap;
+			}
+
+			.card-head h3 {
+				margin: 0;
+				font-size: 14px;
+				font-weight: 700;
+			}
+
+			.card-body {
+				padding: 14px 15px;
+			}
+
+			.grid-2 {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+				gap: 14px;
+			}
+
+			.grid-3 {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+				gap: 14px;
+			}
+
+			.tile {
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-radius: 10px;
+				padding: 13px 15px 14px;
+				display: grid;
+				gap: 4px;
+			}
+
+			.tile .v {
+				font-size: 27px;
+				font-weight: 700;
+				letter-spacing: -0.025em;
+				line-height: 1.05;
+			}
+
+			.tile .note {
+				font-size: 12px;
+				color: var(--ink-2);
+			}
+
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 13px;
+			}
+
+			th {
+				text-align: left;
+				font-family: var(--narrow);
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+				padding: 0 10px 7px 0;
+				border-bottom: 1px solid var(--rule);
+				white-space: nowrap;
+			}
+
+			td {
+				padding: 9px 10px 9px 0;
+				border-bottom: 1px solid var(--rule-soft);
+				vertical-align: top;
+			}
+
+			tr:last-child td {
+				border-bottom: 0;
+			}
+
+			.scroll-x {
+				overflow-x: auto;
+			}
+
+			.rule-row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				flex-wrap: wrap;
+				font-size: 13px;
+			}
+
+			.chip {
+				display: inline-flex;
+				align-items: center;
+				padding: 3px 9px;
+				border-radius: 6px;
+				background: var(--sunk);
+				font-family: var(--mono);
+				font-size: 12px;
+			}
+
+			.op {
+				font-family: var(--narrow);
+				font-size: 10.5px;
+				font-weight: 700;
+				letter-spacing: 0.09em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+			}
+
+			.legend {
+				display: flex;
+				gap: 14px;
+				flex-wrap: wrap;
+				align-items: center;
+			}
+
+			.legend b {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				font-weight: 500;
+				font-size: 12.5px;
+				color: var(--ink-2);
+			}
+
+			.banner {
+				display: flex;
+				align-items: flex-start;
+				gap: 10px;
+				padding: 10px 13px;
+				border-radius: 8px;
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-left: 3px solid var(--warn);
+				font-size: 12.5px;
+				color: var(--ink-2);
+				max-width: 1180px;
+				margin: 16px 22px 0;
+			}
+
+			.banner strong {
+				color: var(--ink);
+			}
+
+			.readiness {
+				display: grid;
+				gap: 11px;
+			}
+
+			.rd-row {
+				display: grid;
+				grid-template-columns: 1fr auto;
+				gap: 4px 12px;
+				align-items: center;
+			}
+
+			.rd-label {
+				font-size: 13px;
+			}
+
+			svg text {
+				font-family: var(--ui);
+			}
+
+			@media (max-width: 1080px) {
+				.inbox {
+					grid-template-columns: 290px minmax(0, 1fr);
+				}
+				.col-ctx {
+					display: none;
+				}
+			}
+
+			@media (max-width: 760px) {
+				.app {
+					grid-template-columns: 62px 1fr;
+				}
+				.inbox {
+					grid-template-columns: 1fr;
+				}
+				.col-queue {
+					display: none;
+				}
+				.clocks {
+					display: none;
+				}
+				.page {
+					padding: 16px;
+				}
+				.banner {
+					margin: 12px 16px 0;
+				}
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="app">
+			<!-- ============ top bar ============ -->
+			<header class="topbar">
+				<div class="brand">
+					<div class="brand-mark" aria-hidden="true">ABC</div>
+					<div class="brand-name">
+						Engage <span>· Customer Communication</span>
+					</div>
+				</div>
+
+				<div class="regionsel" role="group" aria-label="Filter by region">
+					<button type="button" data-region="all" aria-pressed="true">
+						All
+					</button>
+					<button type="button" data-region="UAE" aria-pressed="false">
+						UAE
+					</button>
+					<button type="button" data-region="KSA" aria-pressed="false">
+						KSA
+					</button>
+					<button type="button" data-region="UK" aria-pressed="false">
+						UK
+					</button>
+				</div>
+
+				<div class="clocks" id="clocks"></div>
+			</header>
+
+			<!-- ============ nav rail ============ -->
+			<nav class="rail" aria-label="Sections">
+				<button
+					type="button"
+					class="nav"
+					data-screen="inbox"
+					aria-current="page"
+				>
+					<svg
+						width="19"
+						height="19"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.7"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path
+							d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+						/>
+					</svg>
+					<span>Inbox</span>
+					<em class="badge" id="navBadge">6</em>
+				</button>
+				<button type="button" class="nav" data-screen="cutover">
+					<svg
+						width="19"
+						height="19"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.7"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M3 12h7l2-4 3 8 2-4h4" />
+						<path d="M3 6h4M17 18h4" />
+					</svg>
+					<span>Cutover</span>
+				</button>
+				<button type="button" class="nav" data-screen="rules">
+					<svg
+						width="19"
+						height="19"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.7"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M4 5h16M4 12h10M4 19h6" />
+						<circle cx="18" cy="12" r="2.4" />
+						<circle cx="13" cy="19" r="2.4" />
+					</svg>
+					<span>Rules</span>
+				</button>
+				<button type="button" class="nav" data-screen="broadcast">
+					<svg
+						width="19"
+						height="19"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.7"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1Z" />
+						<path d="M17 9a4 4 0 0 1 0 6" />
+						<path d="M20 6.5a8 8 0 0 1 0 11" />
+					</svg>
+					<span>Send</span>
+				</button>
+				<button type="button" class="nav" data-screen="reports">
+					<svg
+						width="19"
+						height="19"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.7"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M5 20V9M12 20V4M19 20v-7" />
+					</svg>
+					<span>Reports</span>
+				</button>
+				<button type="button" class="nav" data-screen="numbers">
+					<svg
+						width="19"
+						height="19"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.7"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M12 2 3 6v6c0 5 4 8 9 9 5-1 9-4 9-9V6z" />
+						<path d="m9 12 2 2 4-4" />
+					</svg>
+					<span>Numbers</span>
+				</button>
+			</nav>
+
+			<!-- ============ screens ============ -->
+			<main class="main">
+				<!-- ---------- INBOX ---------- -->
+				<section class="screen" id="screen-inbox">
+					<div class="inbox">
+						<div class="col col-queue">
+							<div class="colhead">
+								<h2>Live queue</h2>
+								<span class="eyebrow" id="queueCount">—</span>
+							</div>
+							<div
+								class="queue"
+								id="queue"
+								role="listbox"
+								aria-label="Conversations"
+							></div>
+						</div>
+
+						<div class="col">
+							<div class="thread-head" id="threadHead"></div>
+							<div class="thread" id="thread"></div>
+							<div class="composer" id="composer"></div>
+						</div>
+
+						<aside class="col-ctx" id="ctx"></aside>
+					</div>
+				</section>
+
+				<!-- ---------- CUTOVER ---------- -->
+				<section class="screen" id="screen-cutover" hidden>
+					<div class="banner">
+						<span
+							class="dot"
+							style="background: var(--warn); margin-top: 5px"
+						></span>
+						<div>
+							<strong>Prototype with sample data.</strong> Figures and
+							conversations are illustrative. Items marked
+							<span class="verified">✓ verified</span> were read from ABC
+							Cargo's live Freshworks configuration; everything else is a
+							placeholder pending the configuration export.
+						</div>
+					</div>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Migration control</span>
+							<h1>Cutover readiness</h1>
+							<p>
+								All three numbers run live in Freshchat today, so every region
+								is a production migration. A number moves only when its row
+								reads ready — a WhatsApp number can feed one platform at a time,
+								and the switch is not reversible within the same hour.
+							</p>
+						</div>
+
+						<div class="grid-3" id="cutTiles"></div>
+
+						<div class="card">
+							<div class="card-head">
+								<h3>Readiness by region</h3>
+								<span class="eyebrow" style="margin-left: auto"
+									>Blocking items only</span
+								>
+							</div>
+							<div class="card-body readiness" id="readiness"></div>
+						</div>
+
+						<div class="card">
+							<div class="card-head"><h3>Proposed sequence</h3></div>
+							<div class="card-body">
+								<div class="timeline" id="sequence"></div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ---------- RULES ---------- -->
+				<section class="screen" id="screen-rules" hidden>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Routing</span>
+							<h1>Assignment rules</h1>
+							<p>
+								Rules run top to bottom and stop at the first match, the same
+								order Freshchat evaluates them in. The inbound number is the
+								routing key: each WhatsApp number reaches the engine as a topic
+								named
+								<span class="mono">WHATSAPP_&lt;number&gt;</span>, which is how
+								the three regions stay separate today.
+							</p>
+						</div>
+
+						<div class="card">
+							<div class="card-head">
+								<h3>Rule order</h3>
+								<button type="button" class="btn" style="margin-left: auto">
+									Add rule
+								</button>
+							</div>
+							<div
+								class="card-body"
+								id="rules"
+								style="display: grid; gap: 0"
+							></div>
+						</div>
+
+						<div class="grid-2">
+							<div class="card">
+								<div class="card-head"><h3>Bot before agent</h3></div>
+								<div
+									class="card-body"
+									id="botsPanel"
+									style="display: grid; gap: 13px"
+								></div>
+							</div>
+							<div class="card">
+								<div class="card-head"><h3>Escalation ladder</h3></div>
+								<div class="card-body">
+									<div class="timeline" id="escalation"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ---------- SEND ---------- -->
+				<section class="screen" id="screen-broadcast" hidden>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Outbound</span>
+							<h1>Templates and sends</h1>
+							<p>
+								Outside the 24-hour service window only an approved template may
+								be sent. Each send is checked against the number's messaging
+								limit and quality rating before it is queued, so a campaign
+								cannot quietly burn a number's standing with Meta.
+							</p>
+						</div>
+
+						<div class="grid-3" id="sendTiles"></div>
+
+						<div class="card">
+							<div class="card-head">
+								<h3>Approved templates</h3>
+								<span class="eyebrow" style="margin-left: auto"
+									>Meta category governs pricing</span
+								>
+							</div>
+							<div class="card-body scroll-x">
+								<table id="templates">
+									<thead>
+										<tr>
+											<th>Template</th>
+											<th>Category</th>
+											<th>Languages</th>
+											<th>Status</th>
+											<th>Used 7d</th>
+										</tr>
+									</thead>
+									<tbody></tbody>
+								</table>
+							</div>
+						</div>
+
+						<div class="card">
+							<div class="card-head">
+								<h3>Send check — rate update to UAE trade customers</h3>
+							</div>
+							<div
+								class="card-body"
+								id="sendCheck"
+								style="display: grid; gap: 12px"
+							></div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ---------- REPORTS ---------- -->
+				<section class="screen" id="screen-reports" hidden>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Measurement</span>
+							<h1>Regional performance</h1>
+							<p>
+								Each region is measured on its own calendar and its own targets.
+								Figures below are sample data for the prototype; the reporting
+								baseline from Freshworks has not yet been exported, so nothing
+								here is a comparison against the current platform.
+							</p>
+						</div>
+
+						<div class="grid-3" id="repTiles"></div>
+
+						<div class="card">
+							<div class="card-head">
+								<h3>Conversations per day</h3>
+								<div
+									class="legend"
+									id="legend1"
+									style="margin-left: auto"
+								></div>
+								<button type="button" class="btn" id="tableToggle1">
+									Table view
+								</button>
+							</div>
+							<div class="card-body">
+								<div id="chart1" class="scroll-x"></div>
+								<div
+									id="table1"
+									hidden
+									class="scroll-x"
+									style="margin-top: 10px"
+								></div>
+							</div>
+						</div>
+
+						<div class="grid-2">
+							<div class="card">
+								<div class="card-head">
+									<h3>Median first response</h3>
+									<span class="eyebrow" style="margin-left: auto"
+										>Business hours only</span
+									>
+								</div>
+								<div class="card-body">
+									<div id="chart2" class="scroll-x"></div>
+								</div>
+							</div>
+							<div class="card">
+								<div class="card-head"><h3>Satisfaction</h3></div>
+								<div
+									class="card-body"
+									id="csat"
+									style="display: grid; gap: 12px"
+								></div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ---------- NUMBERS ---------- -->
+				<section class="screen" id="screen-numbers" hidden>
+					<div class="banner">
+						<span
+							class="dot"
+							style="background: var(--good); margin-top: 5px"
+						></span>
+						<div>
+							The number, topic, bot and assignment group on this screen were
+							read from ABC Cargo's live Freshchat configuration and are
+							<span class="verified">✓ verified</span>. Quality rating,
+							messaging limit and webhook figures are placeholders — they come
+							from Meta WhatsApp Manager, which has not been read yet.
+						</div>
+					</div>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Platform</span>
+							<h1>Numbers and health</h1>
+							<p>
+								One row per WhatsApp business number. Quality rating and
+								messaging limit are Meta's, not ours — they decide how many
+								customers the number may reach in a rolling 24 hours, and a
+								rating falling to red is the single fastest way to lose the
+								channel.
+							</p>
+						</div>
+
+						<div id="numberCards" class="grid-2"></div>
+
+						<div class="card">
+							<div class="card-head"><h3>Business hours</h3></div>
+							<div class="card-body scroll-x">
+								<table id="hours">
+									<thead>
+										<tr>
+											<th>Region</th>
+											<th>Calendar</th>
+											<th>Working days</th>
+											<th>Hours</th>
+											<th>Timezone</th>
+										</tr>
+									</thead>
+									<tbody></tbody>
+								</table>
+							</div>
+						</div>
+
+						<div class="card">
+							<div class="card-head"><h3>Groups and cover</h3></div>
+							<div class="card-body scroll-x">
+								<table id="groups">
+									<thead>
+										<tr>
+											<th>Group</th>
+											<th>Region</th>
+											<th>Agents</th>
+											<th>Online now</th>
+											<th>Open</th>
+										</tr>
+									</thead>
+									<tbody></tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</section>
+			</main>
+		</div>
+
+		<script>
+			(() => {
+				"use strict";
+
+				/* =========================================================
+				   Data. Verified items came from ABC Cargo's live Freshchat
+				   configuration; everything else is sample data for the
+				   prototype and is labelled as such in the interface.
+				   ========================================================= */
+
+				const REGIONS = {
+					UAE: {
+						code: "UAE",
+						name: "United Arab Emirates",
+						number: "+971800916",
+						topic: "WHATSAPP_+971800916",
+						bot: "ABC Cargo",
+						group: "UAE Sales Team",
+						tz: "Asia/Dubai",
+						offset: 4,
+						open: [8, 18],
+						color: "var(--s-uae)",
+						quality: "Green",
+						tier: "10,000",
+						used: 3840,
+					},
+					KSA: {
+						code: "KSA",
+						name: "Saudi Arabia",
+						number: "+966548454866",
+						topic: "WHATSAPP_+966548454866",
+						bot: "ABC Cargo KSA",
+						group: "KSA Sales Team",
+						tz: "Asia/Riyadh",
+						offset: 3,
+						open: [9, 18],
+						color: "var(--s-ksa)",
+						quality: "Green",
+						tier: "1,000",
+						used: 410,
+					},
+					UK: {
+						code: "UK",
+						name: "United Kingdom",
+						number: "+447388800000",
+						topic: "WHATSAPP_+447388800000",
+						bot: "ABC Cargo UK",
+						group: "UK Customer Support",
+						tz: "Europe/London",
+						offset: 1,
+						open: [9, 17],
+						color: "var(--s-uk)",
+						quality: "Yellow",
+						tier: "1,000",
+						used: 705,
+					},
+				};
+
+				const HOUR = 3600e3;
+
+				/* minutesAgo -> Date */
+				const ago = (m) => new Date(Date.now() - m * 60e3);
+
+				const CONVOS = [
+					{
+						id: "c1",
+						name: "Rashid Al Marzooqi",
+						phone: "+971 50 662 1184",
+						region: "UAE",
+						state: "sla",
+						awb: "ABC-471-88210",
+						lane: "Dubai → Kochi",
+						svc: "Air freight, 3 pcs, 41 kg",
+						last: "It still says in transit since Tuesday. Can someone check where it actually is?",
+						at: ago(6),
+						windowLeft: 2.1 * HOUR,
+						slaLeft: -4 * 60e3,
+						assigned: "Unassigned",
+						tags: ["Tracking", "Repeat contact"],
+						thread: [
+							{
+								t: "in",
+								m: "Hi, I need an update on ABC-471-88210",
+								at: ago(31),
+							},
+							{
+								t: "bot",
+								m: "Welcome to ABC Cargo. I can help with tracking, rates, a claim, or connect you to an agent. What do you need?",
+								at: ago(31),
+								qr: [
+									"Track a shipment",
+									"Get a rate",
+									"Raise a claim",
+									"Talk to an agent",
+								],
+							},
+							{ t: "in", m: "Track a shipment", at: ago(30) },
+							{
+								t: "bot",
+								m: "Please send the airway bill reference, starting ABC-",
+								at: ago(30),
+							},
+							{ t: "in", m: "ABC-471-88210", at: ago(29) },
+							{
+								t: "bot",
+								m: "ABC-471-88210 — Dubai to Kochi, 3 pieces, 41 kg. Last scan: departed DXB, 12 Sep 21:40. Status: in transit.",
+								at: ago(29),
+							},
+							{
+								t: "in",
+								m: "It still says in transit since Tuesday. Can someone check where it actually is?",
+								at: ago(6),
+							},
+							{
+								t: "handover",
+								m: "Bot could not resolve — escalated to UAE Sales Team",
+								at: ago(6),
+							},
+						],
+					},
+					{
+						id: "c2",
+						name: "Fatimah Al Otaibi",
+						phone: "+966 55 218 9032",
+						region: "KSA",
+						state: "assigned",
+						awb: "ABC-966-30514",
+						lane: "Riyadh → Manila",
+						svc: "Sea freight, 1 pallet, 320 kg",
+						last: "Yes please send the quote in writing.",
+						at: ago(14),
+						windowLeft: 17.4 * HOUR,
+						slaLeft: 11 * 60e3,
+						assigned: "Noura A. — KSA Sales Team",
+						tags: ["Quotation"],
+						thread: [
+							{
+								t: "in",
+								m: "السلام عليكم، أحتاج سعر شحن إلى مانيلا",
+								at: ago(48),
+							},
+							{
+								t: "bot",
+								m: "أهلاً بك في ABC Cargo. هل ترغب في تتبع شحنة، أو الحصول على عرض سعر، أو التحدث مع موظف؟",
+								at: ago(48),
+								qr: ["تتبع شحنة", "عرض سعر", "موظف خدمة"],
+							},
+							{ t: "in", m: "عرض سعر", at: ago(47) },
+							{
+								t: "handover",
+								m: "Quotation intent — routed to KSA Sales Team",
+								at: ago(47),
+							},
+							{
+								t: "agent",
+								m: "Good morning. Sea freight Riyadh to Manila, one pallet at 320 kg, is 1,840 SAR all-in, transit 26 to 31 days.",
+								at: ago(20),
+								by: "Noura A.",
+							},
+							{
+								t: "in",
+								m: "Yes please send the quote in writing.",
+								at: ago(14),
+							},
+						],
+					},
+					{
+						id: "c3",
+						name: "Daniel Okoye",
+						phone: "+44 7700 900 214",
+						region: "UK",
+						state: "window",
+						awb: "ABC-447-11903",
+						lane: "Manchester → Lagos",
+						svc: "Air freight, 2 pcs, 18 kg",
+						last: "Thanks, I'll check with my brother and come back to you.",
+						at: ago(1390),
+						windowLeft: 0.6 * HOUR,
+						slaLeft: null,
+						assigned: "James P. — UK Customer Support",
+						tags: ["Awaiting customer"],
+						thread: [
+							{
+								t: "in",
+								m: "Hello, has my parcel left Manchester yet?",
+								at: ago(1500),
+							},
+							{
+								t: "bot",
+								m: "Hello, welcome to ABC Cargo UK. I can check a shipment, quote a shipment, or pass you to the team.",
+								at: ago(1500),
+								qr: ["Check a shipment", "Get a quote", "Speak to the team"],
+							},
+							{ t: "in", m: "Check a shipment", at: ago(1499) },
+							{
+								t: "bot",
+								m: "ABC-447-11903 — Manchester to Lagos, 2 pieces, 18 kg. Booked and awaiting uplift on the 16 Sep rotation.",
+								at: ago(1499),
+							},
+							{
+								t: "in",
+								m: "Can I add one more box to the same booking?",
+								at: ago(1470),
+							},
+							{
+								t: "handover",
+								m: "Booking change — escalated to UK Customer Support",
+								at: ago(1470),
+							},
+							{
+								t: "agent",
+								m: "Yes, we can add a third piece if it reaches our Trafford Park depot before 14:00 on the 15th. Shall I hold the space?",
+								at: ago(1420),
+								by: "James P.",
+							},
+							{
+								t: "in",
+								m: "Thanks, I'll check with my brother and come back to you.",
+								at: ago(1390),
+							},
+						],
+					},
+					{
+						id: "c4",
+						name: "Meera Raghavan",
+						phone: "+971 56 331 7742",
+						region: "UAE",
+						state: "bot",
+						awb: "—",
+						lane: "Sharjah → Chennai",
+						svc: "Enquiry, not yet booked",
+						last: "Get a rate",
+						at: ago(2),
+						windowLeft: 23.9 * HOUR,
+						slaLeft: null,
+						assigned: "Bot — ABC Cargo",
+						tags: ["New contact"],
+						thread: [
+							{ t: "in", m: "hi", at: ago(3) },
+							{
+								t: "bot",
+								m: "Welcome to ABC Cargo. I can help with tracking, rates, a claim, or connect you to an agent. What do you need?",
+								at: ago(3),
+								qr: [
+									"Track a shipment",
+									"Get a rate",
+									"Raise a claim",
+									"Talk to an agent",
+								],
+							},
+							{ t: "in", m: "Get a rate", at: ago(2) },
+							{
+								t: "bot",
+								m: "Which city are you sending from, and which city is it going to?",
+								at: ago(2),
+							},
+						],
+					},
+					{
+						id: "c5",
+						name: "Abdulaziz Al Harbi",
+						phone: "+966 50 774 2201",
+						region: "KSA",
+						state: "sla",
+						awb: "ABC-966-30488",
+						lane: "Jeddah → Karachi",
+						svc: "Air freight, 5 pcs, 96 kg",
+						last: "One carton arrived open and two shirts are missing.",
+						at: ago(22),
+						windowLeft: 9.2 * HOUR,
+						slaLeft: -13 * 60e3,
+						assigned: "Unassigned",
+						tags: ["Claim", "Priority"],
+						thread: [
+							{
+								t: "in",
+								m: "I want to raise a complaint about a damaged carton",
+								at: ago(26),
+							},
+							{
+								t: "bot",
+								m: "أهلاً بك في ABC Cargo. I can start a claim for you. Please send the airway bill reference.",
+								at: ago(26),
+								qr: ["Start a claim", "Talk to an agent"],
+							},
+							{ t: "in", m: "ABC-966-30488", at: ago(24) },
+							{
+								t: "in",
+								m: "One carton arrived open and two shirts are missing.",
+								at: ago(22),
+							},
+							{
+								t: "handover",
+								m: "Claim intent — escalated to KSA Sales Team",
+								at: ago(22),
+							},
+						],
+					},
+					{
+						id: "c6",
+						name: "Priya Sundaram",
+						phone: "+44 7911 123 660",
+						region: "UK",
+						state: "assigned",
+						awb: "ABC-447-11877",
+						lane: "London → Colombo",
+						svc: "Air freight, 1 pc, 7 kg",
+						last: "Perfect, thank you for sorting that so quickly.",
+						at: ago(38),
+						windowLeft: 20.8 * HOUR,
+						slaLeft: 46 * 60e3,
+						assigned: "James P. — UK Customer Support",
+						tags: ["Resolved today"],
+						thread: [
+							{
+								t: "in",
+								m: "My delivery address changed, can you update it?",
+								at: ago(74),
+							},
+							{
+								t: "bot",
+								m: "Hello, welcome to ABC Cargo UK. An address change needs the team — putting you through now.",
+								at: ago(74),
+							},
+							{
+								t: "handover",
+								m: "Address change — escalated to UK Customer Support",
+								at: ago(74),
+							},
+							{
+								t: "agent",
+								m: "Updated to 14 Bramley Court, Colombo 05. The consignee will get an SMS on arrival.",
+								at: ago(40),
+								by: "James P.",
+							},
+							{
+								t: "in",
+								m: "Perfect, thank you for sorting that so quickly.",
+								at: ago(38),
+							},
+						],
+					},
+				];
+
+				const STATE = {
+					sla: { label: "SLA breached", bg: "var(--critical)", fg: "#fff" },
+					assigned: {
+						label: "With agent",
+						bg: "var(--sunk)",
+						fg: "var(--ink-2)",
+					},
+					bot: { label: "Bot handling", bg: "var(--sunk)", fg: "var(--ink-2)" },
+					window: { label: "Window closing", bg: "var(--warn)", fg: "#2a2000" },
+				};
+
+				/* ---------- report data (sample) ---------- */
+				const DAYS = ["Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Mon"];
+				const SERIES = [
+					{
+						key: "UAE",
+						color: "var(--s-uae)",
+						v: [118, 131, 126, 109, 74, 141, 152],
+					},
+					{
+						key: "KSA",
+						color: "var(--s-ksa)",
+						v: [46, 52, 61, 38, 29, 67, 72],
+					},
+					{ key: "UK", color: "var(--s-uk)", v: [31, 28, 34, 37, 19, 22, 41] },
+				];
+				const FRT = [
+					{ key: "UAE", color: "var(--s-uae)", v: 4.2, target: 5 },
+					{ key: "KSA", color: "var(--s-ksa)", v: 6.8, target: 5 },
+					{ key: "UK", color: "var(--s-uk)", v: 3.1, target: 5 },
+				];
+
+				/* =========================================================
+				   Helpers
+				   ========================================================= */
+
+				const $ = (s, r = document) => r.querySelector(s);
+				const el = (tag, attrs = {}, html) => {
+					const n = document.createElement(tag);
+					for (const [k, v] of Object.entries(attrs)) {
+						if (k === "style") n.style.cssText = v;
+						else n.setAttribute(k, v);
+					}
+					if (html != null) n.innerHTML = html;
+					return n;
+				};
+				const esc = (s) =>
+					String(s).replace(
+						/[&<>"]/g,
+						(c) =>
+							({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+					);
+				const pad = (n) => String(n).padStart(2, "0");
+
+				function rel(d) {
+					const m = Math.round((Date.now() - d.getTime()) / 60e3);
+					if (m < 1) return "now";
+					if (m < 60) return m + "m";
+					const h = Math.floor(m / 60);
+					if (h < 24) return h + "h";
+					return Math.floor(h / 24) + "d";
+				}
+
+				function clockFor(r) {
+					const now = new Date();
+					const utc = now.getTime() + now.getTimezoneOffset() * 60e3;
+					return new Date(utc + r.offset * HOUR);
+				}
+
+				function isOpen(r) {
+					const h = clockFor(r).getHours();
+					return h >= r.open[0] && h < r.open[1];
+				}
+
+				function dur(ms) {
+					const neg = ms < 0;
+					const t = Math.abs(ms);
+					const h = Math.floor(t / HOUR);
+					const m = Math.floor((t % HOUR) / 60e3);
+					const s = Math.floor((t % 60e3) / 1000);
+					const str = h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
+					return (neg ? "−" : "") + str;
+				}
+
+				/* =========================================================
+				   Top bar: clocks + region filter + nav
+				   ========================================================= */
+
+				let activeRegion = "all";
+				let activeConvo = CONVOS[0].id;
+
+				function renderClocks() {
+					const wrap = $("#clocks");
+					wrap.innerHTML = "";
+					for (const r of Object.values(REGIONS)) {
+						const c = clockFor(r);
+						const open = isOpen(r);
+						const n = el("div", { class: "clock" + (open ? "" : " closed") });
+						n.innerHTML =
+							`<span class="dot" style="background:${open ? "var(--good)" : "var(--ink-3)"}"></span>` +
+							`<span class="tz">${r.code}</span>` +
+							`<span class="t">${pad(c.getHours())}:${pad(c.getMinutes())}</span>`;
+						n.title = `${r.tz} — ${open ? "within business hours" : "outside business hours"}`;
+						wrap.appendChild(n);
+					}
+				}
+
+				document.querySelectorAll(".regionsel button").forEach((b) => {
+					b.addEventListener("click", () => {
+						activeRegion = b.dataset.region;
+						document
+							.querySelectorAll(".regionsel button")
+							.forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+						renderQueue();
+						renderReports();
+					});
+				});
+
+				document.querySelectorAll(".nav").forEach((b) => {
+					b.addEventListener("click", () => {
+						document
+							.querySelectorAll(".nav")
+							.forEach((x) => x.removeAttribute("aria-current"));
+						b.setAttribute("aria-current", "page");
+						document
+							.querySelectorAll(".screen")
+							.forEach((s) => (s.hidden = true));
+						$("#screen-" + b.dataset.screen).hidden = false;
+					});
+				});
+
+				/* =========================================================
+				   Inbox
+				   ========================================================= */
+
+				function visibleConvos() {
+					return CONVOS.filter(
+						(c) => activeRegion === "all" || c.region === activeRegion,
+					);
+				}
+
+				function renderQueue() {
+					const list = visibleConvos();
+					const q = $("#queue");
+					q.innerHTML = "";
+					$("#queueCount").textContent =
+						list.length +
+						(activeRegion === "all" ? " open" : " open · " + activeRegion);
+					$("#navBadge").textContent = CONVOS.filter(
+						(c) => c.state === "sla" || c.state === "bot",
+					).length;
+
+					for (const c of list) {
+						const r = REGIONS[c.region];
+						const st = STATE[c.state];
+						const row = el("button", {
+							type: "button",
+							class: "qrow",
+							role: "option",
+							"aria-selected": String(c.id === activeConvo),
+							style: `--sr:${r.color}`,
+						});
+						row.innerHTML =
+							`<span class="qstripe"></span><span class="qbody">` +
+							`<span class="qtop"><span class="qcode">${r.code}</span>` +
+							`<span class="qname">${esc(c.name)}</span>` +
+							`<span class="qtime">${rel(c.at)}</span></span>` +
+							`<span class="qmsg">${esc(c.last)}</span>` +
+							`<span class="qmeta">` +
+							`<span class="pill" style="background:${st.bg};color:${st.fg}">${st.label}</span>` +
+							(c.awb !== "—"
+								? `<span class="mono" style="font-size:11px;color:var(--ink-3)">${c.awb}</span>`
+								: "") +
+							`</span></span>`;
+						row.addEventListener("click", () => {
+							activeConvo = c.id;
+							renderQueue();
+							renderThread();
+						});
+						q.appendChild(row);
+					}
+
+					if (!list.some((c) => c.id === activeConvo) && list.length) {
+						activeConvo = list[0].id;
+						renderThread();
+					}
+				}
+
+				function current() {
+					return CONVOS.find((c) => c.id === activeConvo) || CONVOS[0];
+				}
+
+				function renderThread() {
+					const c = current();
+					const r = REGIONS[c.region];
+
+					/* header */
+					$("#threadHead").innerHTML =
+						`<div class="avatar" style="background:${r.color}">${esc(
+							c.name
+								.split(" ")
+								.map((w) => w[0])
+								.slice(0, 2)
+								.join(""),
+						)}</div>` +
+						`<div style="display:grid;gap:1px;min-width:0">` +
+						`<div style="font-weight:700;font-size:14.5px">${esc(c.name)}</div>` +
+						`<div class="mono" style="font-size:11.5px;color:var(--ink-3)">${esc(c.phone)} · ${r.topic}</div>` +
+						`</div>` +
+						`<div style="margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap">` +
+						`<span class="pill" style="background:var(--sunk);color:var(--ink-2)">${esc(c.assigned)}</span>` +
+						`<button type="button" class="btn">Assign</button>` +
+						`<button type="button" class="btn">Resolve</button>` +
+						`</div>`;
+
+					/* thread */
+					const t = $("#thread");
+					t.innerHTML = "";
+					t.appendChild(
+						el(
+							"div",
+							{ class: "daymark" },
+							`<span class="eyebrow">Conversation start</span>`,
+						),
+					);
+
+					for (const m of c.thread) {
+						if (m.t === "handover") {
+							t.appendChild(
+								el(
+									"div",
+									{ class: "handover" },
+									`<span class="dot" style="background:var(--brand)"></span>` +
+										`<span class="txt"><strong>Handover.</strong> ${esc(m.m)}</span>` +
+										`<span class="mono" style="margin-left:auto;font-size:11px;color:var(--ink-3)">${rel(m.at)} ago</span>`,
+								),
+							);
+							continue;
+						}
+						const cls =
+							m.t === "in"
+								? "b-in"
+								: m.t === "bot"
+									? "b-bot"
+									: m.t === "tmpl"
+										? "b-tmpl"
+										: "b-agent";
+						const b = el("div", { class: "bubble " + cls });
+						let inner = "";
+						if (m.t === "bot") {
+							inner +=
+								`<span class="botlabel"><span class="dot" style="background:var(--ink-3)"></span>` +
+								`<span class="eyebrow">${esc(r.bot)} · bot</span></span>`;
+						}
+						if (m.t === "agent") {
+							inner += `<span class="botlabel"><span class="eyebrow" style="color:var(--ink-3)">${esc(m.by)}</span></span>`;
+						}
+						inner += esc(m.m);
+						if (m.qr) {
+							inner +=
+								`<span class="quickreplies">` +
+								m.qr.map((q) => `<span class="qr">${esc(q)}</span>`).join("") +
+								`</span>`;
+						}
+						inner += `<span class="stamp">${rel(m.at)} ago</span>`;
+						b.innerHTML = inner;
+						t.appendChild(b);
+					}
+					t.scrollTop = t.scrollHeight;
+
+					renderComposer();
+					renderCtx();
+				}
+
+				function renderComposer() {
+					const c = current();
+					const open = c.windowLeft > 0;
+					const box = $("#composer");
+
+					if (open) {
+						box.innerHTML =
+							`<div class="composer-row">` +
+							`<div class="fauxinput">Reply to ${esc(c.name.split(" ")[0])}…</div>` +
+							`<button type="button" class="btn">Canned reply</button>` +
+							`<button type="button" class="btn btn-primary">Send</button>` +
+							`</div>` +
+							`<div class="composer-row" style="gap:7px">` +
+							`<span class="eyebrow">Service window</span>` +
+							`<span class="mono" id="cw" style="font-size:12px">${dur(c.windowLeft)}</span>` +
+							`<span style="font-size:12px;color:var(--ink-2)">of free-form replies left</span>` +
+							`</div>`;
+					} else {
+						box.innerHTML =
+							`<div class="locked">` +
+							`<span class="dot" style="background:var(--brand);margin-top:5px"></span>` +
+							`<div><h4>Free-form replies are closed</h4>` +
+							`<p>More than 24 hours have passed since ${esc(c.name.split(" ")[0])} last wrote. Meta allows only an approved template until they reply again.</p></div>` +
+							`</div>` +
+							`<div class="composer-row">` +
+							`<div class="fauxinput">Choose a template…</div>` +
+							`<button type="button" class="btn btn-primary">Open templates</button>` +
+							`</div>`;
+					}
+				}
+
+				function renderCtx() {
+					const c = current();
+					const r = REGIONS[c.region];
+					const winPct = Math.max(
+						0,
+						Math.min(100, (c.windowLeft / (24 * HOUR)) * 100),
+					);
+					const winColor =
+						c.windowLeft <= 0
+							? "var(--critical)"
+							: c.windowLeft < 2 * HOUR
+								? "var(--warn)"
+								: "var(--good)";
+
+					const slaBlock =
+						c.slaLeft == null
+							? `<span class="pill" style="background:var(--sunk);color:var(--ink-2)">No clock running</span>`
+							: `<div class="ring-wrap"><div><div class="ring-num" id="slaNum" style="color:${c.slaLeft < 0 ? "var(--critical)" : "var(--ink)"}">${dur(c.slaLeft)}</div>` +
+								`<div style="font-size:12px;color:var(--ink-2)">${c.slaLeft < 0 ? "over the first-response target" : "until first-response target"}</div></div></div>`;
+
+					$("#ctx").innerHTML =
+						`<div class="ctx-sec">` +
+						`<span class="eyebrow">Response clock</span>` +
+						slaBlock +
+						`</div>` +
+						`<div class="ctx-sec">` +
+						`<span class="eyebrow">24-hour service window</span>` +
+						`<div class="ring-wrap"><div style="flex:1">` +
+						`<div class="ring-num" id="winNum" style="color:${winColor}">${c.windowLeft > 0 ? dur(c.windowLeft) : "Closed"}</div>` +
+						`<div class="track" style="margin-top:7px"><i style="width:${winPct}%;background:${winColor}"></i></div>` +
+						`</div></div>` +
+						`<div style="font-size:12px;color:var(--ink-2)">Resets to 24:00:00 each time the customer sends a message.</div>` +
+						`</div>` +
+						`<div class="ctx-sec">` +
+						`<span class="eyebrow">Shipment</span>` +
+						`<dl class="kv">` +
+						`<dt>Reference</dt><dd class="mono">${esc(c.awb)}</dd>` +
+						`<dt>Lane</dt><dd>${esc(c.lane)}</dd>` +
+						`<dt>Service</dt><dd>${esc(c.svc)}</dd>` +
+						`</dl>` +
+						`<div style="font-size:11.5px;color:var(--ink-3)">Sample data. Live status will come from the shipment system once its API is confirmed.</div>` +
+						`</div>` +
+						`<div class="ctx-sec">` +
+						`<span class="eyebrow">Routing</span>` +
+						`<dl class="kv">` +
+						`<dt>Number</dt><dd class="mono">${esc(r.number)}</dd>` +
+						`<dt>Topic</dt><dd class="mono" style="font-size:11.5px">${esc(r.topic)}</dd>` +
+						`<dt>Bot</dt><dd>${esc(r.bot)}</dd>` +
+						`<dt>Group</dt><dd>${esc(r.group)}</dd>` +
+						`<dt>Hours</dt><dd>${pad(r.open[0])}:00–${pad(r.open[1])}:00 ${r.tz}</dd>` +
+						`</dl>` +
+						`<span class="verified">✓ verified from Freshchat</span>` +
+						`</div>` +
+						`<div class="ctx-sec">` +
+						`<span class="eyebrow">Labels</span>` +
+						`<div style="display:flex;gap:6px;flex-wrap:wrap">` +
+						c.tags
+							.map(
+								(t) =>
+									`<span class="pill" style="background:var(--sunk);color:var(--ink-2)">${esc(t)}</span>`,
+							)
+							.join("") +
+						`</div></div>`;
+				}
+
+				/* live clocks on the selected conversation */
+				setInterval(() => {
+					renderClocks();
+					const c = current();
+					if (c.windowLeft > 0) c.windowLeft -= 1000;
+					if (c.slaLeft != null) c.slaLeft -= 1000;
+					const w = $("#winNum");
+					if (w)
+						w.textContent = c.windowLeft > 0 ? dur(c.windowLeft) : "Closed";
+					const s = $("#slaNum");
+					if (s) s.textContent = dur(c.slaLeft);
+					const cw = $("#cw");
+					if (cw) cw.textContent = dur(c.windowLeft);
+					if (
+						c.windowLeft <= 0 &&
+						$("#composer")
+							.querySelector(".fauxinput")
+							?.textContent.startsWith("Reply")
+					)
+						renderComposer();
+				}, 1000);
+
+				/* =========================================================
+				   Cutover
+				   ========================================================= */
+
+				const READY = {
+					KSA: [
+						["SLA policy exported", true],
+						["Business hours exported", true],
+						["Assignment rules captured", false],
+						["Bot flow captured", false],
+						["Templates re-submitted to Meta", false],
+						["Contacts exported", false],
+					],
+					UK: [
+						["SLA policy exported", true],
+						["Business hours exported", false],
+						["Assignment rules captured", false],
+						["Bot flow captured", false],
+						["Templates re-submitted to Meta", false],
+						["Contacts exported", false],
+					],
+					UAE: [
+						["SLA policy exported", false],
+						["Business hours exported", false],
+						["Assignment rules captured", false],
+						["Bot flow captured", false],
+						["Templates re-submitted to Meta", false],
+						["Contacts exported", false],
+					],
+				};
+
+				function renderCutover() {
+					const tiles = $("#cutTiles");
+					tiles.innerHTML = "";
+					for (const code of ["KSA", "UK", "UAE"]) {
+						const r = REGIONS[code];
+						const items = READY[code];
+						const done = items.filter((i) => i[1]).length;
+						const pct = Math.round((done / items.length) * 100);
+						tiles.appendChild(
+							el(
+								"div",
+								{ class: "tile" },
+								`<span class="eyebrow">${r.code} · ${esc(r.number)}</span>` +
+									`<span class="v" style="color:${r.color}">${pct}%</span>` +
+									`<div class="track"><i style="width:${pct}%;background:${r.color}"></i></div>` +
+									`<span class="note">${done} of ${items.length} blocking items cleared</span>`,
+							),
+						);
+					}
+
+					const rd = $("#readiness");
+					rd.innerHTML = "";
+					for (const code of ["KSA", "UK", "UAE"]) {
+						const r = REGIONS[code];
+						rd.appendChild(
+							el(
+								"div",
+								{
+									style:
+										"display:flex;align-items:center;gap:9px;margin-top:4px",
+								},
+								`<span class="dot" style="background:${r.color}"></span><span class="eyebrow" style="color:var(--ink)">${r.code} — ${esc(r.group)}</span>`,
+							),
+						);
+						for (const [label, ok] of READY[code]) {
+							rd.appendChild(
+								el(
+									"div",
+									{ class: "rd-row" },
+									`<span class="rd-label">${esc(label)}</span>` +
+										`<span class="pill" style="background:${ok ? "transparent" : "var(--sunk)"};color:${ok ? "var(--good)" : "var(--ink-2)"};border:1px solid ${ok ? "var(--good)" : "transparent"}">${ok ? "✓ done" : "outstanding"}</span>`,
+								),
+							);
+						}
+					}
+
+					const seq = [
+						[
+							"KSA first",
+							"Lowest volume, so the smallest number of customers is exposed to a first cutover.",
+							"var(--s-ksa)",
+						],
+						[
+							"UK second",
+							"Different timezone from the Gulf, so a fault is contained inside UK hours.",
+							"var(--s-uk)",
+						],
+						[
+							"UAE last",
+							"Highest volume and the busiest number — moved only once the pattern is proven twice.",
+							"var(--s-uae)",
+						],
+						[
+							"Freshworks decision",
+							"Retire it, or keep it for email, phone and ticketing. Open for the Head of IT.",
+							"var(--ink-3)",
+						],
+					];
+					$("#sequence").innerHTML = seq
+						.map(
+							([h, p, c]) =>
+								`<div class="tl"><i style="background:${c}"></i><div><div class="t"><strong>${esc(h)}</strong></div><div class="s" style="font-family:var(--ui);font-size:12.5px;color:var(--ink-2)">${esc(p)}</div></div></div>`,
+						)
+						.join("");
+				}
+
+				/* =========================================================
+				   Rules
+				   ========================================================= */
+
+				const RULES = [
+					{
+						n: 1,
+						name: "KSA · claims to a named owner",
+						when: [
+							["Topic", "is", "WHATSAPP_+966548454866"],
+							["Message", "contains", "claim, damage, missing, تالف"],
+						],
+						then: "Assign to KSA Sales Team · label Claim · first-response target 30 min",
+						on: true,
+					},
+					{
+						n: 2,
+						name: "KSA · everything else",
+						when: [["Topic", "is", "WHATSAPP_+966548454866"]],
+						then: "Assign to KSA Sales Team, round robin by load",
+						on: true,
+					},
+					{
+						n: 3,
+						name: "UK · booking changes",
+						when: [
+							["Topic", "is", "WHATSAPP_+447388800000"],
+							["Message", "contains", "change, add, cancel, reschedule"],
+						],
+						then: "Assign to UK Customer Support · label Booking change",
+						on: true,
+					},
+					{
+						n: 4,
+						name: "UK · everything else",
+						when: [["Topic", "is", "WHATSAPP_+447388800000"]],
+						then: "Assign to UK Customer Support, round robin by load",
+						on: true,
+					},
+					{
+						n: 5,
+						name: "UAE · where is my shipment",
+						when: [
+							["Topic", "is", "WHATSAPP_+971800916"],
+							["Message", "contains", "where is my"],
+						],
+						then: "Assign to UAE Sales Team · label Tracking",
+						on: true,
+						note: "This rule exists in Freshchat today and was the first evidence that UAE WhatsApp was already live.",
+					},
+					{
+						n: 6,
+						name: "UAE · everything else",
+						when: [["Topic", "is", "WHATSAPP_+971800916"]],
+						then: "Assign to UAE Sales Team, round robin by load",
+						on: true,
+					},
+					{
+						n: 7,
+						name: "Out of hours acknowledgement",
+						when: [["Time", "is outside", "the region's business hours"]],
+						then: "Send the region's away template, hold in queue until opening",
+						on: false,
+					},
+				];
+
+				function renderRules() {
+					const wrap = $("#rules");
+					wrap.innerHTML = "";
+					RULES.forEach((r, i) => {
+						const region = r.when[0][2].includes("971")
+							? "UAE"
+							: r.when[0][2].includes("966")
+								? "KSA"
+								: r.when[0][2].includes("447")
+									? "UK"
+									: null;
+						const color = region ? REGIONS[region].color : "var(--ink-3)";
+						const box = el("div", {
+							style: `display:grid;gap:7px;padding:13px 0;${i ? "border-top:1px solid var(--rule-soft)" : ""}`,
+						});
+						box.innerHTML =
+							`<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">` +
+							`<span class="mono" style="font-size:12px;color:var(--ink-3)">${pad(r.n)}</span>` +
+							`<span class="dot" style="background:${color}"></span>` +
+							`<strong style="font-size:13.5px">${esc(r.name)}</strong>` +
+							`<span class="pill" style="margin-left:auto;background:${r.on ? "transparent" : "var(--sunk)"};color:${r.on ? "var(--good)" : "var(--ink-3)"};border:1px solid ${r.on ? "var(--good)" : "transparent"}">${r.on ? "Live" : "Draft"}</span>` +
+							`</div>` +
+							r.when
+								.map(
+									(w, j) =>
+										`<div class="rule-row"><span class="op" style="width:38px">${j ? "and" : "when"}</span>` +
+										`<span>${esc(w[0])}</span><span class="op">${esc(w[1])}</span><span class="chip">${esc(w[2])}</span></div>`,
+								)
+								.join("") +
+							`<div class="rule-row"><span class="op" style="width:38px">then</span><span>${esc(r.then)}</span></div>` +
+							(r.note
+								? `<div style="font-size:12px;color:var(--ink-2);padding-left:46px">${esc(r.note)} <span class="verified">✓ verified</span></div>`
+								: "");
+						wrap.appendChild(box);
+					});
+
+					$("#botsPanel").innerHTML = Object.values(REGIONS)
+						.map(
+							(r) =>
+								`<div style="display:grid;gap:5px">` +
+								`<div style="display:flex;align-items:center;gap:8px"><span class="dot" style="background:${r.color}"></span>` +
+								`<strong style="font-size:13.5px">${esc(r.bot)}</strong>` +
+								`<span class="pill" style="margin-left:auto;background:var(--sunk);color:var(--ink-2)">Both hours</span></div>` +
+								`<div style="font-size:12.5px;color:var(--ink-2)">Answers first on ${esc(r.number)}, 24 hours a day, then hands to ${esc(r.group)}.</div>` +
+								`</div>`,
+						)
+						.join("");
+
+					$("#escalation").innerHTML = [
+						[
+							"Bot answers",
+							"Every message, at every hour. The customer is never left without a reply.",
+							"var(--ink-3)",
+						],
+						[
+							"Agent group",
+							"On handover, or when the bot cannot resolve the intent.",
+							"var(--s-uae)",
+						],
+						[
+							"Supervisor",
+							"When the first-response target passes with no agent reply.",
+							"var(--warn)",
+						],
+						[
+							"Regional manager",
+							"When a claim or a priority conversation passes twice the target.",
+							"var(--critical)",
+						],
+					]
+						.map(
+							([h, p, c]) =>
+								`<div class="tl"><i style="background:${c}"></i><div><div class="t"><strong>${esc(h)}</strong></div><div style="font-size:12.5px;color:var(--ink-2)">${esc(p)}</div></div></div>`,
+						)
+						.join("");
+				}
+
+				/* =========================================================
+				   Send
+				   ========================================================= */
+
+				const TEMPLATES = [
+					["abc_shipment_status_update", "Utility", "en, ar", "Approved", 1284],
+					["abc_delivery_scheduled", "Utility", "en, ar", "Approved", 671],
+					["abc_claim_acknowledged", "Utility", "en, ar", "Approved", 88],
+					["abc_rate_update_trade", "Marketing", "en", "Approved", 0],
+					["abc_out_of_hours", "Utility", "en, ar", "Approved", 942],
+					["abc_login_code", "Authentication", "en", "Approved", 33],
+					["abc_ramadan_hours", "Marketing", "en, ar", "Pending review", 0],
+				];
+
+				function renderSend() {
+					const tiles = $("#sendTiles");
+					tiles.innerHTML = "";
+					for (const r of Object.values(REGIONS)) {
+						const cap = Number(r.tier.replace(/,/g, ""));
+						const pct = Math.round((r.used / cap) * 100);
+						const qc =
+							r.quality === "Green"
+								? "var(--good)"
+								: r.quality === "Yellow"
+									? "var(--warn)"
+									: "var(--critical)";
+						tiles.appendChild(
+							el(
+								"div",
+								{ class: "tile" },
+								`<span class="eyebrow">${r.code} · messaging limit</span>` +
+									`<span class="v">${r.used.toLocaleString()}<span style="font-size:15px;font-weight:500;color:var(--ink-3)"> / ${r.tier}</span></span>` +
+									`<div class="track"><i style="width:${Math.min(100, pct)}%;background:${r.color}"></i></div>` +
+									`<span class="note"><span class="dot" style="display:inline-block;background:${qc};vertical-align:middle;margin-right:5px"></span>Quality ${r.quality} · rolling 24 hours</span>`,
+							),
+						);
+					}
+
+					$("#templates tbody").innerHTML = TEMPLATES.map(
+						([n, cat, lang, st, used]) => {
+							const ok = st === "Approved";
+							return (
+								`<tr><td class="mono" style="font-size:12.5px">${esc(n)}</td>` +
+								`<td><span class="pill" style="background:var(--sunk);color:var(--ink-2)">${esc(cat)}</span></td>` +
+								`<td class="mono" style="font-size:12.5px">${esc(lang)}</td>` +
+								`<td><span class="pill" style="background:transparent;color:${ok ? "var(--good)" : "var(--warn)"};border:1px solid currentColor">${ok ? "✓ " : "● "}${esc(st)}</span></td>` +
+								`<td class="mono">${used.toLocaleString()}</td></tr>`
+							);
+						},
+					).join("");
+
+					const checks = [
+						[
+							"Template approved by Meta",
+							true,
+							"abc_rate_update_trade, English, Marketing category",
+						],
+						[
+							"Recipients opted in",
+							true,
+							"1,120 contacts with a Marketing opt-in on the UAE number",
+						],
+						[
+							"Inside the messaging limit",
+							true,
+							"3,840 used of 10,000 in the rolling window — 1,120 fits",
+						],
+						[
+							"Quality rating healthy",
+							true,
+							"UAE is Green. A Marketing send on a Yellow number is blocked.",
+						],
+						[
+							"Sent within local hours",
+							false,
+							"Scheduled 02:10 Asia/Dubai. Move to business hours before sending.",
+						],
+					];
+					$("#sendCheck").innerHTML =
+						checks
+							.map(
+								([h, ok, p]) =>
+									`<div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start">` +
+									`<span class="dot" style="background:${ok ? "var(--good)" : "var(--warn)"};margin-top:6px"></span>` +
+									`<div><div style="font-size:13px;font-weight:600">${esc(h)}</div>` +
+									`<div style="font-size:12.5px;color:var(--ink-2)">${esc(p)}</div></div></div>`,
+							)
+							.join("") +
+						`<div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:2px">` +
+						`<button type="button" class="btn btn-primary">Schedule for 09:00 Asia/Dubai</button>` +
+						`<button type="button" class="btn">Send anyway</button></div>`;
+				}
+
+				/* =========================================================
+				   Reports — charts drawn to one scale, with a table view
+				   ========================================================= */
+
+				function renderReports() {
+					const active = SERIES.filter(
+						(s) => activeRegion === "all" || s.key === activeRegion,
+					);
+					const frt = FRT.filter(
+						(s) => activeRegion === "all" || s.key === activeRegion,
+					);
+
+					/* tiles */
+					const total = active.reduce(
+						(a, s) => a + s.v.reduce((x, y) => x + y, 0),
+						0,
+					);
+					const botPct = 63;
+					const tiles = $("#repTiles");
+					tiles.innerHTML =
+						`<div class="tile"><span class="eyebrow">Conversations, 7 days</span><span class="v">${total.toLocaleString()}</span>` +
+						`<span class="note">${activeRegion === "all" ? "All three regions" : REGIONS[activeRegion].name}</span></div>` +
+						`<div class="tile"><span class="eyebrow">Resolved by bot</span><span class="v">${botPct}%</span>` +
+						`<span class="note">Closed without reaching an agent</span></div>` +
+						`<div class="tile"><span class="eyebrow">Breached first response</span><span class="v" style="color:var(--critical)">18</span>` +
+						`<span class="note">Of ${total.toLocaleString()} conversations</span></div>`;
+
+					/* legend */
+					$("#legend1").innerHTML = active
+						.map(
+							(s) =>
+								`<b><span class="dot" style="background:${s.color}"></span>${s.key}</b>`,
+						)
+						.join("");
+
+					/* ---- chart 1: lines ---- */
+					const W = 760,
+						H = 230,
+						L = 40,
+						R = 96,
+						T = 16,
+						B = 30;
+					const max = Math.max(...active.flatMap((s) => s.v), 10);
+					const ymax = Math.ceil(max / 40) * 40;
+					const x = (i) => L + (i * (W - L - R)) / (DAYS.length - 1);
+					const y = (v) => T + (H - T - B) * (1 - v / ymax);
+
+					let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:560px;display:block" role="img" aria-label="Conversations per day by region">`;
+					for (let g = 0; g <= 4; g++) {
+						const v = (ymax / 4) * g;
+						svg += `<line x1="${L}" y1="${y(v)}" x2="${W - R}" y2="${y(v)}" stroke="var(--grid)" stroke-width="1"/>`;
+						svg += `<text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--ink-3)">${v}</text>`;
+					}
+					DAYS.forEach((d, i) => {
+						svg += `<text x="${x(i)}" y="${H - 9}" text-anchor="middle" font-size="11" fill="var(--ink-3)">${d}</text>`;
+					});
+					for (const s of active) {
+						const pts = s.v.map((v, i) => `${x(i)},${y(v)}`).join(" ");
+						svg += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+						const lastI = s.v.length - 1;
+						svg += `<circle cx="${x(lastI)}" cy="${y(s.v[lastI])}" r="4.5" fill="${s.color}" stroke="var(--card)" stroke-width="2"/>`;
+						svg += `<text x="${x(lastI) + 10}" y="${y(s.v[lastI]) + 4}" font-size="11.5" font-weight="600" fill="var(--ink-2)">${s.key} ${s.v[lastI]}</text>`;
+					}
+					svg += `</svg>`;
+					$("#chart1").innerHTML = svg;
+
+					$("#table1").innerHTML =
+						`<table><thead><tr><th>Region</th>${DAYS.map((d) => `<th>${d}</th>`).join("")}<th>Total</th></tr></thead><tbody>` +
+						active
+							.map(
+								(s) =>
+									`<tr><td><span class="dot" style="display:inline-block;background:${s.color};margin-right:7px"></span>${s.key}</td>` +
+									s.v.map((v) => `<td class="mono">${v}</td>`).join("") +
+									`<td class="mono"><strong>${s.v.reduce((a, b) => a + b, 0)}</strong></td></tr>`,
+							)
+							.join("") +
+						`</tbody></table>`;
+
+					/* ---- chart 2: bars ---- */
+					const BW = 420,
+						BH = 30 + frt.length * 44,
+						BL = 52,
+						BR = 74;
+					const fmax = Math.max(...frt.map((s) => s.v), 8);
+					let bsvg = `<svg viewBox="0 0 ${BW} ${BH}" width="100%" style="min-width:340px;display:block" role="img" aria-label="Median first response by region, in minutes">`;
+					const tx = BL + ((BW - BL - BR) * 5) / fmax;
+					bsvg += `<line x1="${tx}" y1="6" x2="${tx}" y2="${BH - 22}" stroke="var(--axis)" stroke-width="1" stroke-dasharray="3 3"/>`;
+					bsvg += `<text x="${tx}" y="${BH - 7}" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">target 5 min</text>`;
+					frt.forEach((s, i) => {
+						const yy = 12 + i * 44;
+						const w = ((BW - BL - BR) * s.v) / fmax;
+						bsvg += `<text x="${BL - 9}" y="${yy + 16}" text-anchor="end" font-size="11.5" fill="var(--ink-2)">${s.key}</text>`;
+						bsvg += `<rect x="${BL}" y="${yy + 4}" width="${Math.max(w, 2)}" height="18" rx="4" fill="${s.color}"/>`;
+						bsvg += `<text x="${BW - 6}" y="${yy + 18}" text-anchor="end" font-size="12" font-weight="600" fill="${s.v > s.target ? "var(--critical)" : "var(--ink-2)"}">${s.v.toFixed(1)} min</text>`;
+					});
+					bsvg += `</svg>`;
+					$("#chart2").innerHTML = bsvg;
+
+					/* ---- CSAT ---- */
+					$("#csat").innerHTML =
+						`<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">` +
+						`<span style="font-size:26px;font-weight:700;letter-spacing:-0.025em;color:var(--ink-3)">Not measured</span>` +
+						`<span class="pill" style="background:var(--sunk);color:var(--ink-2)">No baseline exists</span></div>` +
+						`<div style="font-size:12.5px;color:var(--ink-2)">The satisfaction survey is switched off on all three WhatsApp numbers in Freshworks today <span class="verified">✓ verified</span>, so there is no history to carry over and nothing to compare against.</div>` +
+						`<div style="font-size:12.5px;color:var(--ink-2)">Engage can ask one question after every resolved conversation. That makes satisfaction a new capability rather than a migration item — and the first regional score will be a genuine baseline.</div>` +
+						`<div><button type="button" class="btn btn-primary">Turn on after cutover</button></div>`;
+				}
+
+				$("#tableToggle1").addEventListener("click", () => {
+					const t = $("#table1"),
+						c = $("#chart1"),
+						b = $("#tableToggle1");
+					const showTable = t.hidden;
+					t.hidden = !showTable;
+					c.hidden = showTable;
+					b.textContent = showTable ? "Chart view" : "Table view";
+				});
+
+				/* =========================================================
+				   Numbers
+				   ========================================================= */
+
+				function renderNumbers() {
+					const wrap = $("#numberCards");
+					wrap.innerHTML = "";
+					for (const r of Object.values(REGIONS)) {
+						const qc =
+							r.quality === "Green"
+								? "var(--good)"
+								: r.quality === "Yellow"
+									? "var(--warn)"
+									: "var(--critical)";
+						wrap.appendChild(
+							el(
+								"div",
+								{ class: "card" },
+								`<div class="card-head"><span class="dot" style="background:${r.color}"></span>` +
+									`<h3 class="mono" style="font-family:var(--mono)">${esc(r.number)}</h3>` +
+									`<span class="pill" style="margin-left:auto;background:var(--sunk);color:var(--ink-2)">${r.code}</span></div>` +
+									`<div class="card-body"><dl class="kv">` +
+									`<dt>Topic</dt><dd class="mono" style="font-size:12px">${esc(r.topic)}</dd>` +
+									`<dt>Bot</dt><dd>${esc(r.bot)} <span class="verified">✓</span></dd>` +
+									`<dt>Group</dt><dd>${esc(r.group)} <span class="verified">✓</span></dd>` +
+									`<dt>Quality</dt><dd><span class="dot" style="display:inline-block;background:${qc};margin-right:6px"></span>${r.quality}</dd>` +
+									`<dt>Limit</dt><dd class="mono">${r.tier} / 24h</dd>` +
+									`<dt>Survey</dt><dd>Off <span class="verified">✓</span></dd>` +
+									`<dt>Webhook</dt><dd><span class="dot" style="display:inline-block;background:var(--good);margin-right:6px"></span>Delivering · 0 failures 24h</dd>` +
+									`</dl></div>`,
+							),
+						);
+					}
+
+					$("#hours tbody").innerHTML = Object.values(REGIONS)
+						.map(
+							(r) =>
+								`<tr><td><span class="dot" style="display:inline-block;background:${r.color};margin-right:7px"></span>${r.code}</td>` +
+								`<td>${esc(r.name)}</td><td>Sunday to Thursday</td>` +
+								`<td class="mono">${pad(r.open[0])}:00 – ${pad(r.open[1])}:00</td>` +
+								`<td class="mono" style="font-size:12.5px">${esc(r.tz)}</td></tr>`,
+						)
+						.join("");
+
+					const G = [
+						["UAE Sales Team", "UAE", 9, 6, 24],
+						["KSA Sales Team", "KSA", 4, 3, 11],
+						["UK Customer Support", "UK", 3, 2, 7],
+						["HR Department", "—", 2, 0, 0],
+					];
+					$("#groups tbody").innerHTML = G.map(([n, code, a, on, open]) => {
+						const c = REGIONS[code] ? REGIONS[code].color : "var(--ink-3)";
+						return (
+							`<tr><td><span class="dot" style="display:inline-block;background:${c};margin-right:7px"></span>${esc(n)}</td>` +
+							`<td>${esc(code)}</td><td class="mono">${a}</td>` +
+							`<td class="mono" style="color:${on ? "var(--good)" : "var(--ink-3)"}">${on}</td>` +
+							`<td class="mono">${open}</td></tr>`
+						);
+					}).join("");
+				}
+
+				/* =========================================================
+				   Boot
+				   ========================================================= */
+
+				renderClocks();
+				renderQueue();
+				renderThread();
+				renderCutover();
+				renderRules();
+				renderSend();
+				renderReports();
+				renderNumbers();
+			})();
+		</script>
+	</body>
+</html>
