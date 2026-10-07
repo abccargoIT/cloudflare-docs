@@ -185,6 +185,16 @@ between those two is an interruption to UK customer service. If the intent was
 the wider one, it needs a Stage B note first; approving this one does not
 reach it.
 
+### 9.2a Confirmed by the Head of IT
+
+Asked to confirm the narrow reading, the Head of IT replied: **"only demo no
+live or no live numbers"**.
+
+So it is settled rather than inferred. No live number moves. `+971800916`,
+`+966548454866` and `+447388800000` all stay on Freshworks, and the Meta
+callback URL is not touched. Nothing in this project may change that without a
+Stage B change note and a fresh approval naming it.
+
 ### 9.3 A demonstration does not need the live number
 
 Worth settling before anyone assumes otherwise. There are three ways to show
@@ -204,6 +214,18 @@ everything the cutover would, and costs nothing if it fails.
 Recommendation: do not move `+447388800000` to demonstrate it. Move it when the
 bot conversation flows have been exported and the cutover has been rehearsed —
 not to satisfy a demonstration.
+
+### 9.3a What to use for the Management demonstration
+
+**Open `demo/app.html`.** Nothing to deploy, nothing to install, no numbers of
+any kind, no internet connection. It is the whole product and it runs the
+platform's own compiled code, so what Management sees is what the platform
+decides.
+
+Stage A stays approved and is safe to run whenever convenient — it touches no
+number and no live service — but it is **not required for the demonstration**.
+It proves the hostname and the deployment pipeline, which is a separate
+milestone from showing the product.
 
 ### 9.4 Execution
 
