@@ -8,18 +8,22 @@
 	// URL has to be stable, so the Worker is reached through a custom
 	// hostname rather than a workers.dev address.
 	"workers_dev": false,
-	// The intended hostname, held here until the zone is confirmed. Once
-	// abccargosupport.com is an active zone in the ABC Cargo Cloudflare
-	// account, uncomment this block: `wrangler deploy` then creates the
-	// proxied DNS record and attaches the Worker in one step. Leaving it
-	// active before the zone exists makes every deploy fail.
+	// The webhook hostname. The zone is active in the ABC Cargo Cloudflare
+	// account and engage.abccargosupport.com already resolves through the
+	// Cloudflare proxy, held open by a placeholder A record to 192.0.2.0.
 	//
-	// "routes": [
-	//     {
-	//         "pattern": "engage.abccargosupport.com",
-	//         "custom_domain": true,
-	//     },
-	// ],
+	// On deploy, Cloudflare attaches this Worker as the Custom Domain and
+	// manages the DNS record and certificate itself. The placeholder is an A
+	// record, not a CNAME, precisely so it does not block that step.
+	//
+	// A deploy still needs the account resources below to exist first:
+	// the D1 database (and its id filled in), the R2 bucket, and both queues.
+	"routes": [
+		{
+			"pattern": "engage.abccargosupport.com",
+			"custom_domain": true,
+		},
+	],
 	"observability": {
 		"enabled": true,
 	},

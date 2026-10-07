@@ -1,7 +1,7 @@
 # Change note — webhook hostname for ABC Cargo Engage
 
-**Status:** Prepared. Not executed. Blocked on prerequisites listed in §4.
-Cannot be executed from the preparing session at all — see §4.5.
+**Status:** **Done — DNS placeholder created and verified, 7 October 2026.**
+The Worker Custom Domain remains outstanding; see §10.
 **Prepared by:** ABC Cargo IT Department
 **Approval held:** `APPROVE LIVE CHANGE` given by the Head of IT, 7 October 2026.
 **Date prepared:** 7 October 2026
@@ -88,13 +88,11 @@ account.** The connector cannot see this account, so nothing here can be
 verified from the preparing session — only from the dashboard or an
 authenticated machine.
 
-### 4.3 The zone status is unconfirmed
+### 4.3 The zone status is unconfirmed — **CLEARED**
 
-It is not established that `abccargosupport.com` is an active zone in
-Cloudflare. If the domain's nameservers are elsewhere, the first change is a
-nameserver migration for the entire domain — a materially larger and riskier
-change than adding one subdomain, affecting website, email and any existing
-records. That would need its own change note and its own approval.
+`abccargosupport.com` is an active zone in the ABC Cargo Developer Cloudflare
+account. No nameserver migration is needed; the larger whole-domain change
+anticipated here does not arise.
 
 ### 4.4 The account is empty, and on the Free plan
 
@@ -209,3 +207,72 @@ With those, the remaining work is to deploy the Worker and uncomment the
 `routes` block. The approval already given covers this change as scoped above;
 it does not cover a nameserver migration, deploying into an unrelated
 Cloudflare account, or changing the Meta callback URL.
+
+---
+
+## 10. Execution record — 7 October 2026
+
+The DNS placeholder was created by the Head of IT in the Cloudflare dashboard
+and verified.
+
+| Setting      | Saved value            |
+| ------------ | ---------------------- |
+| Record type  | A                      |
+| Name         | `engage`               |
+| IPv4 address | `192.0.2.0`            |
+| Proxy status | Proxied (orange cloud) |
+| TTL          | Auto                   |
+
+Verification: the record persists across a dashboard reload; the authoritative
+nameservers and Cloudflare's resolver (1.1.1.1) both return the proxy addresses
+`104.21.32.25` and `172.67.182.85`. Google's resolver (8.8.8.8) had not picked
+it up at the time of checking, which is ordinary propagation rather than a
+fault.
+
+`192.0.2.0` is RFC 5737 documentation space. Because the record is proxied,
+requests terminate at Cloudflare and never reach that address.
+
+**Expected behaviour until the Worker is deployed: a Cloudflare error page on
+`https://engage.abccargosupport.com`.** That is the placeholder working, not a
+failure.
+
+### 10.1 Why an A record and not a CNAME
+
+Cloudflare's documented restriction is that a Custom Domain cannot be created
+on a hostname that already carries a **CNAME** record. An A record carries no
+such restriction, so this placeholder does not have to be removed before the
+Worker is attached. If the Custom Domain step nevertheless reports a conflict,
+the remedy is to delete the A record and add the Custom Domain again.
+
+### 10.2 Configuration change made alongside it
+
+`wrangler.jsonc` now carries the `routes` block live rather than commented out:
+
+```jsonc
+"routes": [{ "pattern": "engage.abccargosupport.com", "custom_domain": true }]
+```
+
+`wrangler deploy --dry-run` passes with it active. On a real deploy Cloudflare
+attaches the Worker as the Custom Domain and takes over the DNS record and the
+certificate.
+
+### 10.3 What now blocks the deployment
+
+Each row is a live change to the Cloudflare account and needs its own approval.
+They are listed in dependency order; the deploy fails at the first one missing.
+
+| #   | Prerequisite                                                                                                     | Blocks                                       |
+| --- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| 1   | `wrangler d1 create abc-whatsapp`, then paste the id into `wrangler.jsonc` (currently `REPLACE_AFTER_D1_CREATE`) | deploy fails immediately                     |
+| 2   | Enable R2 on the account, then create bucket `abc-whatsapp-media`                                                | deploy fails on the binding                  |
+| 3   | Create queues `abc-whatsapp-webhooks` and `abc-whatsapp-webhooks-dlq`                                            | deploy fails on the binding                  |
+| 4   | Apply the D1 migrations                                                                                          | the Worker deploys but cannot store anything |
+| 5   | Set four secrets with `wrangler secret put`                                                                      | signature checks and Graph calls fail        |
+| 6   | Replace the three `REPLACE_ME` phone number IDs in `REGION_NUMBERS`                                              | no inbound message routes to a region        |
+| 7   | Authenticate wrangler on an ABC Cargo machine (`wrangler login`)                                                 | nothing can be deployed at all               |
+
+Items 1–4 are reversible and touch nothing outside this new, empty account.
+Item 6 depends on values from Meta WhatsApp Manager, which remain outstanding.
+
+**None of this moves live customer traffic.** Changing the Meta callback URL is
+the step that does, and it is a separate change with its own approval.
