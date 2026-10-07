@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
 	buildAutoReply,
 	describeDays,
+	extractTrackingMentions,
 	extractTrackingNumbers,
 } from "../src/auto-reply.ts";
 import type { RegionConfig } from "../src/regions.ts";
@@ -39,6 +40,30 @@ test("matches the reference formats the platform itself issues", () => {
 	]);
 	// Grouped digits, the way a customer often types an airway bill.
 	assert.deepEqual(extractTrackingNumbers("ABC-471-88210"), ["ABC47188210"]);
+});
+
+test("keeps the customer's own spelling alongside the normalised key", () => {
+	assert.deepEqual(extractTrackingMentions("where is ABC-UAE-088210"), [
+		{ written: "ABC-UAE-088210", normalised: "ABCUAE088210" },
+	]);
+	// Two spellings of one reference are one mention, keeping the first seen.
+	assert.deepEqual(
+		extractTrackingMentions("ABC-UAE-088210 or abc-uae-088210?"),
+		[{ written: "ABC-UAE-088210", normalised: "ABCUAE088210" }],
+	);
+});
+
+test("the automated reply quotes the reference as the customer wrote it", () => {
+	// A reply that answers ABC-UAE-088210 with ABCUAE088210 does not match the
+	// reference on the customer's paperwork.
+	const text = buildAutoReply({
+		region,
+		reason: "no-agents-online",
+		contactName: "Rashid",
+		inboundText: "Any news on ABC-UAE-088210?",
+	});
+	assert.ok(text.includes("ABC-UAE-088210"), text);
+	assert.ok(!text.includes("ABCUAE088210"), text);
 });
 
 test("outside-hours reply mentions hours and the reference", () => {

@@ -1,0 +1,3053 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, viewport-fit=cover"
+		/>
+		<title>ABC Cargo Engage</title>
+		<style>
+			:root {
+				color-scheme: light;
+				--paper: #f4f1ee;
+				--card: #ffffff;
+				--sunk: #ebe6e2;
+				--ink: #17120f;
+				--ink-2: #56504b;
+				--ink-3: #8a827c;
+				--rule: #ddd6d0;
+				--rule-soft: #eae4df;
+				--brand: #c1121f;
+				--brand-ink: #8c0d17;
+				--brand-wash: #fbeced;
+				--uae: #2a78d6;
+				--ksa: #eb6834;
+				--uk: #1baf7a;
+				--good: #0b8a3e;
+				--good-wash: #e7f5ec;
+				--warn: #9a6400;
+				--warn-wash: #fdf3e0;
+				--critical: #c22b2b;
+				--critical-wash: #fbeaea;
+				--wa-canvas: #e9e1d8;
+				--wa-in: #ffffff;
+				--wa-out: #dcf7c5;
+				--wa-ink: #17120f;
+				/*
+				 * Fonts already on the machine. The page must work with the
+				 * network cable out, so it asks nothing of a font service; on a
+				 * corporate laptop a blocked webfont request is a blank second
+				 * of unstyled text, and on an air-gapped one it never resolves.
+				 */
+				--ui: "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
+					Arial, sans-serif;
+				--narrow: "Segoe UI Semibold", "Segoe UI", system-ui,
+					"Helvetica Neue", Arial, sans-serif;
+				--mono: "Cascadia Mono", Consolas, ui-monospace, Menlo,
+					"DejaVu Sans Mono", monospace;
+				--shadow: 0 1px 2px rgba(23, 18, 15, 0.06),
+					0 10px 28px -20px rgba(23, 18, 15, 0.35);
+			}
+
+			@media (prefers-color-scheme: dark) {
+				:root:not([data-theme="light"]) {
+					color-scheme: dark;
+					--paper: #100e0d;
+					--card: #1b1917;
+					--sunk: #232020;
+					--ink: #f3efec;
+					--ink-2: #b6aea8;
+					--ink-3: #8a827c;
+					--rule: #302c29;
+					--rule-soft: #262322;
+					--brand: #ef4352;
+					--brand-ink: #ff6b76;
+					--brand-wash: #2e1416;
+					--uae: #6ca8ea;
+					--ksa: #f58b5e;
+					--uk: #45c795;
+					--good: #4cc37d;
+					--good-wash: #14301f;
+					--warn: #e0a846;
+					--warn-wash: #332710;
+					--critical: #f06a6a;
+					--critical-wash: #331717;
+					--wa-canvas: #0b0a09;
+					--wa-in: #221f1d;
+					--wa-out: #104a31;
+					--wa-ink: #f3efec;
+					--shadow: 0 1px 2px rgba(0, 0, 0, 0.5),
+						0 12px 30px -22px rgba(0, 0, 0, 0.9);
+				}
+			}
+
+			:root[data-theme="dark"] {
+				color-scheme: dark;
+				--paper: #100e0d;
+				--card: #1b1917;
+				--sunk: #232020;
+				--ink: #f3efec;
+				--ink-2: #b6aea8;
+				--ink-3: #8a827c;
+				--rule: #302c29;
+				--rule-soft: #262322;
+				--brand: #ef4352;
+				--brand-ink: #ff6b76;
+				--brand-wash: #2e1416;
+				--uae: #6ca8ea;
+				--ksa: #f58b5e;
+				--uk: #45c795;
+				--good: #4cc37d;
+				--good-wash: #14301f;
+				--warn: #e0a846;
+				--warn-wash: #332710;
+				--critical: #f06a6a;
+				--critical-wash: #331717;
+				--wa-canvas: #0b0a09;
+				--wa-in: #221f1d;
+				--wa-out: #104a31;
+				--wa-ink: #f3efec;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			html,
+			body {
+				margin: 0;
+				padding: 0;
+			}
+
+			body {
+				background: var(--paper);
+				color: var(--ink);
+				font-family: var(--ui);
+				font-size: 15px;
+				line-height: 1.45;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			button,
+			input,
+			select,
+			textarea {
+				font: inherit;
+				color: inherit;
+			}
+
+			button {
+				cursor: pointer;
+			}
+
+			/* ------------------------------------------------------------ chrome */
+
+			.topbar {
+				position: sticky;
+				top: 0;
+				z-index: 20;
+				background: var(--card);
+				border-bottom: 1px solid var(--rule);
+				padding: 10px 16px;
+				display: flex;
+				flex-wrap: wrap;
+				gap: 12px 18px;
+				align-items: center;
+			}
+
+			.brand {
+				display: flex;
+				align-items: baseline;
+				gap: 9px;
+				margin-right: auto;
+			}
+
+			.brand b {
+				font-family: var(--narrow);
+				font-weight: 700;
+				font-size: 20px;
+				letter-spacing: 0.01em;
+				color: var(--brand);
+				text-transform: uppercase;
+			}
+
+			.brand span {
+				font-size: 12px;
+				color: var(--ink-3);
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+			}
+
+			.regions {
+				display: flex;
+				gap: 6px;
+				background: var(--sunk);
+				padding: 4px;
+				border-radius: 10px;
+			}
+
+			.regions button {
+				border: 0;
+				background: transparent;
+				border-radius: 7px;
+				padding: 6px 12px;
+				font-size: 13px;
+				font-weight: 600;
+				color: var(--ink-2);
+				display: flex;
+				align-items: center;
+				gap: 7px;
+			}
+
+			.regions button[aria-pressed="true"] {
+				background: var(--card);
+				color: var(--ink);
+				box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+			}
+
+			.regions .dot {
+				width: 8px;
+				height: 8px;
+				border-radius: 50%;
+				flex: none;
+			}
+
+			.dot-uae {
+				background: var(--uae);
+			}
+			.dot-ksa {
+				background: var(--ksa);
+			}
+			.dot-uk {
+				background: var(--uk);
+			}
+
+			.regions .count {
+				font-family: var(--mono);
+				font-size: 11px;
+				background: var(--brand);
+				color: #fff;
+				border-radius: 999px;
+				padding: 0 5px;
+				min-width: 17px;
+				text-align: center;
+			}
+
+			.clockbox {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				font-size: 12px;
+				color: var(--ink-2);
+			}
+
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				border-radius: 999px;
+				padding: 3px 9px;
+				font-size: 11px;
+				font-weight: 600;
+				letter-spacing: 0.03em;
+				text-transform: uppercase;
+				border: 1px solid transparent;
+			}
+
+			.pill-open {
+				background: var(--good-wash);
+				color: var(--good);
+			}
+			.pill-closed {
+				background: var(--sunk);
+				color: var(--ink-3);
+			}
+			.pill-warn {
+				background: var(--warn-wash);
+				color: var(--warn);
+			}
+			.pill-critical {
+				background: var(--critical-wash);
+				color: var(--critical);
+			}
+			.pill-brand {
+				background: var(--brand-wash);
+				color: var(--brand-ink);
+			}
+
+			.ghost {
+				border: 1px solid var(--rule);
+				background: var(--card);
+				border-radius: 8px;
+				padding: 6px 11px;
+				font-size: 13px;
+				font-weight: 500;
+			}
+
+			.ghost:hover {
+				border-color: var(--ink-3);
+			}
+
+			.primary {
+				border: 0;
+				background: var(--brand);
+				color: #fff;
+				border-radius: 8px;
+				padding: 7px 14px;
+				font-size: 13px;
+				font-weight: 600;
+			}
+
+			.primary:disabled,
+			.ghost:disabled {
+				opacity: 0.4;
+				cursor: not-allowed;
+			}
+
+			.safety {
+				background: var(--warn-wash);
+				color: var(--warn);
+				border-bottom: 1px solid var(--rule);
+				padding: 7px 16px;
+				font-size: 12.5px;
+				display: flex;
+				gap: 8px;
+				align-items: center;
+			}
+
+			nav.tabs {
+				display: flex;
+				gap: 2px;
+				padding: 0 16px;
+				border-bottom: 1px solid var(--rule);
+				background: var(--card);
+				overflow-x: auto;
+			}
+
+			nav.tabs button {
+				border: 0;
+				background: transparent;
+				padding: 11px 13px;
+				font-size: 13.5px;
+				font-weight: 600;
+				color: var(--ink-3);
+				border-bottom: 2px solid transparent;
+				white-space: nowrap;
+			}
+
+			nav.tabs button[aria-selected="true"] {
+				color: var(--ink);
+				border-bottom-color: var(--brand);
+			}
+
+			main {
+				padding: 16px;
+				max-width: 1440px;
+				margin: 0 auto;
+			}
+
+			/* ------------------------------------------------------------- cards */
+
+			.card {
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-radius: 12px;
+				box-shadow: var(--shadow);
+			}
+
+			.card > h2,
+			.card > h3 {
+				margin: 0;
+				padding: 12px 14px;
+				border-bottom: 1px solid var(--rule-soft);
+				font-size: 13px;
+				font-weight: 700;
+				letter-spacing: 0.05em;
+				text-transform: uppercase;
+				color: var(--ink-2);
+				display: flex;
+				align-items: center;
+				gap: 9px;
+			}
+
+			.card > h2 small,
+			.card > h3 small {
+				margin-left: auto;
+				font-weight: 500;
+				letter-spacing: 0;
+				text-transform: none;
+				color: var(--ink-3);
+			}
+
+			.pad {
+				padding: 14px;
+			}
+
+			.muted {
+				color: var(--ink-3);
+			}
+
+			.mono {
+				font-family: var(--mono);
+				font-size: 12.5px;
+			}
+
+			.empty {
+				padding: 28px 14px;
+				text-align: center;
+				color: var(--ink-3);
+				font-size: 13.5px;
+			}
+
+			/* ------------------------------------------------------------- inbox */
+
+			.inbox {
+				display: grid;
+				grid-template-columns: 290px minmax(0, 1fr) 330px;
+				gap: 14px;
+				align-items: start;
+			}
+
+			@media (max-width: 1180px) {
+				.inbox {
+					grid-template-columns: 260px minmax(0, 1fr);
+				}
+				.inbox .rail {
+					grid-column: 1 / -1;
+				}
+			}
+
+			@media (max-width: 760px) {
+				.inbox {
+					grid-template-columns: minmax(0, 1fr);
+				}
+			}
+
+			.convlist {
+				max-height: 70vh;
+				overflow-y: auto;
+			}
+
+			.conv {
+				display: block;
+				width: 100%;
+				text-align: left;
+				border: 0;
+				border-bottom: 1px solid var(--rule-soft);
+				background: transparent;
+				padding: 11px 13px;
+			}
+
+			.conv:hover {
+				background: var(--sunk);
+			}
+
+			.conv[aria-current="true"] {
+				background: var(--brand-wash);
+				box-shadow: inset 3px 0 0 var(--brand);
+			}
+
+			.conv .row1 {
+				display: flex;
+				align-items: baseline;
+				gap: 8px;
+			}
+
+			.conv .name {
+				font-weight: 600;
+				font-size: 14px;
+			}
+
+			.conv .time {
+				margin-left: auto;
+				font-size: 11px;
+				color: var(--ink-3);
+				font-family: var(--mono);
+			}
+
+			.conv .preview {
+				font-size: 12.5px;
+				color: var(--ink-3);
+				overflow: hidden;
+				text-overflow: ellipsis;
+				white-space: nowrap;
+				margin-top: 2px;
+			}
+
+			.conv .tags {
+				display: flex;
+				gap: 5px;
+				margin-top: 6px;
+				flex-wrap: wrap;
+			}
+
+			.thread {
+				background: var(--wa-canvas);
+				padding: 14px;
+				min-height: 320px;
+				max-height: 52vh;
+				overflow-y: auto;
+				display: flex;
+				flex-direction: column;
+				gap: 9px;
+			}
+
+			.bubble {
+				max-width: 78%;
+				padding: 7px 10px 5px;
+				border-radius: 9px;
+				font-size: 14px;
+				color: var(--wa-ink);
+				word-wrap: break-word;
+				box-shadow: 0 1px 1px rgba(0, 0, 0, 0.12);
+			}
+
+			/*
+			 * Only the message text keeps the customer's own line breaks. Putting
+			 * pre-wrap on the bubble itself would also preserve the indentation of
+			 * the template literal that builds it, which pushes every message to
+			 * the right and stretches the bubble to its full width.
+			 */
+			.bubble .text {
+				display: block;
+				white-space: pre-wrap;
+			}
+
+			.bubble.in {
+				background: var(--wa-in);
+				align-self: flex-start;
+				border-top-left-radius: 2px;
+			}
+
+			.bubble.out {
+				background: var(--wa-out);
+				align-self: flex-end;
+				border-top-right-radius: 2px;
+			}
+
+			.bubble .meta {
+				display: flex;
+				gap: 6px;
+				align-items: center;
+				justify-content: flex-end;
+				font-size: 10.5px;
+				color: var(--ink-3);
+				font-family: var(--mono);
+				margin-top: 3px;
+			}
+
+			.bubble .who {
+				font-size: 10.5px;
+				font-weight: 700;
+				letter-spacing: 0.05em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+				margin-bottom: 2px;
+			}
+
+			.composer {
+				border-top: 1px solid var(--rule);
+				padding: 12px 14px;
+				display: grid;
+				gap: 9px;
+			}
+
+			.composer textarea {
+				width: 100%;
+				min-height: 62px;
+				resize: vertical;
+				border: 1px solid var(--rule);
+				border-radius: 9px;
+				padding: 9px 11px;
+				background: var(--card);
+			}
+
+			.composer .actions {
+				display: flex;
+				gap: 8px;
+				align-items: center;
+				flex-wrap: wrap;
+			}
+
+			.sim {
+				border-top: 1px dashed var(--rule-soft);
+				background: var(--sunk);
+				padding: 12px 14px;
+				display: grid;
+				gap: 9px;
+			}
+
+			.sim h4 {
+				margin: 0;
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+				color: var(--ink-2);
+			}
+
+			.sim .simwho {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-size: 12px;
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+				color: var(--ink-3);
+			}
+
+			.sim .simwho select {
+				flex: 1;
+				min-width: 0;
+				text-transform: none;
+				letter-spacing: 0;
+			}
+
+			.sim .inputrow {
+				display: flex;
+				gap: 8px;
+			}
+
+			.sim input {
+				flex: 1;
+				border: 1px solid var(--rule);
+				border-radius: 9px;
+				padding: 9px 11px;
+				background: var(--card);
+				min-width: 0;
+			}
+
+			.chips {
+				display: flex;
+				gap: 6px;
+				flex-wrap: wrap;
+			}
+
+			.chip {
+				border: 1px solid var(--rule);
+				background: var(--card);
+				border-radius: 999px;
+				padding: 4px 10px;
+				font-size: 12px;
+				color: var(--ink-2);
+			}
+
+			.chip:hover {
+				border-color: var(--brand);
+				color: var(--brand-ink);
+			}
+
+			/* -------------------------------------------------------- trace card */
+
+			.trace {
+				border: 1px solid var(--rule);
+				border-left: 3px solid var(--brand);
+				border-radius: 9px;
+				background: var(--card);
+				padding: 11px 13px;
+				display: grid;
+				gap: 7px;
+				font-size: 13px;
+			}
+
+			.trace h5 {
+				margin: 0;
+				font-size: 11.5px;
+				letter-spacing: 0.05em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+			}
+
+			.trace ul {
+				margin: 0;
+				padding-left: 17px;
+				display: grid;
+				gap: 3px;
+			}
+
+			.kv {
+				display: grid;
+				grid-template-columns: 128px minmax(0, 1fr);
+				gap: 3px 10px;
+				font-size: 13px;
+			}
+
+			.kv dt {
+				color: var(--ink-3);
+			}
+
+			.kv dd {
+				margin: 0;
+			}
+
+			/* ------------------------------------------------------------- rail */
+
+			.rail {
+				display: grid;
+				gap: 14px;
+			}
+
+			.timeline {
+				max-height: 42vh;
+				overflow-y: auto;
+				padding: 4px 0;
+			}
+
+			.tl {
+				display: grid;
+				grid-template-columns: 22px minmax(0, 1fr);
+				gap: 9px;
+				padding: 8px 13px;
+				border-bottom: 1px solid var(--rule-soft);
+			}
+
+			.tl:last-child {
+				border-bottom: 0;
+			}
+
+			.tl .ic {
+				width: 22px;
+				height: 22px;
+				border-radius: 6px;
+				background: var(--sunk);
+				display: grid;
+				place-items: center;
+				font-size: 11px;
+				font-weight: 700;
+				color: var(--ink-2);
+			}
+
+			.tl .s {
+				font-size: 13px;
+				font-weight: 500;
+			}
+
+			.tl .d {
+				font-size: 12px;
+				color: var(--ink-3);
+				white-space: pre-wrap;
+			}
+
+			.tl .t {
+				font-family: var(--mono);
+				font-size: 10.5px;
+				color: var(--ink-3);
+			}
+
+			/* ------------------------------------------------------------ tables */
+
+			.tablewrap {
+				overflow-x: auto;
+			}
+
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 13.5px;
+			}
+
+			th {
+				text-align: left;
+				font-size: 11px;
+				letter-spacing: 0.05em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+				padding: 9px 12px;
+				border-bottom: 1px solid var(--rule);
+				white-space: nowrap;
+			}
+
+			td {
+				padding: 10px 12px;
+				border-bottom: 1px solid var(--rule-soft);
+				vertical-align: top;
+			}
+
+			tr:last-child td {
+				border-bottom: 0;
+			}
+
+			td .acts {
+				display: flex;
+				gap: 6px;
+				flex-wrap: wrap;
+			}
+
+			td .acts button {
+				border: 1px solid var(--rule);
+				background: var(--card);
+				border-radius: 7px;
+				padding: 3px 9px;
+				font-size: 12px;
+			}
+
+			td .acts button:hover:not(:disabled) {
+				border-color: var(--brand);
+				color: var(--brand-ink);
+			}
+
+			/* ----------------------------------------------------------- overview */
+
+			.stats {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+				gap: 14px;
+			}
+
+			.stat {
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-radius: 12px;
+				padding: 13px 15px;
+			}
+
+			.stat .n {
+				font-family: var(--narrow);
+				font-size: 30px;
+				font-weight: 700;
+				line-height: 1.1;
+			}
+
+			.stat .l {
+				font-size: 12px;
+				color: var(--ink-3);
+				text-transform: uppercase;
+				letter-spacing: 0.05em;
+			}
+
+			.stat .h {
+				font-size: 12px;
+				color: var(--ink-2);
+				margin-top: 5px;
+			}
+
+			.grid2 {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+				gap: 14px;
+				align-items: start;
+			}
+
+			.bars {
+				display: grid;
+				gap: 8px;
+			}
+
+			.bar {
+				display: grid;
+				grid-template-columns: 96px minmax(0, 1fr) 34px;
+				gap: 9px;
+				align-items: center;
+				font-size: 13px;
+			}
+
+			.bar .track {
+				height: 8px;
+				background: var(--sunk);
+				border-radius: 999px;
+				overflow: hidden;
+			}
+
+			.bar .fill {
+				height: 100%;
+				background: var(--brand);
+				border-radius: 999px;
+			}
+
+			.bar .v {
+				font-family: var(--mono);
+				font-size: 12px;
+				text-align: right;
+				color: var(--ink-2);
+			}
+
+			.note {
+				font-size: 12.5px;
+				color: var(--ink-2);
+				background: var(--sunk);
+				border-radius: 9px;
+				padding: 10px 12px;
+			}
+
+			.note b {
+				color: var(--ink);
+			}
+
+			.toast {
+				position: fixed;
+				left: 50%;
+				bottom: 22px;
+				transform: translateX(-50%) translateY(14px);
+				background: var(--ink);
+				color: var(--paper);
+				padding: 9px 16px;
+				border-radius: 999px;
+				font-size: 13px;
+				font-weight: 500;
+				opacity: 0;
+				pointer-events: none;
+				transition:
+					opacity 0.18s,
+					transform 0.18s;
+				z-index: 60;
+				max-width: calc(100vw - 32px);
+				text-align: center;
+			}
+
+			.toast.show {
+				opacity: 1;
+				transform: translateX(-50%) translateY(0);
+			}
+
+			.sr {
+				position: absolute;
+				width: 1px;
+				height: 1px;
+				padding: 0;
+				margin: -1px;
+				overflow: hidden;
+				clip: rect(0 0 0 0);
+				white-space: nowrap;
+				border: 0;
+			}
+		</style>
+	</head>
+
+	<body>
+		<header class="topbar">
+			<div class="brand">
+				<b>ABC Cargo Engage</b>
+				<span>Demonstration</span>
+			</div>
+
+			<div class="regions" id="regions" role="group" aria-label="WhatsApp number"></div>
+
+			<div class="clockbox">
+				<span id="regionClock" class="mono"></span>
+				<span id="regionState" class="pill"></span>
+			</div>
+
+			<button class="ghost" id="presenceBtn" type="button"></button>
+			<button class="ghost" id="clockBtn" type="button">Jump to after hours</button>
+			<button class="ghost" id="resetBtn" type="button">Reset demo</button>
+		</header>
+
+		<div class="safety">
+			<strong>Demonstration only.</strong>
+			<span
+				>Nothing here is connected to Freshworks, to Meta, or to any live ABC
+				Cargo system. No message can reach a real customer. All data is
+				invented and stays in this browser.</span
+			>
+		</div>
+
+		<nav class="tabs" id="tabs" role="tablist"></nav>
+
+		<main id="main"></main>
+
+		<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+		<script>
+			/*__ENGINE__*/
+
+			/* ==================================================================
+			 * Everything above this line is the platform's own code.
+			 * Everything below is the demonstration shell: the screens, and a
+			 * store that keeps records in the browser instead of the database.
+			 * ================================================================== */
+
+			"use strict";
+
+			/* ------------------------------------------------------------ config */
+
+			/**
+			 * The same REGION_NUMBERS value the local harness uses, parsed by the
+			 * platform's own validator so a malformed configuration fails here
+			 * exactly as it would on the Worker.
+			 */
+			const REGION_NUMBERS_JSON =
+				'[{"id":"uae","label":"UAE","phoneNumberId":"100000000000001","displayNumber":"+971800916","timezone":"Asia/Dubai","language":"en","businessHours":{"days":[0,1,2,3,4],"start":"08:00","end":"18:00"}},{"id":"ksa","label":"KSA","phoneNumberId":"100000000000002","displayNumber":"+966548454866","timezone":"Asia/Riyadh","language":"ar","businessHours":{"days":[0,1,2,3,4],"start":"09:00","end":"18:00"}},{"id":"uk","label":"UK","phoneNumberId":"100000000000003","displayNumber":"+447388800000","timezone":"Europe/London","language":"en","businessHours":{"days":[1,2,3,4,5],"start":"09:00","end":"17:00"}}]';
+
+			const REGIONS = parseRegionConfig(REGION_NUMBERS_JSON);
+
+			const SERVICE_WINDOW_MS = 24 * 60 * 60 * 1000;
+			const STORAGE_KEY = "abc-engage-demo-v1";
+			const AGENT_NAME = "Mariam (agent)";
+
+			const VIEWS = [
+				["inbox", "Inbox"],
+				["leads", "Leads & quotations"],
+				["tickets", "Tickets"],
+				["bookings", "Bookings"],
+				["calls", "Calls"],
+				["overview", "Overview"],
+			];
+
+			/** Pre-written customer messages, to show the routing quickly. */
+			const SAMPLES = [
+				"Hello, how much to send 40 kg from Sharjah to Chennai?",
+				"One carton of ABC-KSA-030488 arrived open and two shirts are missing",
+				"Where is my shipment ABC-UAE-088210?",
+				"السلام عليكم، أحتاج سعر شحن إلى مانيلا",
+				"Please send me the invoice copy for last month",
+				"I need to change the delivery address",
+				"hi",
+			];
+
+			/* ------------------------------------------------------------- clock */
+
+			/**
+			 * A demonstration has to be able to show what happens at 02:00 on a
+			 * Friday without waiting for Friday. The offset shifts the whole
+			 * application's idea of "now"; every rule still reads it from here.
+			 */
+			let clockOffsetMs = 0;
+
+			function now() {
+				return new Date(Date.now() + clockOffsetMs);
+			}
+
+			function nowIso() {
+				return now().toISOString();
+			}
+
+			/* ------------------------------------------------------------- store */
+
+			let state = null;
+
+			function storageAvailable() {
+				try {
+					const k = "__abc_probe__";
+					window.localStorage.setItem(k, "1");
+					window.localStorage.removeItem(k);
+					return true;
+				} catch {
+					return false;
+				}
+			}
+
+			const CAN_PERSIST = storageAvailable();
+
+			function save() {
+				if (!CAN_PERSIST) return;
+				try {
+					window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+				} catch {
+					/* A full or blocked store must not break the demonstration. */
+				}
+			}
+
+			function load() {
+				if (!CAN_PERSIST) return null;
+				try {
+					const raw = window.localStorage.getItem(STORAGE_KEY);
+					if (!raw) return null;
+					const parsed = JSON.parse(raw);
+					return parsed && parsed.version === 1 ? parsed : null;
+				} catch {
+					return null;
+				}
+			}
+
+			let activityId = 1;
+
+			function uid(prefix) {
+				return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+			}
+
+			/**
+			 * Sample data. Invented people, invented shipments; the references
+			 * follow ABC Cargo's shape so the screens read correctly. The values
+			 * match tools/seed-local.sql so the demonstration and the local
+			 * harness tell the same story.
+			 */
+			function seed() {
+				const t = (iso) => iso;
+				const s = {
+					version: 1,
+					regionId: "uae",
+					view: "inbox",
+					selectedConversationId: null,
+					presence: { uae: true, ksa: true, uk: false },
+					seq: { lead: 1204, quotation: 860, ticket: 482, booking: 88210 },
+					customers: [
+						{
+							id: "cus_971506621184",
+							displayName: "Rashid Al Marzooqi",
+							company: "Marzooqi Trading LLC",
+							waId: "971506621184",
+							phone: "+971 50 662 1184",
+							email: "rashid@example.invalid",
+							regionId: "uae",
+							accountType: "trade",
+							createdAt: t("2019-04-01T00:00:00Z"),
+						},
+						{
+							id: "cus_966507742201",
+							displayName: "Abdulaziz Al Harbi",
+							company: "Harbi Garments Est.",
+							waId: "966507742201",
+							phone: "+966 50 774 2201",
+							email: "aziz@example.invalid",
+							regionId: "ksa",
+							accountType: "trade",
+							createdAt: t("2022-02-01T00:00:00Z"),
+						},
+						{
+							id: "cus_447700900214",
+							displayName: "Daniel Okoye",
+							company: null,
+							waId: "447700900214",
+							phone: "+44 7700 900 214",
+							email: "d.okoye@example.invalid",
+							regionId: "uk",
+							accountType: "cash",
+							createdAt: t("2026-01-10T00:00:00Z"),
+						},
+					],
+					bookings: [
+						{
+							id: "bkg_1",
+							ref: "ABC-UAE-088210",
+							customerId: "cus_971506621184",
+							regionId: "uae",
+							origin: "Dubai",
+							destination: "Kochi",
+							mode: "air",
+							pieces: 3,
+							weightKg: 41,
+							valueAmount: 3180,
+							currency: "AED",
+							milestone: "departed",
+							milestoneAt: hoursAgo(76),
+							createdAt: hoursAgo(130),
+						},
+						{
+							id: "bkg_2",
+							ref: "ABC-KSA-030488",
+							customerId: "cus_966507742201",
+							regionId: "ksa",
+							origin: "Jeddah",
+							destination: "Karachi",
+							mode: "air",
+							pieces: 5,
+							weightKg: 96,
+							valueAmount: 5640,
+							currency: "SAR",
+							milestone: "delivered",
+							milestoneAt: hoursAgo(20),
+							createdAt: hoursAgo(170),
+						},
+					],
+					leads: [
+						{
+							id: "lead_seed1",
+							ref: "L-01203",
+							customerId: "cus_447700900214",
+							regionId: "uk",
+							source: "whatsapp_bot",
+							origin: "Manchester",
+							destination: "Lagos",
+							mode: "sea_lcl",
+							stage: "qualified",
+							estValue: 920,
+							currency: "GBP",
+							lostReason: null,
+							createdAt: hoursAgo(28),
+							updatedAt: hoursAgo(5),
+						},
+					],
+					quotations: [],
+					tickets: [
+						{
+							id: "tkt_seed1",
+							ref: "T-00481",
+							customerId: "cus_971506621184",
+							regionId: "uae",
+							bookingId: "bkg_1",
+							type: "documentation",
+							subject: "Needs a stamped invoice copy for customs",
+							priority: "normal",
+							status: "open",
+							firstResponseDueAt: null,
+							resolutionDueAt: null,
+							firstResponseAt: null,
+							resolvedAt: null,
+							createdAt: hoursAgo(3),
+							updatedAt: hoursAgo(3),
+						},
+					],
+					calls: [
+						{
+							id: "call_seed1",
+							customerId: "cus_971506621184",
+							regionId: "uae",
+							direction: "out",
+							agentId: AGENT_NAME,
+							startedAt: hoursAgo(2),
+							durationSeconds: 184,
+							outcome: "Explained clearance delay, customer satisfied",
+							linkedRef: "ABC-UAE-088210",
+						},
+					],
+					conversations: [
+						{
+							id: "conv_1",
+							customerId: "cus_971506621184",
+							regionId: "uae",
+							status: "open",
+							assignedAgentId: AGENT_NAME,
+							lastInboundAt: hoursAgo(3),
+							windowExpiresAt: null,
+							firstResponseDueAt: null,
+							firstResponseAt: hoursAgo(2.8),
+							lastAutoReplyAt: null,
+							messages: [
+								msg(
+									"in",
+									"Good morning, I need the stamped invoice copy for ABC-UAE-088210, customs is asking",
+									hoursAgo(3),
+								),
+								msg(
+									"out",
+									"Good morning Mr Rashid. I have the file open now — I will send the stamped copy within the hour.",
+									hoursAgo(2.8),
+									{ kind: "text", actor: AGENT_NAME },
+								),
+							],
+						},
+						{
+							id: "conv_2",
+							customerId: "cus_966507742201",
+							regionId: "ksa",
+							status: "open",
+							assignedAgentId: null,
+							lastInboundAt: hoursAgo(1.2),
+							windowExpiresAt: null,
+							firstResponseDueAt: null,
+							firstResponseAt: null,
+							lastAutoReplyAt: null,
+							messages: [
+								msg("in", "تم التوصيل، شكراً لكم", hoursAgo(1.2)),
+							],
+						},
+					],
+					activities: [],
+				};
+
+				// Window expiry and the open first-response clock follow from the
+				// real rules rather than being written in by hand.
+				for (const c of s.conversations) {
+					c.windowExpiresAt = new Date(
+						Date.parse(c.lastInboundAt) + SERVICE_WINDOW_MS,
+					).toISOString();
+					if (!c.firstResponseAt) {
+						c.firstResponseDueAt = addBusinessMinutes(
+							regionOf(c.regionId),
+							new Date(c.lastInboundAt),
+							CONVERSATION_FIRST_RESPONSE_MINUTES,
+						).toISOString();
+					}
+				}
+
+				// Same for the seeded ticket's service targets.
+				for (const tk of s.tickets) {
+					const due = ticketDueDates(
+						regionOf(tk.regionId),
+						tk.type,
+						tk.priority,
+						new Date(tk.createdAt),
+					);
+					tk.firstResponseDueAt = due.firstResponseDueAt;
+					tk.resolutionDueAt = due.resolutionDueAt;
+				}
+
+				s.activities = [
+					act(
+						"cus_971506621184",
+						"uae",
+						"booking",
+						"ABC-UAE-088210",
+						"Booking created · Dubai → Kochi, 3 pieces, 41 kg",
+						null,
+						"system",
+						hoursAgo(130),
+					),
+					act(
+						"cus_971506621184",
+						"uae",
+						"milestone",
+						"ABC-UAE-088210",
+						"Shipment departed",
+						null,
+						"shipment_system",
+						hoursAgo(76),
+					),
+					act(
+						"cus_971506621184",
+						"uae",
+						"whatsapp",
+						null,
+						"Inbound WhatsApp · documentation",
+						"Good morning, I need the stamped invoice copy for ABC-UAE-088210, customs is asking",
+						"customer",
+						hoursAgo(3),
+					),
+					act(
+						"cus_971506621184",
+						"uae",
+						"ticket",
+						"T-00481",
+						"Ticket opened · documentation",
+						"Needs a stamped invoice copy for customs",
+						"system",
+						hoursAgo(3),
+					),
+					act(
+						"cus_971506621184",
+						"uae",
+						"call",
+						null,
+						"Outbound call · 3:04",
+						"Explained clearance delay, customer satisfied",
+						AGENT_NAME,
+						hoursAgo(2),
+					),
+					act(
+						"cus_966507742201",
+						"ksa",
+						"milestone",
+						"ABC-KSA-030488",
+						"Shipment delivered",
+						null,
+						"shipment_system",
+						hoursAgo(20),
+					),
+					act(
+						"cus_966507742201",
+						"ksa",
+						"whatsapp",
+						null,
+						"Inbound WhatsApp · unknown",
+						"تم التوصيل، شكراً لكم",
+						"customer",
+						hoursAgo(1.2),
+					),
+					act(
+						"cus_447700900214",
+						"uk",
+						"lead",
+						"L-01203",
+						"Lead opened · whatsapp_bot",
+						"Manchester → Lagos, sea LCL",
+						"system",
+						hoursAgo(28),
+					),
+				];
+
+				s.selectedConversationId = "conv_1";
+				return s;
+			}
+
+			function hoursAgo(h) {
+				return new Date(Date.now() - h * 3_600_000).toISOString();
+			}
+
+			function msg(dir, text, at, opts = {}) {
+				return {
+					id: uid("msg"),
+					dir,
+					text,
+					at,
+					kind: opts.kind || (dir === "in" ? "text" : "text"),
+					actor: opts.actor || (dir === "in" ? "customer" : AGENT_NAME),
+					template: opts.template || null,
+				};
+			}
+
+			function act(
+				customerId,
+				regionId,
+				kind,
+				ref,
+				summary,
+				detail,
+				actor,
+				occurredAt,
+			) {
+				return {
+					id: activityId++,
+					customerId,
+					regionId,
+					kind,
+					ref,
+					summary,
+					detail,
+					actor,
+					occurredAt,
+				};
+			}
+
+			/* --------------------------------------------------------- selectors */
+
+			function regionOf(id) {
+				const r = findRegionById(REGIONS, id);
+				if (!r) throw new Error(`unknown region ${id}`);
+				return r;
+			}
+
+			function currentRegion() {
+				return regionOf(state.regionId);
+			}
+
+			function customerById(id) {
+				return state.customers.find((c) => c.id === id) || null;
+			}
+
+			function customerByWaId(waId) {
+				return state.customers.find((c) => c.waId === waId) || null;
+			}
+
+			function bookingByRef(ref) {
+				const want = String(ref).toUpperCase();
+				return state.bookings.find((b) => b.ref.toUpperCase() === want) || null;
+			}
+
+			function conversationById(id) {
+				return state.conversations.find((c) => c.id === id) || null;
+			}
+
+			function conversationsForRegion(regionId) {
+				return state.conversations
+					.filter((c) => c.regionId === regionId)
+					.sort((a, b) => Date.parse(b.lastInboundAt) - Date.parse(a.lastInboundAt));
+			}
+
+			function conversationForCustomer(customerId) {
+				return (
+					state.conversations.find((c) => c.customerId === customerId) || null
+				);
+			}
+
+			/** Any open matter for this customer — for chips and list rows. */
+			function anyOpenTicketFor(customerId) {
+				return (
+					state.tickets.find(
+						(t) =>
+							t.customerId === customerId &&
+							(t.status === "open" || t.status === "pending"),
+					) || null
+				);
+			}
+
+			/**
+			 * Mirrors CrmService.openTicketIfNoneOpen: a second message only joins
+			 * an existing ticket when it is the SAME kind of matter. A damage
+			 * claim raised while a documentation request is still open is its own
+			 * ticket, with its own type, priority and clock.
+			 */
+			function openTicketFor(customerId, type) {
+				return (
+					state.tickets.find(
+						(t) =>
+							t.customerId === customerId &&
+							t.type === type &&
+							(t.status === "open" || t.status === "pending"),
+					) || null
+				);
+			}
+
+			function openLeadFor(customerId) {
+				return (
+					state.leads.find(
+						(l) => l.customerId === customerId && isLeadOpen(l.stage),
+					) || null
+				);
+			}
+
+			function activitiesFor(customerId) {
+				return state.activities
+					.filter((a) => a.customerId === customerId)
+					.sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt));
+			}
+
+			function windowOpen(conv) {
+				return (
+					!!conv.windowExpiresAt && Date.parse(conv.windowExpiresAt) > now().getTime()
+				);
+			}
+
+			function agentsOnline(regionId) {
+				return state.presence[regionId] ? 1 : 0;
+			}
+
+			/* ---------------------------------------------------------- pipeline */
+
+			/**
+			 * The inbound path, in the same order as the Worker: the conversation
+			 * is updated, the message is classified, a reference is matched to a
+			 * shipment, and the intent decides whether a lead or a ticket is
+			 * opened — reusing an open one rather than creating a second.
+			 *
+			 * Returns a trace so the screen can show not just what happened but
+			 * why, which is the part a supervisor needs to trust it.
+			 */
+			function receiveInbound(customerId, text) {
+				const customer = customerById(customerId);
+				const region = regionOf(customer.regionId);
+				const at = nowIso();
+
+				let conv = conversationForCustomer(customerId);
+				if (!conv) {
+					conv = {
+						id: uid("conv"),
+						customerId,
+						regionId: customer.regionId,
+						status: "open",
+						assignedAgentId: null,
+						lastInboundAt: at,
+						windowExpiresAt: null,
+						firstResponseDueAt: null,
+						firstResponseAt: null,
+						lastAutoReplyAt: null,
+						messages: [],
+					};
+					state.conversations.push(conv);
+				}
+
+				conv.messages.push(msg("in", text, at));
+				conv.lastInboundAt = at;
+				conv.status = "open";
+				// A customer message opens or extends the 24-hour service window.
+				conv.windowExpiresAt = new Date(
+					Date.parse(at) + SERVICE_WINDOW_MS,
+				).toISOString();
+				if (!conv.firstResponseAt) {
+					conv.firstResponseDueAt = addBusinessMinutes(
+						region,
+						new Date(at),
+						CONVERSATION_FIRST_RESPONSE_MINUTES,
+					).toISOString();
+				}
+
+				const intent = classifyIntent(text);
+
+				state.activities.push(
+					act(
+						customerId,
+						region.id,
+						"whatsapp",
+						null,
+						`Inbound WhatsApp · ${intent.intent}`,
+						text,
+						"customer",
+						at,
+					),
+				);
+
+				let booking = null;
+				for (const ref of intent.references) {
+					booking = bookingByRef(ref);
+					if (booking) break;
+				}
+
+				const outcome = outcomeFor(intent.intent);
+				let lead = null;
+				let ticket = null;
+				let reusedExisting = false;
+
+				if (outcome === "lead") {
+					const existing = openLeadFor(customerId);
+					if (existing) {
+						lead = existing;
+						reusedExisting = true;
+					} else {
+						lead = {
+							id: uid("lead"),
+							ref: buildRef("lead", ++state.seq.lead),
+							customerId,
+							regionId: region.id,
+							source: "whatsapp_bot",
+							origin: null,
+							destination: null,
+							mode: null,
+							stage: "new",
+							estValue: null,
+							currency: null,
+							lostReason: null,
+							createdAt: at,
+							updatedAt: at,
+						};
+						state.leads.push(lead);
+						state.activities.push(
+							act(
+								customerId,
+								region.id,
+								"lead",
+								lead.ref,
+								"Lead opened · whatsapp_bot",
+								summarise(text),
+								"system",
+								at,
+							),
+						);
+					}
+				} else if (outcome === "ticket") {
+					const type = ticketTypeFor(intent.intent);
+					const existing = openTicketFor(customerId, type);
+					if (existing) {
+						ticket = existing;
+						reusedExisting = true;
+					} else {
+						const priority = type === "claim" ? "high" : "normal";
+						const due = ticketDueDates(region, type, priority, new Date(at));
+						ticket = {
+							id: uid("tkt"),
+							ref: buildRef("ticket", ++state.seq.ticket),
+							customerId,
+							regionId: region.id,
+							bookingId: booking ? booking.id : null,
+							type,
+							subject: summarise(text) || `${type} raised on WhatsApp`,
+							priority,
+							status: "open",
+							firstResponseDueAt: due.firstResponseDueAt,
+							resolutionDueAt: due.resolutionDueAt,
+							firstResponseAt: null,
+							resolvedAt: null,
+							createdAt: at,
+							updatedAt: at,
+						};
+						state.tickets.push(ticket);
+						state.activities.push(
+							act(
+								customerId,
+								region.id,
+								"ticket",
+								ticket.ref,
+								`Ticket opened · ${type}`,
+								ticket.subject,
+								"system",
+								at,
+							),
+						);
+					}
+				}
+
+				// Automated reply, under the same conditions as the Worker: only
+				// when no agent owns the conversation, and only outside hours or
+				// with nobody online.
+				let autoReply = null;
+				let autoReason = null;
+				if (!conv.assignedAgentId) {
+					if (!isWithinBusinessHours(region, now())) {
+						autoReason = "outside-hours";
+					} else if (agentsOnline(region.id) === 0) {
+						autoReason = "no-agents-online";
+					}
+				}
+				if (autoReason) {
+					autoReply = buildAutoReply({
+						region,
+						reason: autoReason,
+						contactName: customer.displayName,
+						inboundText: text,
+					});
+					conv.messages.push(
+						msg("out", autoReply, nowIso(), { kind: "auto", actor: "automated" }),
+					);
+					conv.lastAutoReplyAt = nowIso();
+				}
+
+				save();
+				return {
+					conversationId: conv.id,
+					intent,
+					booking,
+					lead,
+					ticket,
+					reusedExisting,
+					autoReason,
+					outcome,
+				};
+			}
+
+			/** Same shortening rule the service uses for a ticket subject. */
+			function summarise(text, max = 120) {
+				const clean = String(text || "")
+					.replace(/\s+/g, " ")
+					.trim();
+				return clean.length <= max ? clean : `${clean.slice(0, max - 1)}…`;
+			}
+
+			/* ----------------------------------------------------------- actions */
+
+			function agentReply(convId, text) {
+				const conv = conversationById(convId);
+				if (!conv) return;
+				if (!windowOpen(conv)) {
+					toast("The 24-hour service window has closed — send a template.");
+					return;
+				}
+				const at = nowIso();
+				conv.messages.push(msg("out", text, at, { kind: "text", actor: AGENT_NAME }));
+				conv.assignedAgentId = AGENT_NAME;
+				if (!conv.firstResponseAt) {
+					conv.firstResponseAt = at;
+					conv.firstResponseDueAt = null;
+				}
+				const ticket = openTicketFor(conv.customerId);
+				if (ticket && !ticket.firstResponseAt) {
+					ticket.firstResponseAt = at;
+					ticket.updatedAt = at;
+				}
+				state.activities.push(
+					act(
+						conv.customerId,
+						conv.regionId,
+						"whatsapp",
+						null,
+						"Outbound WhatsApp · agent reply",
+						text,
+						AGENT_NAME,
+						at,
+					),
+				);
+				save();
+				render();
+			}
+
+			function sendTemplate(convId, templateName) {
+				const conv = conversationById(convId);
+				if (!conv) return;
+				const at = nowIso();
+				const body = TEMPLATE_BODIES[templateName] || templateName;
+				conv.messages.push(
+					msg("out", body, at, {
+						kind: "template",
+						actor: AGENT_NAME,
+						template: templateName,
+					}),
+				);
+				state.activities.push(
+					act(
+						conv.customerId,
+						conv.regionId,
+						"whatsapp",
+						null,
+						`Outbound template · ${templateName}`,
+						body,
+						AGENT_NAME,
+						at,
+					),
+				);
+				save();
+				render();
+				toast(`Template ${templateName} sent.`);
+			}
+
+			const TEMPLATE_BODIES = {
+				abc_shipment_status_update:
+					"Hello, this is an update on your ABC Cargo shipment. Your shipment has reached a new stage. Reply to this message if you need anything from us.",
+				abc_delivery_completed:
+					"Hello, your ABC Cargo shipment has been delivered. Thank you for shipping with us. Reply here if anything is not as expected.",
+				abc_service_followup:
+					"Hello, this is ABC Cargo following up on your recent enquiry. Reply to this message and an agent will continue where we left off.",
+			};
+
+			function advanceLead(leadId, to) {
+				const lead = state.leads.find((l) => l.id === leadId);
+				if (!lead) return;
+				try {
+					assertLeadTransition(lead.stage, to);
+				} catch (error) {
+					toast(error.message);
+					return;
+				}
+				const from = lead.stage;
+				lead.stage = to;
+				lead.updatedAt = nowIso();
+				if (to === "lost") lead.lostReason = "Price";
+				if (to === "won" || to === "lost") lead.closedAt = nowIso();
+				state.activities.push(
+					act(
+						lead.customerId,
+						lead.regionId,
+						"lead",
+						lead.ref,
+						`Lead ${from} → ${to}`,
+						null,
+						AGENT_NAME,
+						nowIso(),
+					),
+				);
+				save();
+				render();
+			}
+
+			function quoteLead(leadId) {
+				const lead = state.leads.find((l) => l.id === leadId);
+				if (!lead) return;
+				if (lead.stage === "new") {
+					try {
+						assertLeadTransition("new", "qualified");
+						lead.stage = "qualified";
+					} catch {
+						/* unreachable: new → qualified is always allowed */
+					}
+				}
+				const at = nowIso();
+				const amount = 400 + Math.round(Math.random() * 2600);
+				const currency =
+					lead.regionId === "uae" ? "AED" : lead.regionId === "ksa" ? "SAR" : "GBP";
+				const q = {
+					id: uid("quo"),
+					ref: buildRef("quotation", ++state.seq.quotation),
+					leadId: lead.id,
+					customerId: lead.customerId,
+					regionId: lead.regionId,
+					origin: lead.origin || "Dubai",
+					destination: lead.destination || "Kochi",
+					mode: lead.mode || "air",
+					chargeableKg: 40,
+					totalAmount: amount,
+					currency,
+					status: "draft",
+					validUntil: new Date(Date.parse(at) + 7 * 86_400_000).toISOString(),
+					createdAt: at,
+					updatedAt: at,
+				};
+				state.quotations.push(q);
+				state.activities.push(
+					act(
+						lead.customerId,
+						lead.regionId,
+						"quotation",
+						q.ref,
+						`Quotation drafted · ${currency} ${amount}`,
+						`${q.origin} → ${q.destination}, ${q.mode}`,
+						AGENT_NAME,
+						at,
+					),
+				);
+				save();
+				render();
+				toast(`${q.ref} drafted against ${lead.ref}.`);
+			}
+
+			function moveQuotation(quoteId, to) {
+				const q = state.quotations.find((x) => x.id === quoteId);
+				if (!q) return;
+				try {
+					assertQuotationTransition(q.status, to);
+				} catch (error) {
+					toast(error.message);
+					return;
+				}
+				const from = q.status;
+				q.status = to;
+				q.updatedAt = nowIso();
+
+				state.activities.push(
+					act(
+						q.customerId,
+						q.regionId,
+						"quotation",
+						q.ref,
+						`Quotation ${from} → ${to}`,
+						null,
+						AGENT_NAME,
+						nowIso(),
+					),
+				);
+
+				// The lead follows the quotation, by the rule in lifecycle.ts.
+				const implied = leadStageForQuotation(to);
+				const lead = state.leads.find((l) => l.id === q.leadId);
+				if (implied && lead && canAdvanceLead(lead.stage, implied)) {
+					const from2 = lead.stage;
+					lead.stage = implied;
+					lead.updatedAt = nowIso();
+					state.activities.push(
+						act(
+							lead.customerId,
+							lead.regionId,
+							"lead",
+							lead.ref,
+							`Lead ${from2} → ${implied} (quotation ${to})`,
+							null,
+							"system",
+							nowIso(),
+						),
+					);
+				}
+
+				// An accepted quotation becomes a shipment.
+				if (to === "accepted") {
+					const at = nowIso();
+					const booking = {
+						id: uid("bkg"),
+						ref: buildRef("booking", ++state.seq.booking, q.regionId),
+						customerId: q.customerId,
+						regionId: q.regionId,
+						origin: q.origin,
+						destination: q.destination,
+						mode: q.mode,
+						pieces: 1,
+						weightKg: q.chargeableKg,
+						valueAmount: q.totalAmount,
+						currency: q.currency,
+						milestone: "booked",
+						milestoneAt: at,
+						createdAt: at,
+					};
+					state.bookings.push(booking);
+					state.activities.push(
+						act(
+							q.customerId,
+							q.regionId,
+							"booking",
+							booking.ref,
+							`Booking created · ${booking.origin} → ${booking.destination}`,
+							`From quotation ${q.ref}`,
+							"system",
+							at,
+						),
+					);
+					toast(`${booking.ref} created from ${q.ref}.`);
+				}
+				save();
+				render();
+			}
+
+			function advanceMilestone(bookingId, to) {
+				const b = state.bookings.find((x) => x.id === bookingId);
+				if (!b) return;
+				try {
+					assertMilestoneAdvance(b.milestone, to);
+				} catch (error) {
+					toast(error.message);
+					return;
+				}
+				const from = b.milestone;
+				const at = nowIso();
+				b.milestone = to;
+				b.milestoneAt = at;
+				state.activities.push(
+					act(
+						b.customerId,
+						b.regionId,
+						"milestone",
+						b.ref,
+						`Milestone ${from} → ${to}`,
+						null,
+						"shipment_system",
+						at,
+					),
+				);
+
+				// Only some milestones are worth a message to the customer.
+				const template = templateForMilestone(to);
+				if (template && shouldNotifyCustomer(to)) {
+					const conv = conversationForCustomer(b.customerId);
+					if (conv) {
+						conv.messages.push(
+							msg("out", TEMPLATE_BODIES[template], nowIso(), {
+								kind: "template",
+								actor: "automated",
+								template,
+							}),
+						);
+						state.activities.push(
+							act(
+								b.customerId,
+								b.regionId,
+								"whatsapp",
+								b.ref,
+								`Proactive update sent · ${template}`,
+								null,
+								"automated",
+								nowIso(),
+							),
+						);
+					}
+				}
+				save();
+				render();
+			}
+
+			function ticketAction(ticketId, action) {
+				const t = state.tickets.find((x) => x.id === ticketId);
+				if (!t) return;
+				const at = nowIso();
+				if (action === "respond") {
+					t.firstResponseAt = at;
+					t.status = "pending";
+				} else if (action === "resolve") {
+					if (!t.firstResponseAt) t.firstResponseAt = at;
+					t.resolvedAt = at;
+					t.status = "resolved";
+				} else if (action === "close") {
+					t.status = "closed";
+					if (!t.resolvedAt) t.resolvedAt = at;
+				} else if (action === "escalate") {
+					t.priority = "urgent";
+					const due = ticketDueDates(
+						regionOf(t.regionId),
+						t.type,
+						"urgent",
+						new Date(t.createdAt),
+					);
+					t.firstResponseDueAt = due.firstResponseDueAt;
+					t.resolutionDueAt = due.resolutionDueAt;
+				}
+				t.updatedAt = at;
+				state.activities.push(
+					act(
+						t.customerId,
+						t.regionId,
+						"ticket",
+						t.ref,
+						`Ticket ${action === "respond" ? "first response recorded" : action === "escalate" ? "escalated to urgent" : action + "d"}`,
+						null,
+						AGENT_NAME,
+						at,
+					),
+				);
+				save();
+				render();
+			}
+
+			function logCall(customerId, direction, seconds, outcome) {
+				const customer = customerById(customerId);
+				if (!customer) return;
+				const at = nowIso();
+				state.calls.push({
+					id: uid("call"),
+					customerId,
+					regionId: customer.regionId,
+					direction,
+					agentId: AGENT_NAME,
+					startedAt: at,
+					durationSeconds: seconds,
+					outcome,
+					linkedRef: null,
+				});
+				state.activities.push(
+					act(
+						customerId,
+						customer.regionId,
+						"call",
+						null,
+						`${direction === "in" ? "Inbound" : "Outbound"} call · ${formatDuration(seconds)}`,
+						outcome,
+						AGENT_NAME,
+						at,
+					),
+				);
+				save();
+				render();
+				toast("Call logged on the customer timeline.");
+			}
+
+			/* --------------------------------------------------------- formatting */
+
+			function esc(value) {
+				return String(value == null ? "" : value).replace(
+					/[&<>"']/g,
+					(ch) =>
+						({
+							"&": "&amp;",
+							"<": "&lt;",
+							">": "&gt;",
+							'"': "&quot;",
+							"'": "&#39;",
+						})[ch],
+				);
+			}
+
+			function formatDuration(seconds) {
+				const s = Math.max(0, Math.round(seconds));
+				return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+			}
+
+			/** Clock time in a region's own timezone — the only honest way to show it. */
+			function localTime(iso, regionId) {
+				const region = regionOf(regionId);
+				return new Intl.DateTimeFormat("en-GB", {
+					timeZone: region.timezone,
+					hour: "2-digit",
+					minute: "2-digit",
+					hourCycle: "h23",
+				}).format(new Date(iso));
+			}
+
+			function localDateTime(iso, regionId) {
+				const region = regionOf(regionId);
+				return new Intl.DateTimeFormat("en-GB", {
+					timeZone: region.timezone,
+					day: "2-digit",
+					month: "short",
+					hour: "2-digit",
+					minute: "2-digit",
+					hourCycle: "h23",
+				}).format(new Date(iso));
+			}
+
+			function ago(iso) {
+				const ms = now().getTime() - Date.parse(iso);
+				const mins = Math.round(ms / 60000);
+				if (mins < 1) return "just now";
+				if (mins < 60) return `${mins}m ago`;
+				const hours = Math.round(mins / 60);
+				if (hours < 24) return `${hours}h ago`;
+				return `${Math.round(hours / 24)}d ago`;
+			}
+
+			/** A countdown that reads the same way a supervisor would say it. */
+			function countdown(dueAt) {
+				const ms = remainingMs(dueAt, now());
+				const over = ms < 0;
+                const abs = Math.abs(ms);
+				const mins = Math.floor(abs / 60000);
+				const h = Math.floor(mins / 60);
+				const m = mins % 60;
+				const text = h > 0 ? `${h}h ${m}m` : `${m}m`;
+				return { over, text, ms };
+			}
+
+			function slaPill(dueAt, label) {
+				if (!dueAt) return "";
+				const c = countdown(dueAt);
+				const cls = c.over
+					? "pill-critical"
+					: c.ms < 30 * 60000
+						? "pill-warn"
+						: "pill-open";
+				return `<span class="pill ${cls}">${esc(label)} ${c.over ? `overdue ${esc(c.text)}` : esc(c.text)}</span>`;
+			}
+
+			function titleCase(value) {
+				return String(value)
+					.replace(/_/g, " ")
+					.replace(/\b[a-z]/g, (ch) => ch.toUpperCase());
+			}
+
+			/* ------------------------------------------------------------- render */
+
+			function render() {
+				renderTopbar();
+				renderTabs();
+				const main = document.getElementById("main");
+				const view = state.view;
+				if (view === "inbox") main.innerHTML = viewInbox();
+				else if (view === "leads") main.innerHTML = viewLeads();
+				else if (view === "tickets") main.innerHTML = viewTickets();
+				else if (view === "bookings") main.innerHTML = viewBookings();
+				else if (view === "calls") main.innerHTML = viewCalls();
+				else main.innerHTML = viewOverview();
+
+				const thread = document.getElementById("thread");
+				if (thread) thread.scrollTop = thread.scrollHeight;
+			}
+
+			function renderTopbar() {
+				const host = document.getElementById("regions");
+				host.innerHTML = REGIONS.map((r) => {
+					const unread = conversationsForRegion(r.id).filter(
+						(c) => !c.firstResponseAt && c.firstResponseDueAt,
+					).length;
+					return `<button type="button" data-region="${esc(r.id)}" aria-pressed="${r.id === state.regionId}">
+						<span class="dot dot-${esc(r.id)}"></span>${esc(r.label)}
+						<span class="mono" style="font-size:11px;color:var(--ink-3)">${esc(r.displayNumber)}</span>
+						${unread ? `<span class="count">${unread}</span>` : ""}
+					</button>`;
+				}).join("");
+
+				const region = currentRegion();
+				const open = isWithinBusinessHours(region, now());
+				const clock = new Intl.DateTimeFormat("en-GB", {
+					timeZone: region.timezone,
+					weekday: "short",
+					hour: "2-digit",
+					minute: "2-digit",
+					hourCycle: "h23",
+				}).format(now());
+				document.getElementById("regionClock").textContent = `${clock} ${region.timezone}`;
+				const stateEl = document.getElementById("regionState");
+				stateEl.className = `pill ${open ? "pill-open" : "pill-closed"}`;
+				stateEl.textContent = open ? "Open" : "Closed";
+
+				const presence = document.getElementById("presenceBtn");
+				const online = state.presence[region.id];
+				presence.textContent = online
+					? `${region.label} agents: online`
+					: `${region.label} agents: offline`;
+				presence.setAttribute("aria-pressed", String(!!online));
+
+				document.getElementById("clockBtn").textContent =
+					clockOffsetMs === 0 ? "Jump to after hours" : "Back to real time";
+			}
+
+			function renderTabs() {
+				document.getElementById("tabs").innerHTML = VIEWS.map(
+					([id, label]) => {
+						const badge =
+							id === "tickets"
+								? state.tickets.filter(
+										(t) => t.status === "open" || t.status === "pending",
+									).length
+								: id === "leads"
+									? state.leads.filter((l) => isLeadOpen(l.stage)).length
+									: 0;
+						return `<button type="button" role="tab" data-view="${esc(id)}" aria-selected="${state.view === id}">
+							${esc(label)}${badge ? ` <span class="mono" style="color:var(--ink-3)">${badge}</span>` : ""}
+						</button>`;
+					},
+				).join("");
+			}
+
+			/* --------------------------------------------------------- view: inbox */
+
+			function viewInbox() {
+				const convs = conversationsForRegion(state.regionId);
+				let selected = conversationById(state.selectedConversationId);
+				if (!selected || selected.regionId !== state.regionId) {
+					selected = convs[0] || null;
+					state.selectedConversationId = selected ? selected.id : null;
+				}
+
+				return `<div class="inbox">
+					<section class="card">
+						<h2>Conversations <small>${convs.length}</small></h2>
+						<div class="convlist">${convs.length ? convs.map(convRow).join("") : `<div class="empty">No conversations on this number yet.<br />Use the simulator to send one.</div>`}</div>
+					</section>
+
+					${
+						selected
+							? threadCard(selected)
+							: `<section class="card">
+								<h2>No conversation open<small>${esc(regionOf(state.regionId).displayNumber)}</small></h2>
+								<div class="empty">Nobody has written to this number yet. Send the first message below and the platform will open the conversation.</div>
+								${simPanel(null)}
+							</section>`
+					}
+
+					${selected ? railFor(selected) : "<div></div>"}
+				</div>`;
+			}
+
+			function convRow(conv) {
+				const customer = customerById(conv.customerId);
+				const last = conv.messages[conv.messages.length - 1];
+				const ticket = anyOpenTicketFor(conv.customerId);
+				const lead = openLeadFor(conv.customerId);
+				const tags = [];
+				if (!conv.firstResponseAt && conv.firstResponseDueAt) {
+					tags.push(slaPill(conv.firstResponseDueAt, "First reply"));
+				}
+				if (ticket) tags.push(`<span class="pill pill-brand">${esc(ticket.ref)}</span>`);
+				if (lead) tags.push(`<span class="pill pill-brand">${esc(lead.ref)}</span>`);
+				if (!windowOpen(conv)) {
+					tags.push('<span class="pill pill-closed">Window closed</span>');
+				}
+				return `<button class="conv" type="button" data-conv="${esc(conv.id)}" aria-current="${conv.id === state.selectedConversationId}">
+					<span class="row1">
+						<span class="name">${esc(customer ? customer.displayName : conv.customerId)}</span>
+						<span class="time">${esc(ago(conv.lastInboundAt))}</span>
+					</span>
+					<span class="preview">${esc(last ? (last.dir === "out" ? "↩ " : "") + last.text : "")}</span>
+					${tags.length ? `<span class="tags">${tags.join("")}</span>` : ""}
+				</button>`;
+			}
+
+			function threadCard(conv) {
+				const customer = customerById(conv.customerId);
+				const open = windowOpen(conv);
+				const region = regionOf(conv.regionId);
+
+				return `<section class="card">
+					<h2>
+						${esc(customer ? customer.displayName : "")}
+						<small>${esc(region.label)} · ${esc(region.displayNumber)} · ${open ? `window open, ${esc(countdown(conv.windowExpiresAt).text)} left` : "window closed"}</small>
+					</h2>
+
+					<div class="thread" id="thread">
+						${conv.messages.map(bubble).join("")}
+					</div>
+
+					<div class="composer">
+						<textarea id="replyBox" placeholder="${open ? "Reply to the customer…" : "The 24-hour window has closed. Free text cannot be sent; use a template."}" ${open ? "" : "disabled"}></textarea>
+						<div class="actions">
+							<button class="primary" type="button" id="replyBtn" ${open ? "" : "disabled"}>Send reply</button>
+							<select id="templateSelect" class="ghost">
+								<option value="abc_service_followup">abc_service_followup</option>
+								<option value="abc_shipment_status_update">abc_shipment_status_update</option>
+								<option value="abc_delivery_completed">abc_delivery_completed</option>
+							</select>
+							<button class="ghost" type="button" id="templateBtn">Send template</button>
+							${open ? "" : '<span class="muted" style="font-size:12.5px">Meta only allows an approved template outside the window.</span>'}
+						</div>
+					</div>
+
+					${simPanel(conv)}
+				</section>`;
+			}
+
+			/**
+			 * The customer simulator. It is rendered both under an open thread
+			 * and on a number with no conversations at all — otherwise the empty
+			 * state would tell an agent to use a control that is not on screen.
+			 */
+			function simPanel(conv) {
+				const trace =
+					lastTrace && conv && lastTrace.conversationId === conv.id
+						? traceCard(lastTrace)
+						: !conv && lastTrace
+							? traceCard(lastTrace)
+							: "";
+				const customers = state.customers.filter(
+					(c) => c.regionId === state.regionId,
+				);
+				const chosen = conv ? conv.customerId : "";
+				const picker = customers.length
+					? `<label class="simwho">Sending as
+							<select id="simCustomer" class="ghost">
+								${customers.map((c) => `<option value="${esc(c.id)}" ${c.id === chosen ? "selected" : ""}>${esc(c.displayName)} · ${esc(c.phone)}</option>`).join("")}
+							</select>
+						</label>`
+					: `<div class="muted" style="font-size:12.5px">No customer on file for this number.</div>`;
+
+				return `<div class="sim">
+					<h4>Simulate a customer message</h4>
+					${picker}
+					<div class="inputrow">
+						<input id="simBox" placeholder="Type what a customer would write…" />
+						<button class="primary" type="button" id="simBtn">Send as customer</button>
+					</div>
+					<div class="chips">
+						${SAMPLES.map((s) => `<button class="chip" type="button" data-sample="${esc(s)}">${esc(s.length > 42 ? s.slice(0, 41) + "…" : s)}</button>`).join("")}
+					</div>
+					${trace}
+				</div>`;
+			}
+
+			function bubble(m) {
+				const who =
+					m.kind === "auto"
+						? "Automated reply"
+						: m.kind === "template"
+							? `Template · ${m.template}`
+							: m.dir === "out"
+								? esc(m.actor)
+								: "";
+				return `<div class="bubble ${m.dir === "in" ? "in" : "out"}">${
+					who ? `<div class="who">${who}</div>` : ""
+				}<span class="text">${esc(m.text)}</span><div class="meta">${esc(localTime(m.at, state.regionId))}${m.dir === "out" ? " ✓✓" : ""}</div></div>`;
+			}
+
+			let lastTrace = null;
+
+			function traceCard(t) {
+				const lines = [];
+				lines.push(
+					`<li><b>Intent:</b> ${esc(t.intent.intent)} (confidence ${esc(t.intent.confidence)})${t.intent.matched ? `, on the words “${esc(t.intent.matched)}”` : ", on no keyword"}</li>`,
+				);
+				if (t.intent.references.length) {
+					lines.push(
+						`<li><b>Reference found:</b> ${t.intent.references.map(esc).join(", ")}${t.booking ? ` — matched shipment ${esc(t.booking.ref)}, currently ${esc(t.booking.milestone)}` : " — no shipment with that reference"}</li>`,
+					);
+				}
+				if (t.outcome === null) {
+					lines.push(
+						"<li><b>Created nothing.</b> This intent is handled in the conversation. Not creating work is as important as creating it.</li>",
+					);
+				}
+				if (t.lead) {
+					lines.push(
+						t.reusedExisting
+							? `<li><b>Reused the open lead ${esc(t.lead.ref)}</b> rather than opening a second one for the same customer.</li>`
+							: `<li><b>Opened sales lead ${esc(t.lead.ref)}</b> at stage “${esc(t.lead.stage)}”.</li>`,
+					);
+				}
+				if (t.ticket) {
+					lines.push(
+						t.reusedExisting
+							? `<li><b>Reused the open ticket ${esc(t.ticket.ref)}</b> rather than opening a second one.</li>`
+							: `<li><b>Opened ticket ${esc(t.ticket.ref)}</b> · ${esc(t.ticket.type)}, priority ${esc(t.ticket.priority)}. First reply due ${esc(localDateTime(t.ticket.firstResponseDueAt, t.ticket.regionId))}, resolution due ${esc(localDateTime(t.ticket.resolutionDueAt, t.ticket.regionId))} (${esc(regionOf(t.ticket.regionId).timezone)}).</li>`,
+					);
+				}
+				if (t.autoReason) {
+					lines.push(
+						`<li><b>Sent the automated reply</b> because the reason was “${esc(t.autoReason)}”. An agent owning the conversation would have suppressed it.</li>`,
+					);
+				} else {
+					lines.push(
+						"<li><b>No automated reply.</b> The region is open with an agent available, so the customer waits for a person.</li>",
+					);
+				}
+				return `<div class="trace">
+					<h5>What the platform did, and why</h5>
+					<ul>${lines.join("")}</ul>
+				</div>`;
+			}
+
+			function railFor(conv) {
+				const customer = customerById(conv.customerId);
+				if (!customer) return "<div></div>";
+				const acts = activitiesFor(customer.id);
+				const booking = state.bookings.find((b) => b.customerId === customer.id);
+				const ticket = openTicketFor(customer.id);
+				const lead = openLeadFor(customer.id);
+
+				return `<div class="rail">
+					<section class="card">
+						<h3>Customer</h3>
+						<div class="pad">
+							<dl class="kv">
+								<dt>Name</dt><dd>${esc(customer.displayName)}</dd>
+								${customer.company ? `<dt>Company</dt><dd>${esc(customer.company)}</dd>` : ""}
+								<dt>WhatsApp</dt><dd class="mono">${esc(customer.phone)}</dd>
+								<dt>Region</dt><dd>${esc(regionOf(customer.regionId).label)}</dd>
+								<dt>Account</dt><dd>${esc(customer.accountType || "—")}</dd>
+								<dt>Customer since</dt><dd>${esc(new Date(customer.createdAt).getFullYear())}</dd>
+							</dl>
+							<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:11px">
+								${ticket ? `<span class="pill pill-brand">${esc(ticket.ref)} ${esc(ticket.type)}</span>` : ""}
+								${lead ? `<span class="pill pill-brand">${esc(lead.ref)} ${esc(lead.stage)}</span>` : ""}
+								${booking ? `<span class="pill pill-closed">${esc(booking.ref)} ${esc(booking.milestone)}</span>` : ""}
+							</div>
+							<div class="actions" style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">
+								<button class="ghost" type="button" data-logcall="${esc(customer.id)}">Log a call</button>
+							</div>
+						</div>
+					</section>
+
+					<section class="card">
+						<h3>One timeline <small>${acts.length} entries</small></h3>
+						<div class="timeline">
+							${acts.length ? acts.map(timelineRow).join("") : '<div class="empty">Nothing yet.</div>'}
+						</div>
+					</section>
+				</div>`;
+			}
+
+			const KIND_ICON = {
+				whatsapp: "W",
+				call: "C",
+				lead: "L",
+				quotation: "Q",
+				booking: "B",
+				milestone: "M",
+				ticket: "T",
+				note: "N",
+				handover: "H",
+			};
+
+			function timelineRow(a) {
+				return `<div class="tl">
+					<div class="ic">${esc(KIND_ICON[a.kind] || "·")}</div>
+					<div>
+						<div class="s">${esc(a.summary)}${a.ref ? ` <span class="mono muted">${esc(a.ref)}</span>` : ""}</div>
+						${a.detail ? `<div class="d">${esc(a.detail)}</div>` : ""}
+						<div class="t">${esc(localDateTime(a.occurredAt, a.regionId))} · ${esc(a.actor || "system")}</div>
+					</div>
+				</div>`;
+			}
+
+			/* --------------------------------------------------------- view: leads */
+
+			function viewLeads() {
+				const leads = state.leads.filter((l) => l.regionId === state.regionId);
+				const quotes = state.quotations.filter((q) => q.regionId === state.regionId);
+
+				return `<div class="grid2">
+					<section class="card">
+						<h2>Leads <small>${leads.filter((l) => isLeadOpen(l.stage)).length} open</small></h2>
+						<div class="tablewrap">
+							${
+								leads.length
+									? `<table>
+								<thead><tr><th>Ref</th><th>Customer</th><th>Lane</th><th>Stage</th><th>Next</th></tr></thead>
+								<tbody>${leads.map(leadRow).join("")}</tbody>
+							</table>`
+									: '<div class="empty">No leads on this number. Send a rate enquiry from the Inbox.</div>'
+							}
+						</div>
+					</section>
+
+					<section class="card">
+						<h2>Quotations <small>${quotes.length}</small></h2>
+						<div class="tablewrap">
+							${
+								quotes.length
+									? `<table>
+								<thead><tr><th>Ref</th><th>Lane</th><th>Amount</th><th>Status</th><th>Next</th></tr></thead>
+								<tbody>${quotes.map(quoteRow).join("")}</tbody>
+							</table>`
+									: '<div class="empty">No quotations yet. Draft one from a lead.</div>'
+							}
+						</div>
+					</section>
+
+					<div class="note">
+						<b>The stage buttons are not decoration.</b> They are drawn from
+						the platform's own transition table, so only a legal next stage
+						is offered: a lead cannot be quoted before it is qualified, and a
+						won or lost lead cannot move again. The same table will reject an
+						illegal move arriving from an integration.
+					</div>
+				</div>`;
+			}
+
+			function leadRow(l) {
+				const customer = customerById(l.customerId);
+				const nexts = LEAD_STAGES.filter((s) => canAdvanceLead(l.stage, s));
+				return `<tr>
+					<td class="mono">${esc(l.ref)}</td>
+					<td>${esc(customer ? customer.displayName : "—")}<div class="muted" style="font-size:12px">${esc(ago(l.createdAt))}</div></td>
+					<td>${l.origin ? `${esc(l.origin)} → ${esc(l.destination)}` : '<span class="muted">not captured yet</span>'}${l.mode ? `<div class="muted" style="font-size:12px">${esc(titleCase(l.mode))}</div>` : ""}</td>
+					<td><span class="pill ${l.stage === "won" ? "pill-open" : l.stage === "lost" ? "pill-closed" : "pill-brand"}">${esc(l.stage)}</span></td>
+					<td><div class="acts">
+						${nexts.map((s) => `<button type="button" data-lead="${esc(l.id)}" data-stage="${esc(s)}">${esc(s)}</button>`).join("")}
+						${isLeadOpen(l.stage) ? `<button type="button" data-quote="${esc(l.id)}">draft quote</button>` : ""}
+						${nexts.length === 0 ? '<span class="muted" style="font-size:12px">closed</span>' : ""}
+					</div></td>
+				</tr>`;
+			}
+
+			function quoteRow(q) {
+				const nexts = QUOTATION_STATUSES.filter((s) => canMoveQuotation(q.status, s));
+				return `<tr>
+					<td class="mono">${esc(q.ref)}</td>
+					<td>${esc(q.origin)} → ${esc(q.destination)}<div class="muted" style="font-size:12px">${esc(titleCase(q.mode))}</div></td>
+					<td class="mono">${esc(q.currency)} ${esc(q.totalAmount)}</td>
+					<td><span class="pill ${q.status === "accepted" ? "pill-open" : q.status === "lost" || q.status === "expired" ? "pill-closed" : "pill-brand"}">${esc(q.status)}</span></td>
+					<td><div class="acts">
+						${nexts.map((s) => `<button type="button" data-quotemove="${esc(q.id)}" data-status="${esc(s)}">${esc(s)}</button>`).join("")}
+						${nexts.length === 0 ? '<span class="muted" style="font-size:12px">closed</span>' : ""}
+					</div></td>
+				</tr>`;
+			}
+
+			/* ------------------------------------------------------- view: tickets */
+
+			function viewTickets() {
+				const tickets = state.tickets
+					.filter((t) => t.regionId === state.regionId)
+					.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+
+				return `<div class="grid2" style="grid-template-columns:minmax(0,1fr)">
+					<section class="card">
+						<h2>Tickets <small>${tickets.filter((t) => t.status === "open" || t.status === "pending").length} open</small></h2>
+						<div class="tablewrap">
+							${
+								tickets.length
+									? `<table>
+								<thead><tr><th>Ref</th><th>Customer</th><th>Subject</th><th>Type</th><th>First reply</th><th>Resolution</th><th>Status</th><th>Action</th></tr></thead>
+								<tbody>${tickets.map(ticketRow).join("")}</tbody>
+							</table>`
+									: '<div class="empty">No tickets on this number.</div>'
+							}
+						</div>
+					</section>
+
+					<div class="note">
+						<b>The clocks run on business minutes, not wall-clock time.</b>
+						A ticket raised at 17:55 in the UK is not overdue at 09:05 the
+						next morning. Each due time above was walked across that
+						region's own calendar — ${esc(REGIONS.map((r) => `${r.label} ${r.businessHours.start}–${r.businessHours.end} ${r.timezone}`).join("; "))} — by the
+						platform's own code. The targets themselves are placeholders
+						until ABC Cargo's real SLA policy is exported from Freshworks.
+					</div>
+				</div>`;
+			}
+
+			function ticketRow(t) {
+				const customer = customerById(t.customerId);
+				const booking = t.bookingId
+					? state.bookings.find((b) => b.id === t.bookingId)
+					: null;
+				const closed = t.status === "resolved" || t.status === "closed";
+				return `<tr>
+					<td class="mono">${esc(t.ref)}</td>
+					<td>${esc(customer ? customer.displayName : "—")}${booking ? `<div class="mono muted" style="font-size:11.5px">${esc(booking.ref)}</div>` : ""}</td>
+					<td style="max-width:260px">${esc(t.subject)}</td>
+					<td>${esc(t.type)}<div class="muted" style="font-size:12px">${esc(t.priority)}</div></td>
+					<td>${t.firstResponseAt ? `<span class="pill pill-open">answered</span><div class="muted" style="font-size:11.5px">${esc(localDateTime(t.firstResponseAt, t.regionId))}</div>` : slaPill(t.firstResponseDueAt, "due in")}</td>
+					<td>${t.resolvedAt ? `<span class="pill pill-open">resolved</span>` : slaPill(t.resolutionDueAt, "due in")}</td>
+					<td><span class="pill ${closed ? "pill-closed" : t.status === "pending" ? "pill-warn" : "pill-brand"}">${esc(t.status)}</span></td>
+					<td><div class="acts">
+						${!t.firstResponseAt ? `<button type="button" data-ticket="${esc(t.id)}" data-action="respond">first reply</button>` : ""}
+						${!closed ? `<button type="button" data-ticket="${esc(t.id)}" data-action="resolve">resolve</button>` : ""}
+						${t.status === "resolved" ? `<button type="button" data-ticket="${esc(t.id)}" data-action="close">close</button>` : ""}
+						${!closed && t.priority !== "urgent" ? `<button type="button" data-ticket="${esc(t.id)}" data-action="escalate">escalate</button>` : ""}
+					</div></td>
+				</tr>`;
+			}
+
+			/* ------------------------------------------------------ view: bookings */
+
+			function viewBookings() {
+				const bookings = state.bookings
+					.filter((b) => b.regionId === state.regionId)
+					.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+
+				return `<div class="grid2" style="grid-template-columns:minmax(0,1fr)">
+					<section class="card">
+						<h2>Shipments <small>${bookings.length}</small></h2>
+						<div class="tablewrap">
+							${
+								bookings.length
+									? `<table>
+								<thead><tr><th>Ref</th><th>Customer</th><th>Lane</th><th>Milestone</th><th>Watch</th><th>Advance to</th></tr></thead>
+								<tbody>${bookings.map(bookingRow).join("")}</tbody>
+							</table>`
+									: '<div class="empty">No shipments on this number.</div>'
+							}
+						</div>
+					</section>
+
+					<div class="note">
+						<b>Milestones only move forward</b>, and only some of them are
+						worth telling a customer about — a move from “departed” to “in
+						transit” is internal. Advance one that is notifiable and watch the
+						proactive template appear in that customer's thread. The
+						<b>Watch</b> column is the stall check: how long a shipment may
+						sit on a milestone before the silence is itself the problem, which
+						is what turns a quiet booking into an after-sales ticket before
+						the customer has to chase it.
+					</div>
+				</div>`;
+			}
+
+			function bookingRow(b) {
+				const customer = customerById(b.customerId);
+				const stall = checkStall(b.milestone, b.milestoneAt, now());
+				const nexts = MILESTONES.filter((m) => canAdvanceMilestone(b.milestone, m));
+				return `<tr>
+					<td class="mono">${esc(b.ref)}</td>
+					<td>${esc(customer ? customer.displayName : "—")}</td>
+					<td>${esc(b.origin)} → ${esc(b.destination)}<div class="muted" style="font-size:12px">${esc(titleCase(b.mode))} · ${esc(b.pieces)} pcs · ${esc(b.weightKg)} kg</div></td>
+					<td><span class="pill ${isDelivered(b.milestone) ? "pill-open" : "pill-brand"}">${esc(titleCase(b.milestone))}</span><div class="muted" style="font-size:11.5px">${esc(ago(b.milestoneAt))}</div></td>
+					<td>${
+						isDelivered(b.milestone)
+							? '<span class="muted" style="font-size:12px">complete</span>'
+							: stall.stalled
+								? `<span class="pill pill-critical">stalled ${esc(Math.round(stall.hoursSinceMilestone))}h</span>`
+								: `<span class="pill pill-open">ok</span><div class="muted" style="font-size:11.5px">flags at ${esc(stall.thresholdHours)}h</div>`
+					}</td>
+					<td><div class="acts">
+						${nexts.slice(0, 3).map((m) => `<button type="button" data-booking="${esc(b.id)}" data-milestone="${esc(m)}">${esc(titleCase(m))}${shouldNotifyCustomer(m) ? " ✉" : ""}</button>`).join("")}
+						${nexts.length === 0 ? '<span class="muted" style="font-size:12px">delivered</span>' : ""}
+					</div></td>
+				</tr>`;
+			}
+
+			/* --------------------------------------------------------- view: calls */
+
+			function viewCalls() {
+				const calls = state.calls
+					.filter((c) => c.regionId === state.regionId)
+					.sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt));
+				const customers = state.customers.filter(
+					(c) => c.regionId === state.regionId,
+				);
+
+				return `<div class="grid2">
+					<section class="card">
+						<h2>Call log <small>${calls.length}</small></h2>
+						<div class="tablewrap">
+							${
+								calls.length
+									? `<table>
+								<thead><tr><th>When</th><th>Customer</th><th>Direction</th><th>Length</th><th>Outcome</th></tr></thead>
+								<tbody>${calls
+									.map(
+										(c) => `<tr>
+									<td class="mono" style="font-size:12px">${esc(localDateTime(c.startedAt, c.regionId))}</td>
+									<td>${esc((customerById(c.customerId) || {}).displayName || "—")}</td>
+									<td>${c.direction === "in" ? "Inbound" : "Outbound"}</td>
+									<td class="mono">${esc(formatDuration(c.durationSeconds))}</td>
+									<td>${esc(c.outcome || "—")}</td>
+								</tr>`,
+									)
+									.join("")}</tbody>
+							</table>`
+									: '<div class="empty">No calls logged on this number.</div>'
+							}
+						</div>
+					</section>
+
+					<section class="card">
+						<h2>Log a call</h2>
+						<div class="pad" style="display:grid;gap:10px">
+							<label>Customer
+								<select id="callCustomer" class="ghost" style="width:100%;margin-top:4px">
+									${customers.map((c) => `<option value="${esc(c.id)}">${esc(c.displayName)}</option>`).join("")}
+								</select>
+							</label>
+							<label>Direction
+								<select id="callDirection" class="ghost" style="width:100%;margin-top:4px">
+									<option value="in">Inbound</option>
+									<option value="out">Outbound</option>
+								</select>
+							</label>
+							<label>Length (seconds)
+								<input id="callSeconds" class="ghost" type="number" min="0" value="180" style="width:100%;margin-top:4px" />
+							</label>
+							<label>Outcome
+								<input id="callOutcome" class="ghost" placeholder="What was agreed" style="width:100%;margin-top:4px" />
+							</label>
+							<button class="primary" type="button" id="callBtn">Log the call</button>
+							<div class="note">
+								A call logged here lands on the same customer timeline as
+								the WhatsApp messages, the tickets and the shipments. That
+								single history across channels is the thing a per-channel
+								tool cannot give you.
+							</div>
+						</div>
+					</section>
+				</div>`;
+			}
+
+			/* ------------------------------------------------------ view: overview */
+
+			function viewOverview() {
+				const openTickets = state.tickets.filter(
+					(t) => t.status === "open" || t.status === "pending",
+				);
+				const breached = openTickets.filter(
+					(t) =>
+						(!t.firstResponseAt && isBreached(t.firstResponseDueAt, now())) ||
+						isBreached(t.resolutionDueAt, now()),
+				);
+				const atRisk = openTickets.filter(
+					(t) =>
+						!breached.includes(t) &&
+						((!t.firstResponseAt &&
+							remainingMs(t.firstResponseDueAt, now()) < 60 * 60000) ||
+							remainingMs(t.resolutionDueAt, now()) < 60 * 60000),
+				);
+				const openLeads = state.leads.filter((l) => isLeadOpen(l.stage));
+				const won = state.leads.filter((l) => l.stage === "won");
+				const stalled = state.bookings.filter(
+					(b) =>
+						!isDelivered(b.milestone) &&
+						checkStall(b.milestone, b.milestoneAt, now()).stalled,
+				);
+				const msgsToday = state.conversations.reduce(
+					(n, c) =>
+						n +
+						c.messages.filter(
+							(m) => now().getTime() - Date.parse(m.at) < 24 * 3_600_000,
+						).length,
+					0,
+				);
+
+				const byStage = LEAD_STAGES.map((s) => [
+					s,
+					state.leads.filter((l) => l.stage === s).length,
+				]);
+				const maxStage = Math.max(1, ...byStage.map(([, n]) => n));
+
+				return `<div style="display:grid;gap:14px">
+					<div class="stats">
+						<div class="stat"><div class="n">${openTickets.length}</div><div class="l">Open tickets</div><div class="h">${breached.length} overdue · ${atRisk.length} due within the hour</div></div>
+						<div class="stat"><div class="n">${openLeads.length}</div><div class="l">Open leads</div><div class="h">${won.length} won so far</div></div>
+						<div class="stat"><div class="n">${state.bookings.filter((b) => !isDelivered(b.milestone)).length}</div><div class="l">Shipments moving</div><div class="h">${stalled.length} not moving as expected</div></div>
+						<div class="stat"><div class="n">${msgsToday}</div><div class="l">Messages, last 24h</div><div class="h">across all three numbers</div></div>
+					</div>
+
+					<div class="grid2">
+						<section class="card">
+							<h2>By number</h2>
+							<div class="tablewrap">
+								<table>
+									<thead><tr><th>Number</th><th>State</th><th>Conversations</th><th>Open tickets</th><th>Open leads</th></tr></thead>
+									<tbody>${REGIONS.map((r) => {
+										const open = isWithinBusinessHours(r, now());
+										return `<tr>
+											<td><span class="dot dot-${esc(r.id)}" style="display:inline-block;margin-right:6px"></span>${esc(r.label)}<div class="mono muted" style="font-size:11.5px">${esc(r.displayNumber)}</div></td>
+											<td><span class="pill ${open ? "pill-open" : "pill-closed"}">${open ? "Open" : "Closed"}</span><div class="muted" style="font-size:11.5px">${esc(r.businessHours.start)}–${esc(r.businessHours.end)} ${esc(r.timezone)}</div></td>
+											<td>${state.conversations.filter((c) => c.regionId === r.id).length}</td>
+											<td>${state.tickets.filter((t) => t.regionId === r.id && (t.status === "open" || t.status === "pending")).length}</td>
+											<td>${state.leads.filter((l) => l.regionId === r.id && isLeadOpen(l.stage)).length}</td>
+										</tr>`;
+									}).join("")}</tbody>
+								</table>
+							</div>
+						</section>
+
+						<section class="card">
+							<h2>Lead pipeline</h2>
+							<div class="pad">
+								<div class="bars">
+									${byStage
+										.map(
+											([s, n]) => `<div class="bar">
+										<span>${esc(s)}</span>
+										<span class="track"><span class="fill" style="width:${Math.round((n / maxStage) * 100)}%"></span></span>
+										<span class="v">${n}</span>
+									</div>`,
+										)
+										.join("")}
+								</div>
+							</div>
+						</section>
+					</div>
+
+					<section class="card">
+						<h2>What this demonstration is, and is not</h2>
+						<div class="pad" style="display:grid;gap:11px">
+							<div class="note">
+								<b>It is the real decision logic.</b> Intent recognition in
+								English and Arabic, the service-target clocks on each region's
+								own calendar, the reference formats, the lead, quotation and
+								milestone transitions, and the automated replies are all the
+								platform's own compiled code, inlined into this page at build
+								time. If a rule changes in the source, this page changes with
+								it. Nothing on these screens is a drawing of behaviour.
+							</div>
+							<div class="note">
+								<b>It is not connected to anything.</b> Records live in this
+								browser, not in the database, and the page never makes a
+								network call. It cannot reach Meta, it cannot reach Freshworks,
+								and it cannot send a message to a real customer. Closing the
+								tab loses nothing that matters; <b>Reset demo</b> clears it.
+							</div>
+							<div class="note">
+								<b>Three things are still placeholders</b>, and they are
+								placeholders because they need ABC Cargo's own answers rather
+								than a decision by me: the service targets in the SLA table,
+								the business hours per number, and the exact tracking
+								reference format. Each is a single edit once the real values
+								are available.
+							</div>
+							<div class="note">
+								<b>One artefact worth knowing about.</b> Booking references
+								carry a three-letter region code taken from the region id, so
+								UAE and KSA read <span class="mono">ABC-UAE-000001</span> and
+								<span class="mono">ABC-KSA-000001</span>, but a two-letter id
+								like <span class="mono">uk</span> is padded and reads
+								<span class="mono">ABC-UKX-000001</span>. Accept the padding or
+								change the UK region id before any reference is issued to a
+								customer — not after.
+							</div>
+						</div>
+					</section>
+				</div>`;
+			}
+
+			/* ------------------------------------------------------------- events */
+
+			function toast(message) {
+				const el = document.getElementById("toast");
+				el.textContent = message;
+				el.classList.add("show");
+				window.clearTimeout(toast._t);
+				toast._t = window.setTimeout(() => el.classList.remove("show"), 2600);
+			}
+
+			document.addEventListener("click", (event) => {
+				const t = event.target.closest("[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall]");
+				if (t) {
+					if (t.dataset.region) {
+						state.regionId = t.dataset.region;
+						state.selectedConversationId = null;
+						lastTrace = null;
+						save();
+						render();
+						return;
+					}
+					if (t.dataset.view) {
+						state.view = t.dataset.view;
+						save();
+						render();
+						return;
+					}
+					if (t.dataset.conv) {
+						state.selectedConversationId = t.dataset.conv;
+						lastTrace = null;
+						save();
+						render();
+						return;
+					}
+					if (t.dataset.sample) {
+						const box = document.getElementById("simBox");
+						if (box) {
+							box.value = t.dataset.sample;
+							box.focus();
+						}
+						return;
+					}
+					if (t.dataset.lead && t.dataset.stage) {
+						advanceLead(t.dataset.lead, t.dataset.stage);
+						return;
+					}
+					if (t.dataset.quote) {
+						quoteLead(t.dataset.quote);
+						return;
+					}
+					if (t.dataset.quotemove && t.dataset.status) {
+						moveQuotation(t.dataset.quotemove, t.dataset.status);
+						return;
+					}
+					if (t.dataset.ticket && t.dataset.action) {
+						ticketAction(t.dataset.ticket, t.dataset.action);
+						return;
+					}
+					if (t.dataset.booking && t.dataset.milestone) {
+						advanceMilestone(t.dataset.booking, t.dataset.milestone);
+						return;
+					}
+					if (t.dataset.logcall) {
+						state.view = "calls";
+						save();
+						render();
+						return;
+					}
+				}
+
+				const id = event.target.id;
+
+				if (id === "simBtn") {
+					const box = document.getElementById("simBox");
+					const text = (box.value || "").trim();
+					if (!text) {
+						toast("Type a message first.");
+						return;
+					}
+					const picker = document.getElementById("simCustomer");
+					const conv = conversationById(state.selectedConversationId);
+					const customerId = picker
+						? picker.value
+						: conv
+							? conv.customerId
+							: null;
+					if (!customerId) {
+						toast("There is no customer on file for this number.");
+						return;
+					}
+					lastTrace = receiveInbound(customerId, text);
+					state.selectedConversationId = lastTrace.conversationId;
+					render();
+					return;
+				}
+
+				if (id === "replyBtn") {
+					const box = document.getElementById("replyBox");
+					const text = (box.value || "").trim();
+					if (!text) {
+						toast("Type a reply first.");
+						return;
+					}
+					agentReply(state.selectedConversationId, text);
+					return;
+				}
+
+				if (id === "templateBtn") {
+					const sel = document.getElementById("templateSelect");
+					sendTemplate(state.selectedConversationId, sel.value);
+					return;
+				}
+
+				if (id === "callBtn") {
+					const customerId = document.getElementById("callCustomer").value;
+					const direction = document.getElementById("callDirection").value;
+					const seconds = Number(document.getElementById("callSeconds").value || 0);
+					const outcome = document.getElementById("callOutcome").value.trim();
+					if (!customerId) {
+						toast("Choose a customer.");
+						return;
+					}
+					logCall(customerId, direction, seconds, outcome || "No note");
+					return;
+				}
+
+				if (id === "presenceBtn") {
+					state.presence[state.regionId] = !state.presence[state.regionId];
+					save();
+					render();
+					toast(
+						state.presence[state.regionId]
+							? `${currentRegion().label} agents are now online.`
+							: `${currentRegion().label} agents are now offline — a new message will get the automated reply.`,
+					);
+					return;
+				}
+
+				if (id === "clockBtn") {
+					if (clockOffsetMs !== 0) {
+						clockOffsetMs = 0;
+						toast("Back to real time.");
+					} else {
+						clockOffsetMs = offsetToClosed(currentRegion());
+						toast(
+							`Clock moved to a time when ${currentRegion().label} is closed. Send a message now.`,
+						);
+					}
+					render();
+					return;
+				}
+
+				if (id === "resetBtn") {
+					if (!window.confirm("Clear the demonstration and start again?")) return;
+					activityId = 1;
+					clockOffsetMs = 0;
+					state = seed();
+					save();
+					render();
+					toast("Demonstration reset.");
+					return;
+				}
+			});
+
+			document.addEventListener("keydown", (event) => {
+				if (event.key !== "Enter" || event.shiftKey) return;
+				if (event.target.id === "simBox") {
+					event.preventDefault();
+					document.getElementById("simBtn").click();
+				} else if (event.target.id === "replyBox" && (event.metaKey || event.ctrlKey)) {
+					event.preventDefault();
+					document.getElementById("replyBtn").click();
+				}
+			});
+
+			/**
+			 * Finds an offset that puts the clock outside a region's working
+			 * hours, by stepping forward an hour at a time. Honest because it
+			 * asks the platform's own `isWithinBusinessHours` whether it has
+			 * arrived, rather than assuming where the edge is.
+			 */
+			function offsetToClosed(region) {
+				const start = Date.now();
+				for (let h = 1; h <= 24 * 8; h++) {
+					const candidate = h * 3_600_000;
+					if (!isWithinBusinessHours(region, new Date(start + candidate))) {
+						return candidate;
+					}
+				}
+				return 0;
+			}
+
+			/* --------------------------------------------------------------- boot */
+
+			state = load() || seed();
+			if (state.activities.length) {
+				activityId =
+					Math.max(...state.activities.map((a) => Number(a.id) || 0)) + 1;
+			}
+			render();
+
+			// The service clocks are the point, so they have to actually tick.
+			window.setInterval(() => {
+				if (state.view === "inbox" || state.view === "tickets" || state.view === "overview" || state.view === "bookings") {
+					render();
+				} else {
+					renderTopbar();
+				}
+			}, 30_000);
+		</script>
+	</body>
+</html>

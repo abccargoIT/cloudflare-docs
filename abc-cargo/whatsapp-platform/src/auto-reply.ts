@@ -41,35 +41,63 @@ export const DEFAULT_TRACKING_PATTERN =
 export const TRACKING_MIN_DIGITS = 6;
 export const TRACKING_MAX_DIGITS = 12;
 
-export function extractTrackingNumbers(
+/** One reference found in a message, in both of the forms we need. */
+export interface TrackingMention {
+	/** Exactly as the customer typed it, for quoting back to them. */
+	written: string;
+	/** Punctuation and case removed, for matching against stored records. */
+	normalised: string;
+}
+
+/**
+ * Finds every shipment reference in a message, keeping the customer's own
+ * spelling alongside the normalised key. Deduplication is on the normalised
+ * key, so "ABC-UAE-088210" and "ABC UAE 088210" count once; the first spelling
+ * seen is the one kept.
+ */
+export function extractTrackingMentions(
 	text: string | undefined,
 	pattern: RegExp = DEFAULT_TRACKING_PATTERN,
-): string[] {
+): TrackingMention[] {
 	if (!text) return [];
 	const re = new RegExp(
 		pattern.source,
 		pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`,
 	);
-	const found = new Set<string>();
+	const found = new Map<string, TrackingMention>();
 	for (const match of text.matchAll(re)) {
-		const normalised = match[0].replace(/[- ]/g, "").toUpperCase();
+		const written = match[0];
+		const normalised = written.replace(/[- ]/g, "").toUpperCase();
 		const digits = normalised.replace(/\D/g, "").length;
 		// The pattern alone would accept "here 12"; the digit count is what
 		// separates a reference from an ordinary word next to a number.
 		if (digits < TRACKING_MIN_DIGITS || digits > TRACKING_MAX_DIGITS) continue;
-		found.add(normalised);
+		if (!found.has(normalised)) found.set(normalised, { written, normalised });
 	}
-	return [...found];
+	return [...found.values()];
+}
+
+/**
+ * The normalised references only — the form used to look a shipment up.
+ */
+export function extractTrackingNumbers(
+	text: string | undefined,
+	pattern: RegExp = DEFAULT_TRACKING_PATTERN,
+): string[] {
+	return extractTrackingMentions(text, pattern).map((m) => m.normalised);
 }
 
 export function buildAutoReply(input: AutoReplyInput): string {
 	const greeting = input.contactName
 		? `Hello ${input.contactName.trim()},`
 		: "Hello,";
-	const tracking = extractTrackingNumbers(
+	// Quoted back in the customer's own spelling: a reply that answers
+	// "ABC-UAE-088210" with "ABCUAE088210" does not match the reference on
+	// their paperwork, and invites a second message asking which is right.
+	const tracking = extractTrackingMentions(
 		input.inboundText,
 		input.trackingPattern,
-	);
+	).map((m) => m.written);
 	const lines: string[] = [greeting, ""];
 
 	lines.push(

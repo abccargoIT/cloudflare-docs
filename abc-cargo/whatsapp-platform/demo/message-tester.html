@@ -4,12 +4,6 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<title>Engage Message Tester</title>
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link
-			rel="stylesheet"
-			href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
-		/>
 		<style>
 			:root {
 				color-scheme: light;
@@ -30,9 +24,13 @@
 				--good: #0ca30c;
 				--warn: #fab219;
 				--critical: #d03b3b;
-				--ui: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
-				--narrow: "Archivo Narrow", "Archivo", system-ui, sans-serif;
-				--mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+				/* Fonts already on the machine — the page asks nothing of the network. */
+				--ui: "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
+					Arial, sans-serif;
+				--narrow: "Segoe UI Semibold", "Segoe UI", system-ui,
+					"Helvetica Neue", Arial, sans-serif;
+				--mono: "Cascadia Mono", Consolas, ui-monospace, Menlo,
+					"DejaVu Sans Mono", monospace;
 			}
 
 			@media (prefers-color-scheme: dark) {
@@ -426,7 +424,7 @@
 
 			/*
  * DO NOT EDIT THIS BLOCK.
- * Compiled from the platform source by tools/build-tester.mjs:
+ * Compiled from the platform source by the build script:
  *   src/business-hours.ts
  *   src/auto-reply.ts
  *   src/crm/types.ts
@@ -490,27 +488,44 @@ const DEFAULT_TRACKING_PATTERN = /\b[A-Z]{2,4}(?:-[A-Z]{2,4})?(?:[- ]?\d{2,12}){
 /** Total digits a candidate must carry to be treated as a reference. */
 const TRACKING_MIN_DIGITS = 6;
 const TRACKING_MAX_DIGITS = 12;
-function extractTrackingNumbers(text, pattern = DEFAULT_TRACKING_PATTERN) {
+/**
+ * Finds every shipment reference in a message, keeping the customer's own
+ * spelling alongside the normalised key. Deduplication is on the normalised
+ * key, so "ABC-UAE-088210" and "ABC UAE 088210" count once; the first spelling
+ * seen is the one kept.
+ */
+function extractTrackingMentions(text, pattern = DEFAULT_TRACKING_PATTERN) {
     if (!text)
         return [];
     const re = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
-    const found = new Set();
+    const found = new Map();
     for (const match of text.matchAll(re)) {
-        const normalised = match[0].replace(/[- ]/g, "").toUpperCase();
+        const written = match[0];
+        const normalised = written.replace(/[- ]/g, "").toUpperCase();
         const digits = normalised.replace(/\D/g, "").length;
         // The pattern alone would accept "here 12"; the digit count is what
         // separates a reference from an ordinary word next to a number.
         if (digits < TRACKING_MIN_DIGITS || digits > TRACKING_MAX_DIGITS)
             continue;
-        found.add(normalised);
+        if (!found.has(normalised))
+            found.set(normalised, { written, normalised });
     }
-    return [...found];
+    return [...found.values()];
+}
+/**
+ * The normalised references only — the form used to look a shipment up.
+ */
+function extractTrackingNumbers(text, pattern = DEFAULT_TRACKING_PATTERN) {
+    return extractTrackingMentions(text, pattern).map((m) => m.normalised);
 }
 function buildAutoReply(input) {
     const greeting = input.contactName
         ? `Hello ${input.contactName.trim()},`
         : "Hello,";
-    const tracking = extractTrackingNumbers(input.inboundText, input.trackingPattern);
+    // Quoted back in the customer's own spelling: a reply that answers
+    // "ABC-UAE-088210" with "ABCUAE088210" does not match the reference on
+    // their paperwork, and invites a second message asking which is right.
+    const tracking = extractTrackingMentions(input.inboundText, input.trackingPattern).map((m) => m.written);
     const lines = [greeting, ""];
     lines.push(`Thank you for contacting ABC Cargo (${input.region.label}). This is an automated reply.`);
     if (tracking.length > 0) {
@@ -819,7 +834,7 @@ function classifyIntent(text, trackingPattern = DEFAULT_TRACKING_PATTERN) {
 function containsKeyword(haystack, keyword) {
     if (!/^[a-z0-9 ']+$/.test(keyword))
         return haystack.includes(keyword);
-    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\/*__ENGINE__*/");
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i").test(haystack);
 }
 /**

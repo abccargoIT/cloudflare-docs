@@ -50,7 +50,25 @@ than sending it, so a retry cannot message the customer twice. A shipment
 that stops moving for longer than its milestone allows is swept into a delay
 ticket before the customer has to chase it.
 
-## Interactive demo
+## The working demonstration
+
+**Open `demo/app.html`.** One file, double-clicked. No installation, no server,
+no internet connection. It is the whole product in one page: the agent inbox
+for all three numbers, leads, quotations, bookings, tickets, calls and one
+customer timeline across them.
+
+It runs the platform's own code rather than imitating it. `npm run build:app`
+compiles `src/regions.ts`, `src/business-hours.ts`, `src/auto-reply.ts` and the
+four `src/crm/` modules into the page, so intent recognition, service-target
+clocks, reference formats and the lead and shipment transitions are decided by
+the same functions the Worker runs. Change a rule, rebuild, and the page
+changes with it. Only the storage differs: records live in the browser rather
+than D1.
+
+`npm run build:tester` produces `demo/message-tester.html` the same way — a
+single screen for trying wording against the classifier.
+
+## Earlier demos
 
 `demo/index.html` is a self-contained simulation of the platform for people who want to see
 the behaviour rather than read about it. Open the file in a browser; it needs no build step,

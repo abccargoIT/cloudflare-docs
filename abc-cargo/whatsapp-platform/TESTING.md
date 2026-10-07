@@ -11,17 +11,37 @@ folder deletes it completely.
 
 ---
 
-## Two things you can test
+## Start here: open `demo/app.html`
 
-There are two separate deliverables, and they are tested in different ways.
+**Double-click `demo/app.html`.** It opens in your browser. Nothing to
+install, nothing to start, no internet connection needed.
 
-| What                                    | How you test it                                  | What it proves                                                    |
-| --------------------------------------- | ------------------------------------------------ | ----------------------------------------------------------------- |
-| **The screens** — `demo/engage.html`    | Double-click the file. It opens in your browser. | What the product looks like and how an agent would work           |
-| **The machinery** — the platform itself | Follow the steps below                           | That the system actually reads a message and does the right thing |
+That one file is the whole working demonstration: the agent inbox for all
+three numbers, leads, quotations, bookings, tickets, calls and one customer
+timeline. You can type a message as a customer and watch the platform decide
+what to do with it, and a panel under the thread explains, in words, why it
+did what it did.
 
-The screens are a mock-up with sample data, so managers can see the product.
-The machinery is real working code. Test both.
+It is not a drawing of the product. The intent recognition, the service-target
+clocks, the reference formats and the lead and shipment transitions are the
+platform's own code, compiled into the page by `npm run build:app`. Change a
+rule in `src/`, rebuild, and the page changes with it. Only the storage is
+different: the records live in your browser instead of the database, and
+nothing leaves the machine.
+
+## The other files, and what each is for
+
+| File                            | What it is                                                           |
+| ------------------------------- | -------------------------------------------------------------------- |
+| `demo/app.html`                 | **The working demonstration.** Start here.                           |
+| `demo/message-tester.html`      | One screen: type a message, see how it is classified and what is due |
+| `demo/management-briefing.html` | The slides for the session with Management                           |
+| `demo/engage.html`              | The earlier screen mock-up, kept for reference                       |
+| `demo/platform.html`            | The earlier architecture walkthrough, kept for reference             |
+
+Running the real Worker, with the database and the queue, is a separate
+exercise. The steps are below, and it proves the same decisions against real
+storage.
 
 ---
 

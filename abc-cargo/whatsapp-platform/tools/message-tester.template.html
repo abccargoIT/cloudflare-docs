@@ -4,12 +4,6 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<title>Engage Message Tester</title>
-		<link rel="preconnect" href="https://fonts.googleapis.com" />
-		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link
-			rel="stylesheet"
-			href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
-		/>
 		<style>
 			:root {
 				color-scheme: light;
@@ -30,9 +24,13 @@
 				--good: #0ca30c;
 				--warn: #fab219;
 				--critical: #d03b3b;
-				--ui: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
-				--narrow: "Archivo Narrow", "Archivo", system-ui, sans-serif;
-				--mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+				/* Fonts already on the machine — the page asks nothing of the network. */
+				--ui: "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
+					Arial, sans-serif;
+				--narrow: "Segoe UI Semibold", "Segoe UI", system-ui,
+					"Helvetica Neue", Arial, sans-serif;
+				--mono: "Cascadia Mono", Consolas, ui-monospace, Menlo,
+					"DejaVu Sans Mono", monospace;
 			}
 
 			@media (prefers-color-scheme: dark) {
