@@ -287,10 +287,8 @@ export function vttToText(vtt: string): string {
 		const joined = payload.join(" ");
 		// Microsoft labels the speaker with <v Display Name>text</v>.
 		const voice = joined.match(/^<v\s+([^>]*)>([\s\S]*?)(?:<\/v>)?$/);
-		const speaker = voice ? (voice[1] ?? "").trim() : "";
-		const text = (voice ? (voice[2] ?? "") : joined)
-			.replace(/<[^>]+>/g, "")
-			.trim();
+		const speaker = stripMarkup(voice ? (voice[1] ?? "") : "");
+		const text = stripMarkup(voice ? (voice[2] ?? "") : joined);
 		if (!text) continue;
 
 		const last = out[out.length - 1];
@@ -301,6 +299,44 @@ export function vttToText(vtt: string): string {
 	return out
 		.map((t) => (t.speaker ? `${t.speaker}: ${t.text}` : t.text))
 		.join("\n");
+}
+
+/**
+ * Removes WebVTT's inline markup, leaving plain text.
+ *
+ * A single pass of `replace(/<[^>]*>/g, "")` is not enough and is a well-known
+ * trap: given `<<v>script>`, removing the inner `<v>` leaves `<script>` behind,
+ * so the one thing the pass existed to remove is what it produces. The removal
+ * therefore repeats until the string stops changing.
+ *
+ * Any angle bracket still standing afterwards was never part of a tag. WebVTT
+ * escapes real ones as `&lt;` and `&gt;`, so a bare bracket here is malformed
+ * input, and it is dropped rather than carried into a transcript that an agent
+ * console will later display.
+ *
+ * `&lt;` and `&gt;` are deliberately left as entities while the other escapes
+ * are decoded. Decoding them would put raw brackets back into text that is
+ * stored and rendered, to recover a character that effectively never occurs in
+ * speech — a bad trade. Everything here is defence in depth regardless: the
+ * result is plain text, and whatever displays it must still escape it.
+ */
+function stripMarkup(value: string): string {
+	let current = value;
+	let previous: string;
+	do {
+		previous = current;
+		current = current.replace(/<[^>]*>/g, "");
+	} while (current !== previous);
+
+	return (
+		current
+			.replace(/[<>]/g, "")
+			.replace(/&nbsp;/g, " ")
+			.replace(/&(?:lrm|rlm);/g, "")
+			// Last, so a decoded ampersand cannot begin another entity.
+			.replace(/&amp;/g, "&")
+			.trim()
+	);
 }
 
 /**

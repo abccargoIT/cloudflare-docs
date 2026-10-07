@@ -206,6 +206,40 @@ test("handles a transcript with no speaker labels, and an empty one", () => {
 	assert.equal(vttToText(""), "");
 });
 
+test("nested angle brackets cannot reassemble into a tag", () => {
+	// The trap a single replace() pass falls into: stripping the inner <v>
+	// from "<<v>script>" produces the very thing the pass existed to remove.
+	const vtt = [
+		"WEBVTT",
+		"",
+		"00:00:01.000 --> 00:00:02.000",
+		"<v Caller><<v>script>alert(1)<</v>/script> and then the booking</v>",
+		"",
+	].join("\n");
+
+	const text = vttToText(vtt);
+	assert.ok(!text.includes("<script"), text);
+	assert.ok(!text.includes("<"), text);
+	assert.ok(!text.includes(">"), text);
+	assert.ok(text.includes("and then the booking"), text);
+});
+
+test("a speaker name carrying markup is cleaned too", () => {
+	const vtt =
+		"WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n" +
+		"<v <<b>script>Bad Name><v>Hello</v>\n";
+	const text = vttToText(vtt);
+	assert.ok(!text.includes("<"), text);
+	assert.ok(!text.includes(">"), text);
+});
+
+test("decodes the WebVTT escapes that cannot become markup", () => {
+	const vtt =
+		"WEBVTT\n\n00:00:01.000 --> 00:00:02.000\n" +
+		"<v A>Smith &amp; Sons&nbsp;Ltd</v>\n";
+	assert.equal(vttToText(vtt), "A: Smith & Sons Ltd");
+});
+
 test("previews a transcript without cutting mid-stream silently", () => {
 	assert.equal(transcriptPreview("short line"), "short line");
 	const long = "a".repeat(400);
