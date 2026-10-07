@@ -1,6 +1,8 @@
 # Deployment runbook — ABC Cargo Engage
 
-**Status:** Prepared. Awaiting approval for Stage A.
+**Status:** **Stage A approved by the Head of IT, 7 October 2026**
+("UK DEMO APPROVE LIVE CHANGE"). Not yet executed — see §9.
+Stage B remains unapproved and has no change note.
 **Prepared by:** ABC Cargo IT Department
 **Date:** 7 October 2026
 
@@ -153,3 +155,61 @@ Stage A changes the ABC Cargo Cloudflare account and therefore needs
 Stage B — the Meta callback URL, and the per-region cutover behind it — is a
 separate change with its own note, its own approval and its own window. It is
 not authorised by approving this one.
+
+---
+
+## 9. Approval record and scope — 7 October 2026
+
+The Head of IT gave `APPROVE LIVE CHANGE`, prefixed "UK DEMO".
+
+### 9.1 What this is taken to authorise
+
+**Stage A, in full**, as set out in §2 and §4: creating the D1 database, the R2
+bucket and the two queues in the `abc-cargo-whatsapp-platform` account,
+applying the schema, recording the database id, deploying the Worker, and
+attaching `engage.abccargosupport.com` as its Custom Domain.
+
+### 9.2 What it is NOT taken to authorise
+
+**Changing the Meta callback URL, for the UK number or any other.** That is
+Stage B. It is the step that moves live customer traffic, and it has no change
+note yet — so there is nothing describing its risk, rollback or verification
+for an approval to attach to. ABC Cargo's own rule is that the change note
+comes before the approval, not after.
+
+The UK number `+447388800000` is live in Freshchat today and stays there.
+
+This reading is deliberately the narrow one. "UK DEMO" reads as _deploy so the
+UK can be demonstrated_, not _cut the live UK number over_, and the difference
+between those two is an interruption to UK customer service. If the intent was
+the wider one, it needs a Stage B note first; approving this one does not
+reach it.
+
+### 9.3 A demonstration does not need the live number
+
+Worth settling before anyone assumes otherwise. There are three ways to show
+the UK working, in increasing order of risk:
+
+| Option                                                   | Touches live service | What it proves                                  |
+| -------------------------------------------------------- | -------------------- | ----------------------------------------------- |
+| `demo/app.html`                                          | No                   | The whole product, offline, on any laptop       |
+| Stage A deployment + a **test** number added to the WABA | No                   | The real Worker, real Meta delivery, end to end |
+| Moving `+447388800000`                                   | **Yes**              | Nothing the test number has not already proven  |
+
+The middle option is the one to use for a live demonstration. A test number
+added to the WABA receives real WhatsApp messages through the real pipeline,
+while the three business numbers stay on Freshworks untouched. It proves
+everything the cutover would, and costs nothing if it fails.
+
+Recommendation: do not move `+447388800000` to demonstrate it. Move it when the
+bot conversation flows have been exported and the cutover has been rehearsed —
+not to satisfy a demonstration.
+
+### 9.4 Execution
+
+Stage A cannot be run from the preparation environment: there is no Cloudflare
+credential here and no deployment capability, as recorded in the subdomain
+change note §4.5. It runs on a machine signed in to the ABC Cargo account,
+following §4.
+
+Before §4.2, R2 must be enabled once on the account. It is not enabled today.
