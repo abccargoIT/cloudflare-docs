@@ -7,6 +7,11 @@ import {
 import { handleWebhookBatch } from "./queue/consumer.ts";
 import { verifyMetaSignature, timingSafeEqual } from "./whatsapp/signature.ts";
 import {
+	NotificationRejected,
+	parseNotificationBatch,
+	validationTokenFrom,
+} from "./telephony/graph.ts";
+import {
 	isWhatsAppPayload,
 	splitWebhookPayload,
 	type WebhookQueueMessage,
@@ -29,6 +34,7 @@ import {
 export { Conversation } from "./conversation.ts";
 
 const WEBHOOK_PATH = "/webhooks/whatsapp";
+const TELEPHONY_PATH = "/webhooks/teams";
 
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
@@ -45,6 +51,10 @@ export default {
 
 			if (url.pathname === WEBHOOK_PATH && request.method === "POST") {
 				return await handleWebhookDelivery(request, env, ctx);
+			}
+
+			if (url.pathname === TELEPHONY_PATH && request.method === "POST") {
+				return await handleTelephonyNotification(request, url, env);
 			}
 
 			if (url.pathname.startsWith("/api/")) {
@@ -80,6 +90,61 @@ export default {
  * Meta calls GET with hub.mode=subscribe when the callback URL is saved in
  * the App dashboard. We must echo hub.challenge if the verify token matches.
  */
+/**
+ * Microsoft Graph change notifications for Teams calls.
+ *
+ * Graph proves it owns a new subscription by POSTing a `validationToken` which
+ * must come back as plain text within ten seconds, so that case is answered
+ * before anything else happens.
+ *
+ * Afterwards the only thing separating a stranger's POST from a write to a
+ * customer's history is the `clientState` secret agreed when the subscription
+ * was created. A batch is accepted or rejected whole: one valid notification
+ * does not vouch for a forged one beside it.
+ *
+ * Graph expects a fast acknowledgement and retries without one, so this
+ * returns immediately rather than calling back into Graph inline — the same
+ * shape as the WhatsApp receiver.
+ */
+async function handleTelephonyNotification(
+	request: Request,
+	url: URL,
+	env: Env,
+): Promise<Response> {
+	const token = validationTokenFrom(url);
+	if (token) {
+		return new Response(token, {
+			status: 200,
+			headers: { "content-type": "text/plain" },
+		});
+	}
+
+	let body: unknown;
+	try {
+		body = await request.json();
+	} catch {
+		return json({ error: "Invalid JSON" }, 400);
+	}
+
+	let notifications;
+	try {
+		notifications = parseNotificationBatch(body, env.GRAPH_CLIENT_STATE ?? "");
+	} catch (error) {
+		if (error instanceof NotificationRejected) {
+			// Deliberately terse: an attacker learns nothing about why.
+			return json({ error: "Rejected" }, 401);
+		}
+		throw error;
+	}
+
+	// TODO(telephony): enqueue for the consumer, which fetches the call record
+	// or transcript from Graph and writes it to the customer timeline. Held
+	// back until the tenant permissions in
+	// docs/integrations-crm-and-telephony.md are granted, so nothing
+	// half-finished can reach a live tenant.
+	return json({ accepted: notifications.length }, 202);
+}
+
 function handleWebhookVerification(url: URL, env: Env): Response {
 	const mode = url.searchParams.get("hub.mode");
 	const token = url.searchParams.get("hub.verify_token") ?? "";

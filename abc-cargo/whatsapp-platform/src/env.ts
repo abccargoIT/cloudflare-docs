@@ -24,4 +24,11 @@ export interface Env {
 	WHATSAPP_APP_SECRET: string;
 	WHATSAPP_VERIFY_TOKEN: string;
 	INTERNAL_API_KEY: string;
+	/**
+	 * Shared secret echoed by Microsoft Graph on every change notification.
+	 * The telephony endpoint is public, so this is what distinguishes Graph
+	 * from anyone else who finds the URL. Optional until telephony is enabled;
+	 * unset, the endpoint rejects everything.
+	 */
+	GRAPH_CLIENT_STATE?: string;
 }

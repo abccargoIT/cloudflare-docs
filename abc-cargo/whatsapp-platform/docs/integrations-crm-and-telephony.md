@@ -147,13 +147,15 @@ one option to avoid — it produces conflicts that have no correct resolution.
 
 ## 5. What is needed before this can be built
 
-| #   | Question                                                                  | Blocks                     |
-| --- | ------------------------------------------------------------------------- | -------------------------- |
-| 1   | What is "ABC Cargo CRM" — product name, or in-house? Does it have an API? | All CRM work               |
-| 2   | Which system is master for customers? (§4)                                | All CRM work               |
-| 3   | Is the UK system Teams Phone? Calling Plan or Direct Routing?             | Who to involve on failures |
-| 4   | Is a screen pop required, or is the call timeline enough for now?         | Phase 2 scope              |
-| 5   | Is call recording in scope? If so, it needs its own assessment first.     | §3.4                       |
+| #   | Question                                                                                                                                 | Blocks                     |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| 1   | What is "ABC Cargo CRM" — product name, or in-house? Does it have an API?                                                                | All CRM work               |
+| 2   | Which system is master for customers? (§4)                                                                                               | All CRM work               |
+| 3   | Is the UK system Teams Phone? Calling Plan or Direct Routing?                                                                            | Who to involve on failures |
+| 4   | Is a screen pop required, or is the call timeline enough for now?                                                                        | Phase 2 scope              |
+| 5   | ~~Is call recording in scope?~~ **Answered:** text yes, audio no (§3.4)                                                                  | —                          |
+| 6   | What retention period applies to call transcripts?                                                                                       | first transcript stored    |
+| 7   | Is the UK number fronted by a call queue? `ExplicitRecordingConsent` does not apply to queue calls, so an announcement is needed instead | §3.4                       |
 
 ## 6. Approvals that will be required
 
