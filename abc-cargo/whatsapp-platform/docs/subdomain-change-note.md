@@ -1,6 +1,7 @@
 # Change note — webhook hostname for ABC Cargo Engage
 
 **Status:** Prepared. Not executed. Blocked on prerequisites listed in §4.
+Cannot be executed from the preparing session at all — see §4.5.
 **Prepared by:** ABC Cargo IT Department
 **Approval held:** `APPROVE LIVE CHANGE` given by the Head of IT, 7 October 2026.
 **Date prepared:** 7 October 2026
@@ -80,13 +81,37 @@ nameserver migration for the entire domain — a materially larger and riskier
 change than adding one subdomain, affecting website, email and any existing
 records. That would need its own change note and its own approval.
 
-### 4.4 Tooling limitation
+### 4.4 The account is not provisioned for this platform
 
-This session has no Cloudflare DNS or zone tool. The Cloudflare tools
-available cover D1, KV, R2, Hyperdrive and Workers only. The change must
-therefore be executed either by `wrangler deploy` from an authenticated
-machine, or by hand in the Cloudflare dashboard. No API token has been
-requested and none should be shared.
+Read-only inspection of the Cloudflare account reachable from this session:
+
+| Resource required by the Worker      | State in that account                   |
+| ------------------------------------ | --------------------------------------- |
+| D1 database                          | None exist                              |
+| R2 bucket                            | R2 is not enabled on the account at all |
+| Queue                                | Not created                             |
+| Durable Object namespace             | Not created (comes with the deployment) |
+| Worker `abc-cargo-whatsapp-platform` | Does not exist                          |
+
+An account with R2 switched off and no D1 database is not an account that has
+been prepared for this platform. Provisioning those is a separate set of live
+changes to the Cloudflare account, each needing its own approval; the approval
+held covers the hostname only.
+
+### 4.5 Tooling limitation
+
+Two independent limits apply:
+
+- **No DNS capability.** The Cloudflare tools available in this session cover
+  D1, KV, R2, Hyperdrive and Workers only. There is no zone or DNS record
+  tool, so the record cannot be created from here under any approval.
+- **No credential.** `wrangler whoami` in this environment reports no
+  authenticated account, so `wrangler deploy` cannot run from here either. No
+  API token has been requested and none should be pasted into this session.
+
+The change must therefore be executed by the Head of IT, either by
+`wrangler deploy` from an authenticated ABC Cargo machine or by hand in the
+Cloudflare dashboard, following §3 and §8.
 
 ## 5. Risk and business impact
 
