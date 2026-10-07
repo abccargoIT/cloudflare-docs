@@ -894,6 +894,15 @@
 				text-align: center;
 			}
 
+			.credit {
+				padding: 18px 20px 26px;
+				text-align: center;
+				font-size: 11.5px;
+				letter-spacing: 0.04em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+			}
+
 			.toast.show {
 				opacity: 1;
 				transform: translateX(-50%) translateY(0);
@@ -933,17 +942,21 @@
 		</header>
 
 		<div class="safety">
-			<strong>Demonstration only.</strong>
+			<strong>Training demonstration.</strong>
 			<span
-				>Nothing here is connected to Freshworks, to Meta, or to any live ABC
-				Cargo system. No message can reach a real customer. All data is
-				invented and stays in this browser.</span
+				>Open a conversation, send a message as the customer, and the panel
+				underneath shows what the platform did and why. Prepared by Hakkeem M
+				&middot; ABC Cargo IT Department.</span
 			>
 		</div>
 
 		<nav class="tabs" id="tabs" role="tablist"></nav>
 
 		<main id="main"></main>
+
+		<footer class="credit">
+			ABC Cargo Engage &middot; developed by Hakkeem M, ABC Cargo IT Department
+		</footer>
 
 		<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -961,6 +974,41 @@
  *   src/crm/lifecycle.ts
  * Rebuild with: npm run build:app
  */
+
+/*
+ * Presentation guard. NOT a security control — this file contains the whole
+ * application, and any text editor will show it. It exists so a demonstration
+ * behaves like a product rather than a web page.
+ */
+(function () {
+	const isField = (el) =>
+		el && el.closest && el.closest("input, textarea, [contenteditable]");
+
+	document.addEventListener("contextmenu", (event) => {
+		// Form fields keep their menu, so paste still works.
+		if (isField(event.target)) return;
+		event.preventDefault();
+	});
+
+	document.addEventListener("keydown", (event) => {
+		const key = (event.key || "").toLowerCase();
+		const ctrlish = event.ctrlKey || event.metaKey;
+
+		if (key === "f12") return event.preventDefault();
+		if (ctrlish && event.shiftKey && ["i", "j", "c"].includes(key)) {
+			return event.preventDefault();
+		}
+		// View source. Everything else under Ctrl stays available, so an agent
+		// can still copy, paste, find and print.
+		if (ctrlish && !event.shiftKey && key === "u" && !isField(event.target)) {
+			return event.preventDefault();
+		}
+	});
+
+	document.addEventListener("dragstart", (event) => {
+		if (!isField(event.target)) event.preventDefault();
+	});
+})();
 
 /* ---------- src/regions.ts ---------- */
 /**
@@ -1654,6 +1702,18 @@ const REF_PATTERNS = {
     ticket: /^T-\d{5,}$/,
     booking: /^ABC-[A-Z]{3}-\d{6,}$/,
 };
+/**
+ * The comparison form of a reference: punctuation and case removed.
+ *
+ * Intent recognition hands back references in this form, because it is the
+ * only way one key matches the several ways a customer types the same number.
+ * Anything looking a reference up has to compare in the same form, or a
+ * customer quoting exactly what we printed is not matched to their own
+ * shipment. The `ref_key` column in migration 0004 is this function in SQL.
+ */
+function normaliseRef(value) {
+    return value.replace(/[\s-]/g, "").toUpperCase();
+}
 function isRef(kind, value) {
     return REF_PATTERNS[kind].test(value.trim().toUpperCase());
 }
@@ -2274,9 +2334,17 @@ function templateForMilestone(milestone) {
 				return state.customers.find((c) => c.waId === waId) || null;
 			}
 
+			/**
+			 * Mirrors Repository.getBooking. References arrive here normalised by
+			 * intent recognition — ABC-UAE-088210 as ABCUAE088210 — so both sides
+			 * have to be compared in that form or a customer quoting exactly what
+			 * we printed is not matched to their own shipment.
+			 */
 			function bookingByRef(ref) {
-				const want = String(ref).toUpperCase();
-				return state.bookings.find((b) => b.ref.toUpperCase() === want) || null;
+				const want = normaliseRef(String(ref));
+				return (
+					state.bookings.find((b) => normaliseRef(b.ref) === want) || null
+				);
 			}
 
 			function conversationById(id) {
@@ -3221,7 +3289,12 @@ function templateForMilestone(milestone) {
 				);
 				if (t.intent.references.length) {
 					lines.push(
-						`<li><b>Reference found:</b> ${t.intent.references.map(esc).join(", ")}${t.booking ? ` — matched shipment ${esc(t.booking.ref)}, currently ${esc(t.booking.milestone)}` : " — no shipment with that reference"}</li>`,
+						// Once a shipment is matched, show its reference as the office
+						// prints it. The normalised form is a lookup key, and reads
+						// like a typo to anyone watching.
+						t.booking
+							? `<li><b>Shipment matched:</b> ${esc(t.booking.ref)}, currently ${esc(t.booking.milestone)}</li>`
+							: `<li><b>Reference found:</b> ${t.intent.references.map(esc).join(", ")} — no shipment with that reference</li>`,
 					);
 				}
 				if (t.outcome === null) {

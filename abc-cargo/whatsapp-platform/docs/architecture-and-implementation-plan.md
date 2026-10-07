@@ -240,8 +240,7 @@ Shipment systems (Phase 3) --------------------->  Worker /api/notifications/tem
 
 ## 7. Starter code skeleton
 
-Location: `abc-cargo/whatsapp-platform/` on branch
-`claude/whatsapp-customer-communication-bg7m78`.
+Location: `abc-cargo/whatsapp-platform/` on the project's development branch.
 
 State of the skeleton at the time of this document:
 

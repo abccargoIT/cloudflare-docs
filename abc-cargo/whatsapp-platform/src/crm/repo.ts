@@ -22,7 +22,7 @@ import type {
 	TicketType,
 	TransportMode,
 } from "./types.ts";
-import { buildRef, type RefKind } from "./refs.ts";
+import { buildRef, normaliseRef, type RefKind } from "./refs.ts";
 
 export interface ListFilter {
 	regionId?: string;
@@ -376,10 +376,18 @@ export class CrmRepository {
 			.run();
 	}
 
+	/**
+	 * Accepts an id, a reference as printed, or a reference in the normalised
+	 * form intent recognition produces. The third is the one that matters: a
+	 * customer quoting ABC-UAE-088210 reaches here as ABCUAE088210, and
+	 * comparing that against the stored reference alone never matches.
+	 */
 	async getBooking(idOrRef: string): Promise<BookingRow | null> {
 		return this.db
-			.prepare(`SELECT * FROM bookings WHERE id = ?1 OR ref = ?1`)
-			.bind(idOrRef)
+			.prepare(
+				`SELECT * FROM bookings WHERE id = ?1 OR ref = ?1 OR ref_key = ?2`,
+			)
+			.bind(idOrRef, normaliseRef(idOrRef))
 			.first<BookingRow>();
 	}
 

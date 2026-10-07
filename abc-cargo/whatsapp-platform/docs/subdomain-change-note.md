@@ -66,8 +66,8 @@ domain, and would have to be removed and recreated later.
 **Correction.** An earlier revision of this note recorded three unrelated
 Workers (`keembridge-api-review`, `flyanywhere-keembridge`, `digitalhak`) and
 raised the possibility that the intended account was a personal or mixed one.
-Those Workers are in a _different_ account — the one the Claude Cloudflare
-connector happens to be authorised for. They say nothing about ABC Cargo's
+Those Workers are in a _different_ account — the one the preparation
+tooling happens to be authorised for. They say nothing about ABC Cargo's
 account, and the concern they raised is withdrawn.
 
 The Head of IT has since identified the intended account directly:
@@ -84,7 +84,7 @@ data-control question: deploying here does not put a corporate service into a
 personal account.
 
 **It also means every read-only finding in this session describes the wrong
-account.** The connector cannot see this account, so nothing here can be
+account.** The preparation tooling cannot see this account, so nothing here can be
 verified from the preparing session — only from the dashboard or an
 authenticated machine.
 

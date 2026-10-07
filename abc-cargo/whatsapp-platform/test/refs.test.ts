@@ -4,6 +4,7 @@ import {
 	buildRef,
 	classifyRef,
 	isRef,
+	normaliseRef,
 	regionCode,
 	shortCode,
 } from "../src/crm/refs.ts";
@@ -66,4 +67,15 @@ test("short codes avoid characters that are misread", () => {
 
 test("a short code needs a positive length", () => {
 	assert.throws(() => shortCode(0), /at least 1/);
+});
+
+test("normalises a reference to the form a lookup must compare on", () => {
+	// Intent recognition hands back ABCUAE088210 for a customer who wrote
+	// ABC-UAE-088210. If a lookup compares the two directly it never matches,
+	// and the customer is not connected to their own shipment.
+	assert.equal(normaliseRef("ABC-UAE-088210"), "ABCUAE088210");
+	assert.equal(normaliseRef("abc uae 088210"), "ABCUAE088210");
+	assert.equal(normaliseRef("ABCUAE088210"), "ABCUAE088210");
+	// What the extractor produces and what the office prints must agree.
+	assert.equal(normaliseRef(buildRef("booking", 88210, "uae")), "ABCUAE088210");
 });

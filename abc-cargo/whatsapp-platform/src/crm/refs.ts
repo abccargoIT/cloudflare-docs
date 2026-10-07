@@ -71,6 +71,19 @@ const REF_PATTERNS: Record<RefKind, RegExp> = {
 	booking: /^ABC-[A-Z]{3}-\d{6,}$/,
 };
 
+/**
+ * The comparison form of a reference: punctuation and case removed.
+ *
+ * Intent recognition hands back references in this form, because it is the
+ * only way one key matches the several ways a customer types the same number.
+ * Anything looking a reference up has to compare in the same form, or a
+ * customer quoting exactly what we printed is not matched to their own
+ * shipment. The `ref_key` column in migration 0004 is this function in SQL.
+ */
+export function normaliseRef(value: string): string {
+	return value.replace(/[\s-]/g, "").toUpperCase();
+}
+
 export function isRef(kind: RefKind, value: string): boolean {
 	return REF_PATTERNS[kind].test(value.trim().toUpperCase());
 }

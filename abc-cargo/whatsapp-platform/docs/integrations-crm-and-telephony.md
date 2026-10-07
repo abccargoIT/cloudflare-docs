@@ -53,8 +53,8 @@ changes nothing about the integration below, but it changes who to involve when
 a call fails to appear.
 
 **Not yet verified.** No Microsoft 365 tenant has been inspected. Under ABC
-Cargo's own rules a corporate tenant is not connected to a personal Claude
-account without explicit instruction, so this is stated as the likely case
+Cargo's own rules a corporate tenant is not connected to a personal cloud
+tooling account without explicit instruction, so this is stated as the likely case
 rather than as fact.
 
 ### 3.2 Recommended: call records after the call (build this first)

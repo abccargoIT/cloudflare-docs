@@ -47,6 +47,59 @@ function flatten(javascript) {
 }
 
 /**
+ * Interface guard, prepended to every built page.
+ *
+ * This keeps the demonstration looking like a finished product: no context
+ * menu, no view-source shortcut, no accidental drag of a panel onto the
+ * desktop mid-presentation.
+ *
+ * It is presentation, not protection, and the comment says so on the page
+ * itself. Anyone who wants the source can open the .html file in Notepad —
+ * the whole application is inside it. Nothing here should ever be mistaken
+ * for a security control, and no secret should ever be put in a built page
+ * on the strength of it.
+ *
+ * Two deliberate exceptions: form fields keep their context menu so an agent
+ * can still paste a reference, and nothing blocks ordinary text selection,
+ * because reading a shipment number off the screen and copying it is the
+ * job.
+ */
+const INTERFACE_GUARD = `/*
+ * Presentation guard. NOT a security control — this file contains the whole
+ * application, and any text editor will show it. It exists so a demonstration
+ * behaves like a product rather than a web page.
+ */
+(function () {
+	const isField = (el) =>
+		el && el.closest && el.closest("input, textarea, [contenteditable]");
+
+	document.addEventListener("contextmenu", (event) => {
+		// Form fields keep their menu, so paste still works.
+		if (isField(event.target)) return;
+		event.preventDefault();
+	});
+
+	document.addEventListener("keydown", (event) => {
+		const key = (event.key || "").toLowerCase();
+		const ctrlish = event.ctrlKey || event.metaKey;
+
+		if (key === "f12") return event.preventDefault();
+		if (ctrlish && event.shiftKey && ["i", "j", "c"].includes(key)) {
+			return event.preventDefault();
+		}
+		// View source. Everything else under Ctrl stays available, so an agent
+		// can still copy, paste, find and print.
+		if (ctrlish && !event.shiftKey && key === "u" && !isField(event.target)) {
+			return event.preventDefault();
+		}
+	});
+
+	document.addEventListener("dragstart", (event) => {
+		if (!isField(event.target)) event.preventDefault();
+	});
+})();`;
+
+/**
  * Compiles and concatenates `modules` (paths relative to `root`) into a single
  * block of JavaScript, prefixed with a banner naming its provenance.
  *
@@ -62,7 +115,7 @@ export function inlineModules(root, modules, rebuildCommand) {
 			"",
 		);
 	}
-	const engine = pieces.join("\n");
+	const engine = [INTERFACE_GUARD, "", ...pieces].join("\n");
 
 	const banner = [
 		"/*",
