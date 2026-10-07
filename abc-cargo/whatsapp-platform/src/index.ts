@@ -33,6 +33,11 @@ import {
 
 export { Conversation } from "./conversation.ts";
 
+// Bundled as text by the "rules" entry in wrangler.jsonc. It is the built
+// demonstration page, which already contains the platform's own compiled
+// decision code and no credentials of any kind.
+import demoPage from "../demo/app.html";
+
 const WEBHOOK_PATH = "/webhooks/whatsapp";
 const TELEPHONY_PATH = "/webhooks/teams";
 
@@ -41,6 +46,14 @@ export default {
 		const url = new URL(request.url);
 
 		try {
+			if (
+				request.method === "GET" &&
+				(url.pathname === "/" || url.pathname === "/demo") &&
+				env.SERVE_DEMO === "true"
+			) {
+				return servedemo();
+			}
+
 			if (url.pathname === "/health") {
 				return json({ ok: true });
 			}
@@ -143,6 +156,36 @@ async function handleTelephonyNotification(
 	// docs/integrations-crm-and-telephony.md are granted, so nothing
 	// half-finished can reach a live tenant.
 	return json({ accepted: notifications.length }, 202);
+}
+
+/**
+ * Serves the offline demonstration so the hostname is usable for testing
+ * before any Meta credential exists.
+ *
+ * The page is self-contained: it holds the platform's own compiled rules and
+ * invented sample data, talks to nothing, and stores what it does in the
+ * viewer's own browser. Nothing here reaches a customer.
+ *
+ * It is, however, world-readable to anyone who knows the hostname. Put
+ * Cloudflare Access in front of it before sharing the link outside ABC Cargo,
+ * and set SERVE_DEMO to "false" before the first live number is cut over.
+ */
+function servedemo(): Response {
+	return new Response(demoPage, {
+		headers: {
+			"content-type": "text/html; charset=utf-8",
+			// Nothing here is cacheable for long: a rebuilt demonstration should
+			// reach a reviewer on the next refresh, not after an hour.
+			"cache-control": "no-cache",
+			"x-content-type-options": "nosniff",
+			"referrer-policy": "no-referrer",
+			// The page loads nothing from anywhere. Say so, so a stray tag added
+			// later fails loudly instead of quietly fetching.
+			"content-security-policy":
+				"default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; form-action 'none'; base-uri 'none'; frame-ancestors 'none'",
+			"x-robots-tag": "noindex, nofollow",
+		},
+	});
 }
 
 function handleWebhookVerification(url: URL, env: Env): Response {

@@ -2,7 +2,10 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "abc-cargo-whatsapp-platform",
 	"main": "src/index.ts",
-	"compatibility_date": "2026-08-01",
+	// Must not run ahead of the runtime the pinned wrangler ships: a later date
+	// makes `wrangler dev` refuse to start with "newest date supported by this
+	// server binary". Raise this and the wrangler version together.
+	"compatibility_date": "2026-07-29",
 	"compatibility_flags": ["nodejs_compat"],
 	// Keep the workers.dev preview URL disabled. The Meta webhook callback
 	// URL has to be stable, so the Worker is reached through a custom
@@ -41,6 +44,11 @@
 		"AUTO_REPLY_COOLDOWN_HOURS": "12",
 		// Public tracking page shown in automated replies. Optional.
 		"TRACKING_URL": "",
+		// Serve the offline demonstration at / so the hostname is usable for
+		// testing before any Meta credential exists. Set to "false" before the
+		// first live number is cut over: the demonstration carries invented
+		// customer data and has no place on a production endpoint.
+		"SERVE_DEMO": "true",
 	},
 	// Secrets are NOT stored here. Set them with `wrangler secret put <NAME>`:
 	//   WHATSAPP_ACCESS_TOKEN  - permanent System User token (whatsapp_business_messaging,
@@ -48,6 +56,10 @@
 	//   WHATSAPP_APP_SECRET    - Meta App secret, used to verify X-Hub-Signature-256
 	//   WHATSAPP_VERIFY_TOKEN  - random string entered in the Meta webhook configuration
 	//   INTERNAL_API_KEY       - bearer key for the /api/* agent endpoints
+	// Lets the Worker bundle demo/app.html as a string, so the demonstration
+	// can be served from the webhook hostname without a separate host. See
+	// SERVE_DEMO below.
+	"rules": [{ "type": "Text", "globs": ["**/*.html"] }],
 	"durable_objects": {
 		"bindings": [{ "name": "CONVERSATION", "class_name": "Conversation" }],
 	},

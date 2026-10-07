@@ -101,12 +101,44 @@ curl.exe -s https://engage.abccargosupport.com/health
 Expect `{"ok":true}`.
 
 ```powershell
-curl.exe -s -o NUL -w "%{http_code}`n" https://engage.abccargosupport.com/webhooks/whatsapp
+curl.exe -s -o NUL -w "%{http_code}`n" -X POST -H "content-type: application/json" -d "{}" https://engage.abccargosupport.com/webhooks/whatsapp
 ```
 
-Expect **403**. That is the signature check refusing an unsigned request, and
-it is the single most important result in this runbook: it proves the endpoint
-is live _and_ that it rejects anything not signed by Meta.
+Expect **401**, `{"error":"Invalid signature"}`. That is the signature check
+refusing an unsigned request, and it is the single most important result in
+this runbook: it proves the endpoint is live _and_ that it rejects anything
+Meta has not signed.
+
+An earlier draft of this document said 403, and used a GET. Both were wrong. A
+GET on that path is the Meta verification handshake, which answers 403 for an
+entirely different reason — it would have looked like the right answer for the
+wrong reason. The codes above come from a run against the Worker rather than
+from reading the source.
+
+```powershell
+curl.exe -s -o NUL -w "%{http_code} %{content_type}`n" https://engage.abccargosupport.com/
+```
+
+Expect **200** and `text/html`: the demonstration, served by the Worker (§4.5).
+
+### 4.5 The demonstration on the hostname
+
+With `SERVE_DEMO` set to `"true"` — its current value — the Worker serves the
+offline demonstration at `/`. The hostname is therefore useful the moment it is
+deployed, with no Meta credential, no phone number and no secret: open
+`https://engage.abccargosupport.com/` in a browser and the product is there.
+That is what makes the subdomain testable before the cutover work begins.
+
+Two consequences, both more important than they look.
+
+**It is world-readable.** Anyone who knows the hostname can open it. The page
+holds invented data and reaches nothing, but it carries ABC Cargo's name. Put
+Cloudflare Access in front of the hostname before the link is shared outside
+the department; the account already offers this under Zero Trust.
+
+**Set `SERVE_DEMO` to `"false"` before the first live number is cut over.** A
+demonstration carrying invented customer records has no place on a production
+webhook endpoint.
 
 Then confirm, in the dashboard: the certificate is issued and valid; the
 placeholder A record has been replaced by the Custom Domain; and the three

@@ -18,6 +18,8 @@ export interface Env {
 	REGION_NUMBERS: string;
 	AUTO_REPLY_COOLDOWN_HOURS: string;
 	TRACKING_URL: string;
+	/** "true" serves the offline demonstration at /. See wrangler.jsonc. */
+	SERVE_DEMO?: string;
 
 	// Secrets
 	WHATSAPP_ACCESS_TOKEN: string;
