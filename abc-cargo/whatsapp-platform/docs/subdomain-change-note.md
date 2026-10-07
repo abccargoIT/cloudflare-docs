@@ -61,17 +61,32 @@ this session. The Workers visible are `keembridge-api-review`,
 A hostname created now would resolve to an error page on a live ABC Cargo
 domain, and would have to be removed and recreated later.
 
-### 4.2 The Cloudflare account appears to be the wrong one
+### 4.2 Account identified — and it is not the one this session can read
 
-The account reachable from this session holds the three Workers named above.
-That is not an "ABC Cargo Engage" account. Under ABC Cargo's own data-control
-rules, a corporate production service must not be deployed into a personal or
-unrelated account, and corporate systems must not be connected to a personal
-Claude account.
+**Correction.** An earlier revision of this note recorded three unrelated
+Workers (`keembridge-api-review`, `flyanywhere-keembridge`, `digitalhak`) and
+raised the possibility that the intended account was a personal or mixed one.
+Those Workers are in a _different_ account — the one the Claude Cloudflare
+connector happens to be authorised for. They say nothing about ABC Cargo's
+account, and the concern they raised is withdrawn.
 
-**Required before proceeding:** confirmation of which Cloudflare account owns
-`abccargosupport.com`, and that the Worker will be deployed into that same
-account. A Worker in one account cannot take a route on a zone in another.
+The Head of IT has since identified the intended account directly:
+
+| Property              | Value                                                      |
+| --------------------- | ---------------------------------------------------------- |
+| Account name          | `abc-cargo-whatsapp-platform`                              |
+| workers.dev subdomain | `abc-cargo-whatsapp-platfor…`                              |
+| Workers & Pages       | empty — "You have not created any projects yet"            |
+| Plan                  | Workers Free (0 / 100,000 requests today, Upgrade offered) |
+
+This is a dedicated ABC Cargo account, not a mixed one. That resolves the
+data-control question: deploying here does not put a corporate service into a
+personal account.
+
+**It also means every read-only finding in this session describes the wrong
+account.** The connector cannot see this account, so nothing here can be
+verified from the preparing session — only from the dashboard or an
+authenticated machine.
 
 ### 4.3 The zone status is unconfirmed
 
@@ -81,22 +96,34 @@ nameserver migration for the entire domain — a materially larger and riskier
 change than adding one subdomain, affecting website, email and any existing
 records. That would need its own change note and its own approval.
 
-### 4.4 The account is not provisioned for this platform
+### 4.4 The account is empty, and on the Free plan
 
-Read-only inspection of the Cloudflare account reachable from this session:
+Workers & Pages reports no projects, so the Worker, the D1 database, the queue
+and the R2 bucket all still have to be created. Each is its own live change to
+the Cloudflare account; the approval held covers the hostname only.
 
-| Resource required by the Worker      | State in that account                   |
-| ------------------------------------ | --------------------------------------- |
-| D1 database                          | None exist                              |
-| R2 bucket                            | R2 is not enabled on the account at all |
-| Queue                                | Not created                             |
-| Durable Object namespace             | Not created (comes with the deployment) |
-| Worker `abc-cargo-whatsapp-platform` | Does not exist                          |
+The account is on **Workers Free**. Checked against the Cloudflare
+documentation, that is workable for a pilot but not for live customer traffic:
 
-An account with R2 switched off and no D1 database is not an account that has
-been prepared for this platform. Provisioning those is a separate set of live
-changes to the Cloudflare account, each needing its own approval; the approval
-held covers the hostname only.
+| Component       | On Workers Free                                                   | Verdict                                                       |
+| --------------- | ----------------------------------------------------------------- | ------------------------------------------------------------- |
+| Durable Objects | Available, **SQLite storage backend only**                        | Fine — `wrangler.jsonc` already declares `new_sqlite_classes` |
+| Queues          | Available: 10,000 operations/day; **retention fixed at 24 hours** | Pilot only — see below                                        |
+| D1              | Available on the free tier                                        | Fine for a pilot                                              |
+| R2              | Free tier available, but R2 must be enabled on the account        | Needs enabling before first deploy                            |
+| Requests        | 100,000 per day                                                   | Adequate for a pilot                                          |
+
+**The queue retention limit is the one to watch at go-live.** On the Free plan
+a message is held for 24 hours and the period cannot be raised. It takes three
+operations to deliver one message, so 10,000 operations per day is roughly
+3,300 inbound messages per day across all three numbers. If the consumer is
+down for longer than 24 hours, queued customer messages are discarded rather
+than delayed — acceptable while demonstrating, not acceptable once real
+customers are on the platform.
+
+The Workers Paid plan ($5/month minimum) raises retention to a configurable
+4–14 days and the allowance to 1,000,000 operations a month. Moving to it
+should be settled before cutover, not after.
 
 ### 4.5 Tooling limitation
 
@@ -170,11 +197,13 @@ step that moves live customer traffic off Freshworks.
 
 Three answers are needed from the Head of IT before this can be executed:
 
-1. Which Cloudflare account owns `abccargosupport.com`, and is
-   `abccargosupport.com` already an active zone in it?
-2. Is "ABC Cargo Engage" a new Cloudflare account, or the intended Worker
-   name? If it is a new account, which account holds the domain?
-3. Confirm `engage.abccargosupport.com`, or name a different hostname.
+1. Does `abccargosupport.com` appear under **Domains** in the
+   `abc-cargo-whatsapp-platform` account? If it does not, the first change is
+   a nameserver migration for the whole domain, which is not covered by the
+   approval held.
+2. Confirm `engage.abccargosupport.com`, or name a different hostname.
+3. Should the account move to Workers Paid before cutover, given the 24-hour
+   queue retention limit in §4.4?
 
 With those, the remaining work is to deploy the Worker and uncomment the
 `routes` block. The approval already given covers this change as scoped above;
