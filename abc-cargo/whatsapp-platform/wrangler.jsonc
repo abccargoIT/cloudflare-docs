@@ -4,10 +4,22 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2026-08-01",
 	"compatibility_flags": ["nodejs_compat"],
-	// Keep the workers.dev preview URL disabled. Attach a custom hostname
-	// (for example wa-api.<company-domain>) via a route before go-live so
-	// the Meta webhook callback URL is stable.
+	// Keep the workers.dev preview URL disabled. The Meta webhook callback
+	// URL has to be stable, so the Worker is reached through a custom
+	// hostname rather than a workers.dev address.
 	"workers_dev": false,
+	// The intended hostname, held here until the zone is confirmed. Once
+	// abccargosupport.com is an active zone in the ABC Cargo Cloudflare
+	// account, uncomment this block: `wrangler deploy` then creates the
+	// proxied DNS record and attaches the Worker in one step. Leaving it
+	// active before the zone exists makes every deploy fail.
+	//
+	// "routes": [
+	//     {
+	//         "pattern": "engage.abccargosupport.com",
+	//         "custom_domain": true,
+	//     },
+	// ],
 	"observability": {
 		"enabled": true,
 	},
