@@ -162,11 +162,30 @@ Verified against a running Worker: no credential, a forged email header, a
 garbage assertion and a wrong bearer key are all refused `401`, while `/health`
 and the demonstration stay public.
 
-### 6.5 Still to do
+### 6.5 Enforced on the commercial routes
 
-The commercial routes — leads, quotations, bookings, tickets, calls — are not
-yet scoped. They are regional rather than personal, so `canReadRegionalRecord`
-applies to each, and that is mechanical rather than a design question.
+Leads, quotations, bookings, tickets, calls and customers are regional rather
+than personal: a pipeline each agent only sees their own slice of stops being a
+pipeline. So the region is the whole of the test here, unlike a conversation.
+
+**The dangerous case was a restricted caller asking for no region at all.**
+Every listing took `?region=` and passed it straight to the repository, where
+`undefined` means _every region_. Omitting the parameter would have returned
+all three. Listings now run once per region the caller may see, and a request
+for a region outside their scope is refused rather than silently widened.
+
+Every route that reads or changes a single record now loads it first and checks
+its region before acting — customer 360, lead stage, quotation status,
+quotation to booking, booking fetch, milestone, ticket resolve — and every
+route that takes a region in its body checks it before writing: creating a
+quotation, a ticket or a call.
+
+Two further gates worth naming:
+
+- **Proactive template send** is the one console route that speaks outward to a
+  real customer, so its region is checked before anything else happens.
+- **The stalled-shipment sweep** crosses every region by design, so it is not
+  something a regional user may set running: master admin or service only.
 
 Not built: the login screen (Access provides it), dashboard, team chat,
 broadcasts, contact directory, bot editor.
@@ -180,7 +199,7 @@ broadcasts, contact directory, bot editor.
    must not guess.
 3. Seed the first `master_admin` and one team per region. This is a live change
    and needs its own note.
-4. Scope the commercial routes, per §6.5.
+4. Build the console itself — dashboard, contacts, reports — on top of this.
 
 ## 8. Approval
 

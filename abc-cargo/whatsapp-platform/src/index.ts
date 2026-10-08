@@ -15,6 +15,8 @@ import { Directory } from "./auth/directory.ts";
 import {
 	canAssignConversation,
 	canReadConversation,
+	canAdminister,
+	canReadRegionalRecord,
 	canReplyToConversation,
 	resolveRegionFilter,
 	type Caller,
@@ -524,8 +526,20 @@ async function handleApi(
 		) {
 			return json({ error: "status must be open, pending or resolved" }, 400);
 		}
+		const conversation = await repo.getConversation(id);
+		if (!conversation) return json({ error: "Not found" }, 404);
+		// Resolving is gated like replying rather than like reading: marking
+		// someone else's open case resolved is the same kind of interference.
+		const mayClose = canReplyToConversation(caller, {
+			id: conversation.id,
+			regionId: conversation.region_id,
+			assignedAgentId: conversation.assigned_agent_id,
+		});
+		if (!mayClose.allowed) return refuse(mayClose.reason);
 		const stub = env.CONVERSATION.get(env.CONVERSATION.idFromName(id));
-		await stub.setStatus(body.status, body.actor ?? "api");
+		const statusActor =
+			caller.kind === "user" ? caller.id : (body.actor ?? "api");
+		await stub.setStatus(body.status, statusActor);
 		return json({ ok: true });
 	}
 
@@ -553,6 +567,11 @@ async function handleApi(
 				400,
 			);
 		}
+		// A template send reaches a real customer, so the region is checked
+		// before anything else: this is the one console route that speaks
+		// outward.
+		const mayNotify = canReadRegionalRecord(caller, body.region);
+		if (!mayNotify.allowed) return refuse(mayNotify.reason);
 		const region = findRegionById(
 			parseRegionConfig(env.REGION_NUMBERS),
 			body.region,
@@ -584,7 +603,13 @@ async function handleApi(
 		return json({ ok: true });
 	}
 
-	const operations = await handleOperationsApi(request, url, env, segments);
+	const operations = await handleOperationsApi(
+		request,
+		url,
+		env,
+		segments,
+		caller,
+	);
 	if (operations) return operations;
 
 	return json({ error: "Not found" }, 404);
@@ -600,6 +625,7 @@ async function handleOperationsApi(
 	url: URL,
 	env: Env,
 	segments: string[],
+	caller: Caller,
 ): Promise<Response | null> {
 	const [, resource, rawId, action] = segments;
 	const id = rawId ? decodeURIComponent(rawId) : undefined;
@@ -608,16 +634,47 @@ async function handleOperationsApi(
 	const region = url.searchParams.get("region") ?? undefined;
 	const limit = Number(url.searchParams.get("limit") ?? "50");
 
+	// These records are regional rather than personal: a pipeline each agent
+	// can only see their own slice of stops being a pipeline. So the region is
+	// the whole of the test here, unlike a conversation.
+	const scope = resolveRegionFilter(caller, url.searchParams.get("region"));
+	if (scope !== null && scope.length === 0) return refuse("wrong_region");
+
+	/**
+	 * Runs a listing once per region the caller may see, rather than once with
+	 * no filter. The dangerous case is a restricted caller asking for no
+	 * region at all: passed straight through, `undefined` means every region.
+	 */
+	const listScoped = async <T>(
+		fn: (regionId?: string) => Promise<T[]>,
+	): Promise<T[]> => {
+		if (scope === null) return fn(region);
+		const batches = await Promise.all(scope.map((regionId) => fn(regionId)));
+		return batches.flat().slice(0, limit);
+	};
+
+	/** Refuses unless the caller may touch records of this region. */
+	const guard = (regionId: string): Response | null => {
+		const decision = canReadRegionalRecord(caller, regionId);
+		return decision.allowed ? null : refuse(decision.reason);
+	};
+
 	/* ------------------------------------------------------------ customers */
 
 	if (resource === "customers" && !id && request.method === "GET") {
 		return json({
-			customers: await repo.listCustomers({ regionId: region, limit }),
+			customers: await listScoped((regionId) =>
+				repo.listCustomers({ regionId, limit }),
+			),
 		});
 	}
 
 	// GET /api/customers/:id — everything Customer 360 shows, in one call.
 	if (resource === "customers" && id && !action && request.method === "GET") {
+		const customer = await repo.getCustomer(id);
+		if (!customer) return json({ error: "Not found" }, 404);
+		const denied = guard(customer.region_id);
+		if (denied) return denied;
 		const view = await crm.customerView(
 			id,
 			Number(url.searchParams.get("activities") ?? "100"),
@@ -631,13 +688,15 @@ async function handleOperationsApi(
 	if (resource === "leads" && !id && request.method === "GET") {
 		const stage = url.searchParams.get("stage");
 		return json({
-			leads: await repo.listLeads({
-				regionId: region,
-				customerId: url.searchParams.get("customer") ?? undefined,
-				stage: isOneOf(stage, LEAD_STAGES),
-				openOnly: url.searchParams.get("open") === "true",
-				limit,
-			}),
+			leads: await listScoped((regionId) =>
+				repo.listLeads({
+					regionId,
+					customerId: url.searchParams.get("customer") ?? undefined,
+					stage: isOneOf(stage, LEAD_STAGES),
+					openOnly: url.searchParams.get("open") === "true",
+					limit,
+				}),
+			),
 		});
 	}
 
@@ -660,6 +719,10 @@ async function handleOperationsApi(
 				400,
 			);
 		}
+		const existingLead = await repo.getLead(id);
+		if (!existingLead) return json({ error: "Not found" }, 404);
+		const leadDenied = guard(existingLead.region_id);
+		if (leadDenied) return leadDenied;
 		const lead = await crm.advanceLead(
 			id,
 			stage,
@@ -674,12 +737,14 @@ async function handleOperationsApi(
 	if (resource === "quotations" && !id && request.method === "GET") {
 		const status = url.searchParams.get("status");
 		return json({
-			quotations: await repo.listQuotations({
-				regionId: region,
-				customerId: url.searchParams.get("customer") ?? undefined,
-				status: isOneOf(status, QUOTATION_STATUSES),
-				limit,
-			}),
+			quotations: await listScoped((regionId) =>
+				repo.listQuotations({
+					regionId,
+					customerId: url.searchParams.get("customer") ?? undefined,
+					status: isOneOf(status, QUOTATION_STATUSES),
+					limit,
+				}),
+			),
 		});
 	}
 
@@ -716,6 +781,8 @@ async function handleOperationsApi(
 				400,
 			);
 		}
+		const quoteDenied = guard(body.region);
+		if (quoteDenied) return quoteDenied;
 		const quotation = await crm.createQuotation({
 			leadIdOrRef: body.leadRef,
 			customerId: body.customerId,
@@ -751,6 +818,10 @@ async function handleOperationsApi(
 				400,
 			);
 		}
+		const existingQuote = await repo.getQuotation(id);
+		if (!existingQuote) return json({ error: "Not found" }, 404);
+		const moveDenied = guard(existingQuote.region_id);
+		if (moveDenied) return moveDenied;
 		const quotation = await crm.moveQuotation({
 			quotationIdOrRef: id,
 			to: status,
@@ -772,6 +843,10 @@ async function handleOperationsApi(
 			weightKg?: number;
 			actor?: string;
 		}>(request);
+		const sourceQuote = await repo.getQuotation(id);
+		if (!sourceQuote) return json({ error: "Not found" }, 404);
+		const convertDenied = guard(sourceQuote.region_id);
+		if (convertDenied) return convertDenied;
 		const booking = await crm.createBookingFromQuotation({
 			quotationIdOrRef: id,
 			pieces: body?.pieces ?? null,
@@ -786,19 +861,23 @@ async function handleOperationsApi(
 	if (resource === "bookings" && !id && request.method === "GET") {
 		const milestone = url.searchParams.get("milestone");
 		return json({
-			bookings: await repo.listBookings({
-				regionId: region,
-				customerId: url.searchParams.get("customer") ?? undefined,
-				milestone: isOneOf(milestone, MILESTONES),
-				undelivered: url.searchParams.get("active") === "true",
-				limit,
-			}),
+			bookings: await listScoped((regionId) =>
+				repo.listBookings({
+					regionId,
+					customerId: url.searchParams.get("customer") ?? undefined,
+					milestone: isOneOf(milestone, MILESTONES),
+					undelivered: url.searchParams.get("active") === "true",
+					limit,
+				}),
+			),
 		});
 	}
 
 	if (resource === "bookings" && id && !action && request.method === "GET") {
 		const booking = await repo.getBooking(id);
 		if (!booking) return json({ error: "Not found" }, 404);
+		const bookingDenied = guard(booking.region_id);
+		if (bookingDenied) return bookingDenied;
 		return json({ booking });
 	}
 
@@ -822,6 +901,10 @@ async function handleOperationsApi(
 				400,
 			);
 		}
+		const targetBooking = await repo.getBooking(id);
+		if (!targetBooking) return json({ error: "Not found" }, 404);
+		const milestoneDenied = guard(targetBooking.region_id);
+		if (milestoneDenied) return milestoneDenied;
 		const result = await crm.recordMilestone({
 			bookingIdOrRef: id,
 			milestone,
@@ -840,14 +923,16 @@ async function handleOperationsApi(
 		const status = url.searchParams.get("status");
 		const type = url.searchParams.get("type");
 		return json({
-			tickets: await repo.listTickets({
-				regionId: region,
-				customerId: url.searchParams.get("customer") ?? undefined,
-				status: isOneOf(status, TICKET_STATUSES),
-				type: isOneOf(type, TICKET_TYPES),
-				openOnly: url.searchParams.get("open") === "true",
-				limit,
-			}),
+			tickets: await listScoped((regionId) =>
+				repo.listTickets({
+					regionId,
+					customerId: url.searchParams.get("customer") ?? undefined,
+					status: isOneOf(status, TICKET_STATUSES),
+					type: isOneOf(type, TICKET_TYPES),
+					openOnly: url.searchParams.get("open") === "true",
+					limit,
+				}),
+			),
 		});
 	}
 
@@ -875,6 +960,8 @@ async function handleOperationsApi(
 			body.region,
 		);
 		if (!regionConfig) return json({ error: "Unknown region" }, 400);
+		const ticketDenied = guard(body.region);
+		if (ticketDenied) return ticketDenied;
 		const customer = await repo.getCustomer(body.customerId);
 		if (!customer) return json({ error: "Unknown customer" }, 400);
 
@@ -898,6 +985,10 @@ async function handleOperationsApi(
 		request.method === "POST"
 	) {
 		const body = await readJson<{ actor?: string }>(request);
+		const existingTicket = await repo.getTicket(id);
+		if (!existingTicket) return json({ error: "Not found" }, 404);
+		const resolveDenied = guard(existingTicket.region_id);
+		if (resolveDenied) return resolveDenied;
 		const ticket = await crm.resolveTicket(id, body?.actor ?? "api");
 		return json({ ticket });
 	}
@@ -906,11 +997,13 @@ async function handleOperationsApi(
 
 	if (resource === "calls" && !id && request.method === "GET") {
 		return json({
-			calls: await repo.listCalls({
-				regionId: region,
-				customerId: url.searchParams.get("customer") ?? undefined,
-				limit,
-			}),
+			calls: await listScoped((regionId) =>
+				repo.listCalls({
+					regionId,
+					customerId: url.searchParams.get("customer") ?? undefined,
+					limit,
+				}),
+			),
 		});
 	}
 
@@ -937,6 +1030,8 @@ async function handleOperationsApi(
 				400,
 			);
 		}
+		const callDenied = guard(body.region);
+		if (callDenied) return callDenied;
 		await crm.recordCall({
 			customerId: body.customerId,
 			regionId: body.region,
@@ -960,6 +1055,12 @@ async function handleOperationsApi(
 		id === "sweep-stalled" &&
 		request.method === "POST"
 	) {
+		// The sweep crosses every region by design, so it is not something a
+		// regional user may set running.
+		const maySweep = canAdminister(caller);
+		if (!maySweep.allowed && caller.kind !== "service") {
+			return refuse(maySweep.reason);
+		}
 		const regions = parseRegionConfig(env.REGION_NUMBERS);
 		const opened = await crm.sweepStalledBookings(regions);
 		return json({ opened: opened.length, tickets: opened });
