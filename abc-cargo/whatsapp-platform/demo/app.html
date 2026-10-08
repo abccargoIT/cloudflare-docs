@@ -18,21 +18,63 @@
 				--ink-3: #7a7a7a;
 				--rule: #d8d8d8;
 				--rule-soft: #e8e8e8;
-				--brand: #c1121f;
-				--brand-ink: #8c0d17;
-				--brand-wash: #fbeced;
-				--uae: #c1121f;
-				--ksa: #333333;
-				--uk: #757575;
-				--good: #0b8a3e;
-				--good-wash: #e7f5ec;
-				--warn: #9a6400;
-				--warn-wash: #fdf3e0;
-				--critical: #c22b2b;
-				--critical-wash: #fbeaea;
-				--wa-canvas: #e9e1d8;
+				/*
+				 * Red, white and black only — the Head of IT's decision of
+				 * 8 October 2026.
+				 *
+				 * One accent hue means status cannot be carried by colour alone,
+				 * so it is carried by WEIGHT in that one hue: quiet states are
+				 * ink on a neutral wash, attention is red on a red wash, and the
+				 * most serious state is the only thing on the screen allowed a
+				 * solid red fill. Every pill also carries its own word, so none
+				 * of this depends on seeing the colour at all.
+				 *
+				 * The greys below are tone, not a fourth colour: rules, muted
+				 * text and sunk surfaces are steps between the white and the
+				 * black. Nothing grey carries meaning.
+				 */
+				/*
+				 * #e64a3c is ABC Cargo's own red, read off the live sites
+				 * (abccargo.ae, abccargogcc.com, abccargo.com — it is the most
+				 * frequent colour on all three). It is a FILL colour: 3.88:1 on
+				 * white, which clears the 3:1 a mark needs and misses the 4.5:1
+				 * text needs. So text uses --brand-ink, a darker step of the
+				 * same hue, and a solid red pill uses --brand-solid so the white
+				 * on it still clears 4.5:1. Every ratio here was measured, not
+				 * chosen by eye.
+				 */
+				--brand: #e64a3c;
+				--brand-ink: #d42a1b;
+				--brand-wash: #fbefee;
+				--brand-solid: #e22f1f;
+				/*
+				 * Region identity is shape, not hue — three regions cannot have
+				 * three accent colours out of two. See `.dot-*`: filled red,
+				 * filled ink, and a ring. The label is beside the mark in every
+				 * place one appears, so the mark is reinforcement.
+				 */
+				--uae: #e64a3c;
+				--ksa: #111111;
+				--uk: #ffffff;
+				/* Quiet, settled, nothing-to-do-here. Ink, never green. */
+				--good: #2f2f2f;
+				--good-wash: #ededed;
+				/* Attention. Red, outlined weight. */
+				--warn: #d42a1b;
+				--warn-wash: #fbefee;
+				/* Serious. Red, solid weight — see .pill-critical. */
+				--critical: #ffffff;
+				--critical-wash: #e22f1f;
+				/*
+				 * The WhatsApp thread. Real WhatsApp tints outbound messages
+				 * green; red/white/black has no green, so direction is shown by
+				 * a red edge on our own messages instead of a fill colour. The
+				 * thread is therefore readable but deliberately not a faithful
+				 * likeness of WhatsApp's own interface.
+				 */
+				--wa-canvas: #efefef;
 				--wa-in: #ffffff;
-				--wa-out: #dcf7c5;
+				--wa-out: #fbefee;
 				--wa-ink: #17120f;
 				/*
 				 * Fonts already on the machine. The page must work with the
@@ -65,21 +107,24 @@
 					--ink-3: #808080;
 					--rule: #2e2e2e;
 					--rule-soft: #242424;
-					--brand: #e63946;
-					--brand-ink: #ff6b76;
+					/* The same three colours, stepped for a dark surface. */
+					--brand: #e64a3c;
+					--brand-ink: #e64c3e;
 					--brand-wash: #2b1113;
-					--uae: #e63946;
-					--ksa: #d0d0d0;
-					--uk: #8c8c8c;
-					--good: #4cc37d;
-					--good-wash: #14301f;
-					--warn: #e0a846;
-					--warn-wash: #332710;
-					--critical: #f06a6a;
-					--critical-wash: #331717;
-					--wa-canvas: #0b0a09;
+					--brand-solid: #e64a3c;
+					--uae: #e64a3c;
+					--ksa: #f2f2f2;
+					--uk: #1a1a1a;
+					--good: #c8c8c8;
+					--good-wash: #262626;
+					--warn: #e64c3e;
+					--warn-wash: #2b1113;
+					/* Solid red fill; near-black text on it, because white is 3.88:1. */
+					--critical: #140605;
+					--critical-wash: #e64a3c;
+					--wa-canvas: #121212;
 					--wa-in: #221f1d;
-					--wa-out: #104a31;
+					--wa-out: #2b1113;
 					--wa-ink: #f3efec;
 					--shadow:
 						0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 30px -22px rgba(0, 0, 0, 0.9);
@@ -96,21 +141,22 @@
 				--ink-3: #808080;
 				--rule: #2e2e2e;
 				--rule-soft: #242424;
-				--brand: #e63946;
-				--brand-ink: #ff6b76;
+				--brand: #e64a3c;
+				--brand-ink: #e64c3e;
 				--brand-wash: #2b1113;
-				--uae: #e63946;
-				--ksa: #d0d0d0;
-				--uk: #8c8c8c;
-				--good: #4cc37d;
-				--good-wash: #14301f;
-				--warn: #e0a846;
-				--warn-wash: #332710;
-				--critical: #f06a6a;
-				--critical-wash: #331717;
-				--wa-canvas: #0b0a09;
+				--brand-solid: #e64a3c;
+				--uae: #e64a3c;
+				--ksa: #f2f2f2;
+				--uk: #1a1a1a;
+				--good: #c8c8c8;
+				--good-wash: #262626;
+				--warn: #e64c3e;
+				--warn-wash: #2b1113;
+				--critical: #140605;
+				--critical-wash: #e64a3c;
+				--wa-canvas: #121212;
 				--wa-in: #221f1d;
-				--wa-out: #104a31;
+				--wa-out: #2b1113;
 				--wa-ink: #f3efec;
 			}
 
@@ -217,6 +263,16 @@
 				flex: none;
 			}
 
+			/*
+			 * Region identity, in a palette with one accent hue.
+			 *
+			 * Three regions cannot have three accent colours out of red, white
+			 * and black, so the mark differs by FILL AND SHAPE rather than hue:
+			 * UAE is solid red, KSA is solid ink, UK is a ring. A region's name
+			 * is beside the mark everywhere one appears, so the mark reinforces
+			 * the label instead of replacing it — which is the right way round
+			 * even when a palette does have spare hues.
+			 */
 			.dot-uae {
 				background: var(--uae);
 			}
@@ -225,6 +281,7 @@
 			}
 			.dot-uk {
 				background: var(--uk);
+				box-shadow: inset 0 0 0 2px var(--ink);
 			}
 
 			.regions .count {
@@ -259,6 +316,20 @@
 				border: 1px solid transparent;
 			}
 
+			/*
+			 * Status, as a weight ladder in one hue.
+			 *
+			 * With no green and no amber, severity cannot be a colour change, so
+			 * it is a WEIGHT change: settled states are ink on a neutral wash,
+			 * attention is red ink on a red wash with a red edge, and the most
+			 * serious state is the only solid red fill on the screen. Weight
+			 * reads as severity even in greyscale.
+			 *
+			 * Every pill also prints its own word — "answered", "resolved",
+			 * "overdue" — so none of this is colour-alone. That is the actual
+			 * accessibility guarantee; the colour is the fast path, not the
+			 * information.
+			 */
 			.pill-open {
 				background: var(--good-wash);
 				color: var(--good);
@@ -270,10 +341,12 @@
 			.pill-warn {
 				background: var(--warn-wash);
 				color: var(--warn);
+				border-color: var(--warn);
 			}
 			.pill-critical {
 				background: var(--critical-wash);
 				color: var(--critical);
+				border-color: var(--critical-wash);
 			}
 			.pill-brand {
 				background: var(--brand-wash);
@@ -295,7 +368,8 @@
 
 			.primary {
 				border: 0;
-				background: var(--brand);
+				/* --brand-solid, not --brand: white on the brand fill is 3.88:1. */
+				background: var(--brand-solid);
 				color: #fff;
 				border-radius: 8px;
 				padding: 7px 14px;
@@ -988,6 +1062,7 @@
  *   src/auth/policy.ts
  *   src/crm/transfer.ts
  *   src/crm/csat.ts
+ *   src/crm/report-library.ts
  *   src/admin/guards.ts
  *   src/chat/policy.ts
  *   src/dashboard/clock.ts
@@ -1064,7 +1139,7 @@ var ENGINE = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../../../../../tmp/abc-engage-build-3RXaN8/entry.ts
+  // ../../../../../tmp/abc-engage-build-8wEkFz/entry.ts
   var entry_exports = {};
   __export(entry_exports, {
     ACTIVITY_KINDS: () => ACTIVITY_KINDS,
@@ -1104,6 +1179,7 @@ var ENGINE = (() => {
     QUOTATION_STATUSES: () => QUOTATION_STATUSES,
     RECIPIENT_STATES: () => RECIPIENT_STATES,
     REPLY_ATTRIBUTION_HOURS: () => REPLY_ATTRIBUTION_HOURS,
+    REPORT_LIBRARY: () => REPORT_LIBRARY,
     RESOLUTION_FRESHNESS_HOURS: () => RESOLUTION_FRESHNESS_HOURS,
     ROLES: () => ROLES,
     SESSION_END_REASONS: () => SESSION_END_REASONS,
@@ -1174,17 +1250,21 @@ var ENGINE = (() => {
     compileAudience: () => compileAudience,
     countOnlineIn: () => countOnlineIn,
     coversRegion: () => coversRegion,
+    csatDistributionRows: () => csatDistributionRows,
+    csvField: () => csvField,
     deriveCustomerStage: () => deriveCustomerStage,
     describeAudience: () => describeAudience,
     describeDays: () => describeDays,
     describeMinutes: () => describeMinutes,
     directKey: () => directKey,
     effectivePolicyTable: () => effectivePolicyTable,
+    exportFilename: () => exportFilename,
     extractReferences: () => extractReferences,
     extractTrackingMentions: () => extractTrackingMentions,
     extractTrackingNumbers: () => extractTrackingNumbers,
     findRegionById: () => findRegionById,
     findRegionByPhoneNumberId: () => findRegionByPhoneNumberId,
+    findReport: () => findReport,
     greeting: () => greeting,
     greetingBand: () => greetingBand,
     isBreached: () => isBreached,
@@ -1208,6 +1288,7 @@ var ENGINE = (() => {
     looksLikeTemplateName: () => looksLikeTemplateName,
     milestoneIndex: () => milestoneIndex,
     minutesSince: () => minutesSince,
+    niceMax: () => niceMax,
     normaliseEmail: () => normaliseEmail,
     normaliseRef: () => normaliseRef,
     officeState: () => officeState,
@@ -1246,7 +1327,9 @@ var ENGINE = (() => {
     templateForMilestone: () => templateForMilestone,
     ticketDueDates: () => ticketDueDates,
     ticketTypeFor: () => ticketTypeFor,
+    toCsv: () => toCsv,
     toMinutes: () => toMinutes,
+    toSeries: () => toSeries,
     transferConversation: () => transferConversation,
     unreadCount: () => unreadCount,
     validateAudience: () => validateAudience,
@@ -2640,6 +2723,118 @@ var ENGINE = (() => {
       );
     }
     return out;
+  }
+
+  // src/crm/report-library.ts
+  var REPORT_LIBRARY = [
+    {
+      id: "volume_by_day",
+      title: "Conversation volume by day",
+      description: "New conversations per day, per region. Shows whether a number is getting busier.",
+      group: "day",
+      columns: [
+        { key: "day", label: "Day" },
+        { key: "regionId", label: "Region" },
+        { key: "conversations", label: "Conversations", numeric: true }
+      ],
+      chart: "small_multiples",
+      supervisorOnly: true
+    },
+    {
+      id: "first_response",
+      title: "First response against target",
+      description: "How many conversations were answered inside the service target, by region.",
+      group: "region",
+      columns: [
+        { key: "regionId", label: "Region" },
+        { key: "answered", label: "Answered", numeric: true },
+        { key: "withinTarget", label: "Within target", numeric: true },
+        { key: "late", label: "Late", numeric: true },
+        { key: "unanswered", label: "Still waiting", numeric: true }
+      ],
+      chart: "none",
+      supervisorOnly: true
+    },
+    {
+      id: "tickets_by_type",
+      title: "Tickets by type",
+      description: "What customers actually raise, which is what staffing should follow.",
+      group: "ticket_type",
+      columns: [
+        { key: "type", label: "Type" },
+        { key: "opened", label: "Opened", numeric: true },
+        { key: "resolved", label: "Resolved", numeric: true },
+        { key: "overdue", label: "Overdue", numeric: true }
+      ],
+      chart: "column",
+      supervisorOnly: true
+    },
+    {
+      id: "csat_distribution",
+      title: "Satisfaction distribution",
+      description: "The spread of scores, not just the mean. A 4.4 made of fives and ones is not a 4.4.",
+      group: "score",
+      columns: [
+        { key: "score", label: "Score" },
+        { key: "responses", label: "Responses", numeric: true }
+      ],
+      chart: "column",
+      supervisorOnly: true
+    }
+  ];
+  function findReport(id) {
+    return REPORT_LIBRARY.find((r) => r.id === id);
+  }
+  function toSeries(rows, labelKey, valueKey, panelKey) {
+    const panels = /* @__PURE__ */ new Map();
+    for (const row of rows) {
+      const name = panelKey ? String(row[panelKey] ?? "") : "";
+      const raw = row[valueKey];
+      const value = typeof raw === "number" && Number.isFinite(raw) ? raw : 0;
+      const point = { label: String(row[labelKey] ?? ""), value };
+      const list = panels.get(name);
+      if (list) list.push(point);
+      else panels.set(name, [point]);
+    }
+    return [...panels.entries()].map(([name, points]) => ({ name, points }));
+  }
+  function niceMax(values) {
+    const peak = Math.max(0, ...values.filter((v) => Number.isFinite(v)));
+    if (peak <= 0) return 1;
+    const magnitude = 10 ** Math.floor(Math.log10(peak));
+    for (const step of [1, 2, 2.5, 5, 10]) {
+      const candidate = magnitude * step;
+      if (candidate >= peak) return candidate;
+    }
+    return magnitude * 10;
+  }
+  var FORMULA_START = /^[=+\-@\t\r]/;
+  function csvField(value) {
+    let text = value === null || value === void 0 ? "" : typeof value === "number" && !Number.isFinite(value) ? "" : String(value);
+    if (FORMULA_START.test(text)) text = `'${text}`;
+    if (/["\n\r,;]/.test(text)) {
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+    return text;
+  }
+  function toCsv(definition, rows, options = {}) {
+    const header = definition.columns.map((c) => csvField(c.label)).join(",");
+    const body = rows.map(
+      (row) => definition.columns.map((c) => csvField(row[c.key])).join(",")
+    );
+    const text = [header, ...body].join("\r\n");
+    return options.bom === false ? text : `\uFEFF${text}`;
+  }
+  function exportFilename(definition, window) {
+    const day = (iso) => (iso || "").slice(0, 10) || "unknown";
+    const safeId = definition.id.replace(/[^a-z0-9_-]/gi, "-");
+    return `abc-cargo-${safeId}-${day(window.from)}-to-${day(window.to)}.csv`;
+  }
+  function csatDistributionRows(distribution) {
+    return [1, 2, 3, 4, 5].map((score) => ({
+      score: String(score),
+      responses: distribution[score] ?? 0
+    }));
   }
 
   // src/admin/guards.ts
@@ -4960,7 +5155,7 @@ var ENGINE = (() => {
 					const raw = window.localStorage.getItem(STORAGE_KEY);
 					if (!raw) return null;
 					const parsed = JSON.parse(raw);
-					return parsed && parsed.version === 3 ? parsed : null;
+					return parsed && parsed.version === 4 ? parsed : null;
 				} catch {
 					return null;
 				}
@@ -4992,6 +5187,41 @@ var ENGINE = (() => {
 			 * out and the same data reads 51%, which is the figure the Reports
 			 * screen labels as excluding them.
 			 */
+			/**
+			 * Fourteen days of conversation volume per region, for the chart.
+			 *
+			 * Demonstration data, and the Reports screen says so on the panel.
+			 * The seeded conversations number four — enough to show routing and
+			 * a timeline, nowhere near enough to draw a trend from — so rather
+			 * than render four bars and let them imply a history the platform
+			 * has not collected, the series is seeded and labelled as such.
+			 *
+			 * Shaped rather than random: UAE busiest, KSA about half, UK a quiet
+			 * desk, with a weekly dip, so the three panels differ the way three
+			 * real numbers would and the shared scale has something to show.
+			 */
+			function seedDailyVolume() {
+				const base = { uae: 24, ksa: 13, uk: 5 };
+				const rows = [];
+				for (let back = 13; back >= 0; back--) {
+					const d = new Date(Date.now() - back * 86400000);
+					const day = d.toISOString().slice(5, 10);
+					const weekday = d.getUTCDay();
+					for (const region of ["uae", "ksa", "uk"]) {
+						// A Friday dip in the Gulf, a weekend dip in the UK.
+						const quiet =
+							region === "uk" ? weekday === 0 || weekday === 6 : weekday === 5;
+						const swing = ((back * 7 + region.length * 3) % 5) - 2;
+						const n = Math.max(
+							0,
+							Math.round(base[region] * (quiet ? 0.35 : 1) + swing),
+						);
+						rows.push({ day, regionId: region, conversations: n });
+					}
+				}
+				return rows;
+			}
+
 			function seedBotSessions() {
 				const make = (n, session) =>
 					Array.from({ length: n }, () => ({ ...session }));
@@ -5069,7 +5299,7 @@ var ENGINE = (() => {
 			function seed() {
 				const t = (iso) => iso;
 				const s = {
-					version: 3,
+					version: 4,
 					regionId: "uae",
 					view: "inbox",
 					selectedConversationId: null,
@@ -5188,6 +5418,7 @@ var ENGINE = (() => {
 					// Ended bot sessions, as the runtime records them. The mix gives a
 					// real 41% once abandonment is counted honestly in the denominator.
 					botSessions: seedBotSessions(),
+					dailyVolume: seedDailyVolume(),
 					inboxFilter: "all",
 					selectedCustomerId: null,
 					botScript: null,
@@ -7654,6 +7885,297 @@ var ENGINE = (() => {
 			 * by the bot alone". A plausible number nobody can trace is worse on a
 			 * management screen than an honest gap.
 			 */
+			/* ================================================================
+			 * Charts
+			 *
+			 * Hand-built inline SVG, single series per plot. That is not a
+			 * limitation worked around — it is the point. Red, white and black
+			 * has one accent hue, so a chart that told three regions apart by
+			 * colour would need three, and generating two more would be
+			 * inventing brand colours. Three regions therefore become three
+			 * small panels with one hue each (small multiples), which is the
+			 * standard answer and happens to be easier to read than a
+			 * three-colour grouped chart would have been.
+			 *
+			 * A single series needs no legend: the panel heading names what is
+			 * plotted. Values are labelled selectively — the peak only — and
+			 * every number is also in the table underneath, so nothing is
+			 * reachable by hover alone.
+			 * ================================================================ */
+
+			/** Fixed mark specs, so every chart on the screen matches. */
+			const CHART = {
+				barMax: 24,
+				barGap: 2,
+				radius: 4,
+				padTop: 16,
+				padBottom: 18,
+				padLeft: 30,
+			};
+
+			/**
+			 * A single-series column chart.
+			 *
+			 * Bars grow from one baseline, are capped at 24px wide however much
+			 * room there is, carry a 4px rounded top and a square foot, and are
+			 * separated by 2px of surface rather than by a stroke. Gridlines are
+			 * hairline and recessive. Each bar carries a <title> so hovering
+			 * gives the exact value, and an aria-label so a screen reader gets
+			 * the series without the geometry.
+			 */
+			function columnChart(points, opts) {
+				const o = Object.assign(
+					{ width: 320, height: 132, unit: "", labelEvery: 1, forcedMax: 0 },
+					opts || {},
+				);
+				// A shared scale when the caller supplies one (small multiples),
+				// otherwise this panel's own. Honouring forcedMax is what keeps
+				// the panels comparable; ignoring it was a bug here once.
+				const max =
+					o.forcedMax && o.forcedMax > 0
+						? o.forcedMax
+						: ENGINE.niceMax(points.map((p) => p.value));
+				const plotW = o.width - CHART.padLeft - 6;
+				const plotH = o.height - CHART.padTop - CHART.padBottom;
+				const band = points.length ? plotW / points.length : plotW;
+				const barW = Math.min(CHART.barMax, Math.max(3, band - CHART.barGap));
+				const baseY = CHART.padTop + plotH;
+
+				// Two gridlines only: the top of the scale and the midpoint. More
+				// would out-ink the data.
+				const grid = [0, 0.5, 1]
+					.map((f) => {
+						const y = CHART.padTop + plotH * (1 - f);
+						return `<line x1="${CHART.padLeft}" y1="${y.toFixed(1)}" x2="${o.width - 6}" y2="${y.toFixed(1)}"
+							stroke="var(--rule-soft)" stroke-width="1" />`;
+					})
+					.join("");
+
+				const ticks = [0, max]
+					.map((v, i) => {
+						const y = i === 0 ? baseY : CHART.padTop;
+						return `<text x="${CHART.padLeft - 6}" y="${y + 3}" text-anchor="end"
+							font-size="9" fill="var(--ink-3)" font-family="var(--mono)">${v}</text>`;
+					})
+					.join("");
+
+				const peak = points.reduce(
+					(best, p, i) => (p.value > (points[best]?.value ?? -1) ? i : best),
+					0,
+				);
+
+				const bars = points
+					.map((p, i) => {
+						const h = max > 0 ? (p.value / max) * plotH : 0;
+						const x = CHART.padLeft + band * i + (band - barW) / 2;
+						const y = baseY - h;
+						const r = Math.min(CHART.radius, h);
+						// Rounded at the data end, square at the baseline.
+						const d =
+							h <= 0
+								? ""
+								: `M ${x} ${baseY} L ${x} ${y + r} Q ${x} ${y} ${x + r} ${y}
+							   L ${x + barW - r} ${y} Q ${x + barW} ${y} ${x + barW} ${y + r}
+							   L ${x + barW} ${baseY} Z`;
+						const label =
+							i === peak && p.value > 0
+								? `<text x="${x + barW / 2}" y="${y - 4}" text-anchor="middle"
+										font-size="9.5" fill="var(--ink-2)" font-family="var(--mono)">${p.value}${esc(o.unit)}</text>`
+								: "";
+						const tick =
+							i % o.labelEvery === 0
+								? `<text x="${x + barW / 2}" y="${baseY + 12}" text-anchor="middle"
+										font-size="9" fill="var(--ink-3)">${esc(p.label)}</text>`
+								: "";
+						return `<g><title>${esc(p.label)}: ${p.value}${esc(o.unit)}</title>
+							${d ? `<path d="${d}" fill="var(--brand)" />` : ""}
+							<rect x="${x}" y="${CHART.padTop}" width="${barW}" height="${plotH}" fill="transparent" />
+							${label}${tick}</g>`;
+					})
+					.join("");
+
+				const total = points.reduce((n, p) => n + p.value, 0);
+				return `<svg viewBox="0 0 ${o.width} ${o.height}" width="100%" height="${o.height}"
+					role="img" aria-label="${esc(o.aria || "Column chart")}. ${points.length} values, total ${total}, peak ${points[peak]?.value ?? 0}."
+					style="display:block;overflow:visible">
+					${grid}${ticks}
+					<line x1="${CHART.padLeft}" y1="${baseY}" x2="${o.width - 6}" y2="${baseY}"
+						stroke="var(--rule)" stroke-width="1" />
+					${bars}
+				</svg>`;
+			}
+
+			/**
+			 * One panel per region, each a single-series chart on the same
+			 * scale.
+			 *
+			 * The shared scale is what makes the comparison honest: panels drawn
+			 * to their own maxima look identical however different the volumes
+			 * are, which is the classic small-multiples mistake.
+			 */
+			function smallMultiples(series, opts) {
+				const everyValue = series.flatMap((s) => s.points.map((p) => p.value));
+				const shared = ENGINE.niceMax(everyValue);
+				return `<div class="grid3" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+					${series
+						.map((s) => {
+							const region = REGIONS.find((r) => r.id === s.name);
+							const label = region ? region.label : s.name;
+							const total = s.points.reduce((n, p) => n + p.value, 0);
+							return `<figure style="margin:0">
+								<figcaption style="font-size:12px;font-weight:600;display:flex;align-items:center;gap:6px;margin-bottom:4px">
+									<span class="dot dot-${esc(s.name)}" style="width:8px;height:8px;border-radius:50%;display:inline-block"></span>
+									${esc(label)}
+									<span class="mono muted" style="font-weight:400">${total} total</span>
+								</figcaption>
+								${columnChart(
+									s.points,
+									Object.assign({}, opts, {
+										forcedMax: shared,
+										aria: `${label} ${opts && opts.aria ? opts.aria : "volume"}`,
+									}),
+								)}
+							</figure>`;
+						})
+						.join("")}
+				</div>`;
+			}
+
+			/**
+			 * Builds and downloads one report as CSV.
+			 *
+			 * The rows are assembled here from the demonstration's own state and
+			 * then handed to ENGINE.toCsv, which owns the escaping — including
+			 * the apostrophe prefix that stops a field like `=HYPERLINK(...)`
+			 * running as a formula when the file is opened. The screen does not
+			 * get to decide how a field is escaped.
+			 */
+			function exportReport(reportId) {
+				const def = ENGINE.findReport(reportId);
+				if (!def) {
+					toast("Unknown report.");
+					return;
+				}
+
+				// Reports are a supervisor view. The platform decides, not the
+				// button's presence — a disabled-looking button is not a control.
+				const allowed = ENGINE.canViewReports(currentCaller());
+				if (!allowed.allowed) {
+					toast("Reports are limited to team leads and administrators.");
+					return;
+				}
+
+				const rows = reportRows(def);
+				if (rows.length === 0) {
+					toast("That report has no rows for this window.");
+					return;
+				}
+
+				const csv = ENGINE.toCsv(def, rows);
+				const window14 = reportWindow();
+				const name = ENGINE.exportFilename(def, window14);
+
+				try {
+					const blob = new Blob([csv], {
+						type: "text/csv;charset=utf-8",
+					});
+					const url = URL.createObjectURL(blob);
+					const a = document.createElement("a");
+					a.href = url;
+					a.download = name;
+					document.body.appendChild(a);
+					a.click();
+					a.remove();
+					// Revoked on a timer rather than immediately: some browsers
+					// have not finished reading the blob when click() returns.
+					setTimeout(() => URL.revokeObjectURL(url), 10000);
+					toast(`${rows.length} rows exported as ${name}`);
+				} catch {
+					toast("This browser would not accept the download.");
+				}
+			}
+
+			/** The window the library reports cover. */
+			function reportWindow() {
+				const to = now();
+				const from = new Date(to.getTime() - 13 * 86400000);
+				return { from: from.toISOString(), to: to.toISOString() };
+			}
+
+			/**
+			 * The rows behind each report, from the same state the charts use.
+			 *
+			 * Kept in one place so the CSV and the chart cannot drift apart: the
+			 * chart for `volume_by_day` is drawn from exactly these rows.
+			 */
+			function reportRows(def) {
+				switch (def.id) {
+					case "volume_by_day":
+						return state.dailyVolume.map((r) => ({
+							day: r.day,
+							regionId: regionLabel(r.regionId),
+							conversations: r.conversations,
+						}));
+
+					case "first_response":
+						return REGIONS.map((r) => {
+							const mine = state.conversations.filter(
+								(c) => c.regionId === r.id,
+							);
+							const answered = mine.filter((c) => c.firstResponseAt);
+							const late = answered.filter(
+								(c) =>
+									c.firstResponseDueAt &&
+									Date.parse(c.firstResponseAt) >
+										Date.parse(c.firstResponseDueAt),
+							);
+							return {
+								regionId: r.label,
+								answered: answered.length,
+								withinTarget: answered.length - late.length,
+								late: late.length,
+								unanswered: mine.length - answered.length,
+							};
+						});
+
+					case "tickets_by_type":
+						return ENGINE.TICKET_TYPES.map((type) => {
+							const mine = state.tickets.filter((t) => t.type === type);
+							return {
+								type: titleCase(type),
+								opened: mine.length,
+								resolved: mine.filter(
+									(t) => t.status === "resolved" || t.status === "closed",
+								).length,
+								overdue: mine.filter(
+									(t) =>
+										t.status !== "resolved" &&
+										t.status !== "closed" &&
+										t.resolutionDueAt &&
+										isBreached(t.resolutionDueAt, now()),
+								).length,
+							};
+						});
+
+					case "csat_distribution": {
+						const summary = ENGINE.summarise(
+							state.csat.responses,
+							Object.values(state.csat.sent).reduce((n, v) => n + v, 0),
+						);
+						return ENGINE.csatDistributionRows(summary.distribution);
+					}
+
+					default:
+						return [];
+				}
+			}
+
+			/** A region's label, falling back to its id rather than to blank. */
+			function regionLabel(regionId) {
+				const r = REGIONS.find((x) => x.id === regionId);
+				return r ? r.label : regionId;
+			}
+
 			function viewReports() {
 				const convs = state.conversations;
 				const atRisk = convs.filter(
@@ -7710,6 +8232,12 @@ var ENGINE = (() => {
 				const deflectionByFlow = ENGINE.summariseByFlow(state.botSessions);
 				const hotspots = ENGINE.abandonmentHotspots(state.botSessions);
 				const pct = (v) => `${Math.round(v * 100)}%`;
+				const volumeSeries = ENGINE.toSeries(
+					state.dailyVolume,
+					"day",
+					"conversations",
+					"regionId",
+				);
 
 				return `<div style="display:grid;gap:14px">
 					<section class="card">
@@ -7777,6 +8305,87 @@ var ENGINE = (() => {
 							<strong class="mono">${deflection.rateExcludingAbandoned === null ? "—" : esc(pct(deflection.rateExcludingAbandoned))}</strong>,
 							which is the same data read more kindly. Both are shown so that
 							neither can be quoted without the other.
+						</p>
+					</section>
+
+					<section class="card">
+						<h2>Conversation volume <small>last 14 days, demonstration data</small></h2>
+						<p class="muted" style="margin:2px 0 12px">
+							One panel per number, all three on the same scale — panels drawn
+							to their own maxima look identical however different the volumes
+							are, which is the usual way a small-multiples chart misleads.
+						</p>
+						${smallMultiples(volumeSeries, { height: 132, labelEvery: 3, aria: "daily conversation volume" })}
+						<details style="margin-top:10px">
+							<summary class="muted" style="font-size:12px">Table view</summary>
+							<div class="tablewrap" style="margin-top:8px"><table>
+								<thead><tr><th>Day</th>${REGIONS.map((r) => `<th>${esc(r.label)}</th>`).join("")}</tr></thead>
+								<tbody>${(volumeSeries[0] ? volumeSeries[0].points : [])
+									.map(
+										(p, i) =>
+											`<tr><td class="mono">${esc(p.label)}</td>${volumeSeries
+												.map(
+													(s) =>
+														`<td class="mono">${s.points[i] ? s.points[i].value : 0}</td>`,
+												)
+												.join("")}</tr>`,
+									)
+									.join("")}</tbody>
+							</table></div>
+						</details>
+					</section>
+
+					<section class="card">
+						<h2>Report library</h2>
+						<p class="muted" style="margin:2px 0 12px">
+							Each report is a definition — what it counts, how it groups, which
+							columns it exports — so the chart and the CSV are built from the
+							same rows and cannot disagree about what the report contains.
+						</p>
+						<div class="tablewrap"><table>
+							<thead><tr><th>Report</th><th>Groups by</th><th>Chart</th><th>Export</th></tr></thead>
+							<tbody>
+								${ENGINE.REPORT_LIBRARY.map(
+									(def) => `<tr>
+									<td><strong>${esc(def.title)}</strong>
+										<div class="muted" style="font-size:11.5px">${esc(def.description)}</div></td>
+									<td class="mono">${esc(def.group.replace(/_/g, " "))}</td>
+									<td class="muted" style="font-size:12px">${def.chart === "none" ? "table only" : esc(def.chart.replace(/_/g, " "))}</td>
+									<td><button type="button" class="ghost" data-export="${esc(def.id)}">CSV</button></td>
+								</tr>`,
+								).join("")}
+							</tbody>
+						</table></div>
+						<p class="muted" style="font-size:12px;margin-top:10px">
+							The export writes CRLF endings and a UTF-8 BOM so Excel does not
+							turn an Arabic customer name into mojibake, and it prefixes any
+							field starting <span class="mono">=</span>, <span class="mono">+</span>,
+							<span class="mono">-</span> or <span class="mono">@</span> with an
+							apostrophe. Without that last step a customer called
+							<span class="mono">=HYPERLINK(…)</span> runs as a formula when the
+							file is opened, and a cargo reference starting with a dash is a
+							perfectly ordinary thing to have. Supervisors only, per the same
+							rule that gates this screen.
+						</p>
+					</section>
+
+					<section class="card">
+						<h2>Satisfaction distribution <small>all regions</small></h2>
+						<p class="muted" style="margin:2px 0 12px">
+							The spread, not just the mean. A 4.4 made of fives and ones is not
+							a 4.4, and the mean alone hides that completely.
+						</p>
+						${columnChart(
+							ENGINE.csatDistributionRows(csatAll.distribution).map((r) => ({
+								label: r.score,
+								value: r.responses,
+							})),
+							{ height: 150, aria: "satisfaction score distribution, 1 to 5" },
+						)}
+						<p class="muted" style="font-size:12px;margin-top:6px">
+							${csatAll.responses} response${csatAll.responses === 1 ? "" : "s"} of
+							${csatAll.sent} sent. All five scores are shown even where nobody
+							gave one — a missing 2 reads as though 2 were impossible.
 						</p>
 					</section>
 
@@ -8536,7 +9145,7 @@ var ENGINE = (() => {
 
 			document.addEventListener("click", (event) => {
 				const t = event.target.closest(
-					"[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend],[data-inbox-filter],[data-contact],[data-contact-back]",
+					"[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend],[data-inbox-filter],[data-contact],[data-contact-back],[data-export]",
 				);
 				if (t) {
 					if (t.dataset.region) {
@@ -8545,6 +9154,10 @@ var ENGINE = (() => {
 						lastTrace = null;
 						save();
 						renderApp();
+						return;
+					}
+					if (t.dataset.export) {
+						exportReport(t.dataset.export);
 						return;
 					}
 					if (t.dataset.view) {

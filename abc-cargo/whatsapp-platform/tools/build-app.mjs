@@ -42,6 +42,7 @@ const MODULES = [
 	"src/auth/policy.ts",
 	"src/crm/transfer.ts",
 	"src/crm/csat.ts",
+	"src/crm/report-library.ts",
 	"src/admin/guards.ts",
 	"src/chat/policy.ts",
 	"src/dashboard/clock.ts",

@@ -129,9 +129,12 @@ readable as a record rather than quietly shrinking.
    answering a tracking question without an agent. The bot has the branch for
    it; what is missing is the shipment system's API, which is still an open
    decision.
-3. **Reports: charts and a report library.** A regional summary API exists; no
-   charts, no library, no export. Still unbuilt — the measurement work of
-   8 October 2026 covered item 4 only.
+3. **Reports: charts and a report library.** ~~No charts, no library, no
+   export.~~ **Built on 8 October 2026** — `src/crm/report-library.ts`: four
+   named reports, small multiples on a shared scale, a column chart, and a CSV
+   export that defuses spreadsheet formula injection. Not persisted, not
+   exposed over HTTP, no saved or scheduled reports. See
+   `docs/palette-and-reporting.md` §6 and §7.
 4. **CSAT and bot deflection.** ~~Neither is measured by anything today.~~
    **Measurement built on 8 October 2026** — `src/crm/csat.ts` and
    `src/crm/deflection.ts`, shown on the Reports screen. Deflection is defined
@@ -181,8 +184,11 @@ Worth keeping when the package is used as the specification:
 
 1. **Third region — UK, as the business has, or is Oman real?** The package
    needs one editing pass either way.
-2. **Palette — the screen designs' graphite/steel/amber, or ABC Cargo
-   red/black/white/grey?** My recommendation is in §3.
+2. ~~**Palette**~~ — **DECIDED 8 October 2026 by the Head of IT: red, white
+   and black only.** The red is `#e64a3c`, read off ABC Cargo's own live sites
+   rather than chosen. Applied to the demonstration; green and amber are gone,
+   status is a weight ladder in one hue, and region identity is now shape
+   rather than colour. See `docs/palette-and-reporting.md`.
 3. **"Payment" as a lifecycle stage** — keep it out until a system knows, or
    maintain it by hand?
 4. **Email and phone channels** — in scope now, or after the three WhatsApp
