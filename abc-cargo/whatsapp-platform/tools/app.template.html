@@ -963,6 +963,56 @@
 		<script>
 			/*__ENGINE__*/
 
+			/* ------------------------------------------- the engine, unpacked */
+
+			/*
+			 * The platform's code is bundled above under one global, ENGINE, so
+			 * that each module keeps its own scope. Several of them declare a
+			 * private `ALLOW` or `deny`, and running them all into one scope —
+			 * which is what this build used to do — is a SyntaxError that takes
+			 * the whole page down.
+			 *
+			 * The names this shell calls directly are unpacked here, so the rest
+			 * of the file reads as it did. Everything added later reaches through
+			 * `ENGINE.` on purpose: it makes it obvious, at the call site, which
+			 * decisions belong to the platform and which belong to the screen.
+			 *
+			 * `render` is deliberately NOT unpacked. The bot runtime exports one
+			 * (it fills {{slots}} in a bot message) and this shell has its own
+			 * for drawing the page. The bot's is reached as ENGINE.render.
+			 */
+			const {
+				CONVERSATION_FIRST_RESPONSE_MINUTES,
+				LEAD_STAGES,
+				MILESTONES,
+				QUOTATION_STATUSES,
+				addBusinessMinutes,
+				assertLeadTransition,
+				assertMilestoneAdvance,
+				assertQuotationTransition,
+				buildAutoReply,
+				buildRef,
+				canAdvanceLead,
+				canAdvanceMilestone,
+				canMoveQuotation,
+				checkStall,
+				classifyIntent,
+				findRegionById,
+				isBreached,
+				isDelivered,
+				isLeadOpen,
+				isWithinBusinessHours,
+				leadStageForQuotation,
+				normaliseRef,
+				outcomeFor,
+				parseRegionConfig,
+				remainingMs,
+				shouldNotifyCustomer,
+				templateForMilestone,
+				ticketDueDates,
+				ticketTypeFor,
+			} = ENGINE;
+
 			/* ==================================================================
 			 * Everything above this line is the platform's own code.
 			 * Everything below is the demonstration shell: the screens, and a
@@ -979,8 +1029,18 @@
 			 * exactly as it would on the Worker.
 			 */
 			const REGION_NUMBERS_JSON =
-				'[{"id":"uae","label":"UAE","phoneNumberId":"100000000000001","displayNumber":"+971800916","timezone":"Asia/Dubai","language":"en","businessHours":{"days":[0,1,2,3,4],"start":"08:00","end":"18:00"}},{"id":"ksa","label":"KSA","phoneNumberId":"100000000000002","displayNumber":"+966548454866","timezone":"Asia/Riyadh","language":"ar","businessHours":{"days":[0,1,2,3,4],"start":"09:00","end":"18:00"}},{"id":"uk","label":"UK","phoneNumberId":"100000000000003","displayNumber":"+447388800000","timezone":"Europe/London","language":"en","businessHours":{"days":[1,2,3,4,5],"start":"09:00","end":"17:00"}}]';
+				'[{"id":"uae","label":"UAE","phoneNumberId":"100000000000001","displayNumber":"+971800916","timezone":"Asia/Dubai","language":"en","businessHours":{"days":[0,1,2,3,4,5,6],"start":"08:00","end":"23:00"}},{"id":"ksa","label":"KSA","phoneNumberId":"100000000000002","displayNumber":"+966548454866","timezone":"Asia/Riyadh","language":"ar","businessHours":{"days":[0,1,2,3,4,5,6],"start":"08:00","end":"23:00"}},{"id":"uk","label":"UK","phoneNumberId":"100000000000003","displayNumber":"+447388800000","timezone":"Europe/London","language":"en","businessHours":{"days":[0,1,2,3,4,5,6],"start":"08:00","end":"23:00"}}]';
 
+			/*
+			 * The hours above are the confirmed ones: the WhatsApp desk is covered
+			 * all seven days, 08:00 to 23:00 local, in all three regions. They are
+			 * NOT the office week — the offices work UAE and KSA Sunday to
+			 * Thursday and UK Monday to Friday — and putting the office week here
+			 * would make this page tell a different story from the platform.
+			 *
+			 * The phone number ids are invented. The real ones are supplied at
+			 * go-live; they only have to be distinct here so the config parses.
+			 */
 			const REGIONS = parseRegionConfig(REGION_NUMBERS_JSON);
 
 			const SERVICE_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -988,11 +1048,17 @@
 			const AGENT_NAME = "Mariam (agent)";
 
 			const VIEWS = [
+				["dashboard", "Dashboard"],
 				["inbox", "Inbox"],
+				["contacts", "Contacts"],
 				["leads", "Leads & quotations"],
 				["tickets", "Tickets"],
 				["bookings", "Bookings"],
 				["calls", "Calls"],
+				["bot", "Bot"],
+				["broadcasts", "Broadcasts"],
+				["chat", "Team chat"],
+				["setup", "Setup"],
 				["overview", "Overview"],
 			];
 
@@ -1056,7 +1122,7 @@
 					const raw = window.localStorage.getItem(STORAGE_KEY);
 					if (!raw) return null;
 					const parsed = JSON.parse(raw);
-					return parsed && parsed.version === 1 ? parsed : null;
+					return parsed && parsed.version === 2 ? parsed : null;
 				} catch {
 					return null;
 				}
@@ -1077,11 +1143,50 @@
 			function seed() {
 				const t = (iso) => iso;
 				const s = {
-					version: 1,
+					version: 2,
 					regionId: "uae",
 					view: "inbox",
 					selectedConversationId: null,
 					presence: { uae: true, ksa: true, uk: false },
+					// The people the Setup screen administers. Two active
+					// administrators, so the lockout guard can be demonstrated by
+					// removing one and then trying to remove the other.
+					staff: [
+						{
+							id: "usr_hakkeem",
+							displayName: "Hakkeem M",
+							email: "hakkeem@abccargo.ae",
+							role: "master_admin",
+							status: "active",
+						},
+						{
+							id: "usr_mariam",
+							displayName: "Mariam",
+							email: "mariam@abccargo.ae",
+							role: "master_admin",
+							status: "active",
+						},
+						{
+							id: "usr_aziz",
+							displayName: "Abdulaziz",
+							email: "aziz@abccargo.ae",
+							role: "team_lead",
+							status: "active",
+						},
+						{
+							id: "usr_omar",
+							displayName: "Omar",
+							email: "omar@abccargo.ae",
+							role: "agent",
+							status: "active",
+						},
+					],
+					botScript: null,
+					broadcastKind: "marketing",
+					broadcastRule: { notBookedWithinDays: 90 },
+					broadcastStatus: "draft",
+					broadcastResolvedAt: null,
+					broadcastApprovedBy: null,
 					seq: { lead: 1204, quotation: 860, ticket: 482, booking: 88210 },
 					customers: [
 						{
@@ -1093,6 +1198,7 @@
 							email: "rashid@example.invalid",
 							regionId: "uae",
 							accountType: "trade",
+							optInMarketing: true,
 							createdAt: t("2019-04-01T00:00:00Z"),
 						},
 						{
@@ -1104,6 +1210,10 @@
 							email: "aziz@example.invalid",
 							regionId: "ksa",
 							accountType: "trade",
+							// Has not agreed to marketing. A marketing broadcast
+							// records this as a skip with a reason rather than
+							// quietly leaving them out of the count.
+							optInMarketing: false,
 							createdAt: t("2022-02-01T00:00:00Z"),
 						},
 						{
@@ -1735,7 +1845,7 @@
 					),
 				);
 				save();
-				render();
+				renderApp();
 			}
 
 			function sendTemplate(convId, templateName) {
@@ -1763,7 +1873,7 @@
 					),
 				);
 				save();
-				render();
+				renderApp();
 				toast(`Template ${templateName} sent.`);
 			}
 
@@ -1803,7 +1913,7 @@
 					),
 				);
 				save();
-				render();
+				renderApp();
 			}
 
 			function quoteLead(leadId) {
@@ -1852,7 +1962,7 @@
 					),
 				);
 				save();
-				render();
+				renderApp();
 				toast(`${q.ref} drafted against ${lead.ref}.`);
 			}
 
@@ -1938,7 +2048,7 @@
 					toast(`${booking.ref} created from ${q.ref}.`);
 				}
 				save();
-				render();
+				renderApp();
 			}
 
 			function advanceMilestone(bookingId, to) {
@@ -1994,7 +2104,7 @@
 					}
 				}
 				save();
-				render();
+				renderApp();
 			}
 
 			function ticketAction(ticketId, action) {
@@ -2036,7 +2146,7 @@
 					),
 				);
 				save();
-				render();
+				renderApp();
 			}
 
 			function logCall(customerId, direction, seconds, outcome) {
@@ -2067,7 +2177,7 @@
 					),
 				);
 				save();
-				render();
+				renderApp();
 				toast("Call logged on the customer timeline.");
 			}
 
@@ -2156,16 +2266,22 @@
 
 			/* ------------------------------------------------------------- render */
 
-			function render() {
+			function renderApp() {
 				renderTopbar();
 				renderTabs();
 				const main = document.getElementById("main");
 				const view = state.view;
-				if (view === "inbox") main.innerHTML = viewInbox();
+				if (view === "dashboard") main.innerHTML = viewDashboard();
+				else if (view === "inbox") main.innerHTML = viewInbox();
+				else if (view === "contacts") main.innerHTML = viewContacts();
 				else if (view === "leads") main.innerHTML = viewLeads();
 				else if (view === "tickets") main.innerHTML = viewTickets();
 				else if (view === "bookings") main.innerHTML = viewBookings();
 				else if (view === "calls") main.innerHTML = viewCalls();
+				else if (view === "bot") main.innerHTML = viewBot();
+				else if (view === "broadcasts") main.innerHTML = viewBroadcasts();
+				else if (view === "chat") main.innerHTML = viewChat();
+				else if (view === "setup") main.innerHTML = viewSetup();
 				else main.innerHTML = viewOverview();
 
 				const thread = document.getElementById("thread");
@@ -2737,6 +2853,603 @@
 				</div>`;
 			}
 
+			/* --------------------------------- helpers for the newer screens */
+
+			/** The last thing the customer said, whichever way it was recorded. */
+			function lastInboundAt(c) {
+				if (c.lastInboundAt) return c.lastInboundAt;
+				const last = [...c.messages].reverse().find((m) => m.direction === "in");
+				return last ? last.at : null;
+			}
+
+			/** The customer has spoken since we last did. */
+			function isUnanswered(c) {
+				if (c.status === "resolved") return false;
+				const msgs = [...c.messages].reverse();
+				const lastIn = msgs.find((m) => m.direction === "in");
+				if (!lastIn) return false;
+				const lastOut = msgs.find((m) => m.direction === "out");
+				return !lastOut || Date.parse(lastOut.at) < Date.parse(lastIn.at);
+			}
+
+			function customerFor(conversation) {
+				return customerById(conversation.customerId);
+			}
+
+			/*
+			 * The lifecycle stage is derived by the platform from what the customer
+			 * has actually done, not stored on a record somebody has to remember to
+			 * update. This gathers the facts and hands them to ENGINE.lifecycleFor.
+			 */
+			function lifecycleOf(customer) {
+				const theirConversation = state.conversations.find(
+					(c) => c.customerId === customer.id,
+				);
+				return ENGINE.lifecycleFor(
+					{
+						leads: state.leads
+							.filter((l) => l.customerId === customer.id)
+							.map((l) => ({ stage: l.stage, updatedAt: l.updatedAt })),
+						quotations: state.quotations
+							.filter((q) => q.customerId === customer.id)
+							.map((q) => ({ status: q.status, updatedAt: q.updatedAt })),
+						bookings: state.bookings
+							.filter((b) => b.customerId === customer.id)
+							.map((b) => ({ milestone: b.milestone, createdAt: b.createdAt })),
+						lastInboundAt: theirConversation
+							? lastInboundAt(theirConversation)
+							: null,
+					},
+					now(),
+				);
+			}
+
+			/* ----------------------------------------------------- view: dashboard */
+
+			/*
+			 * Everything on this screen that says "open", "closes in" or "today"
+			 * comes from ENGINE.officeState and ENGINE.regionalDay, which is the
+			 * same code the real dashboard route runs. The three regions are read
+			 * in their own hours, which is why they do not agree.
+			 */
+			function viewDashboard() {
+				const me = "Hakkeem M";
+				const greet = ENGINE.greeting({
+					displayName: me,
+					now: now(),
+					timezone: currentRegion().timezone,
+				});
+
+				const strip = REGIONS.map((r) => {
+					const o = ENGINE.officeState(r, now());
+					const day = ENGINE.regionalDay(now(), r.timezone);
+					const convs = state.conversations.filter((c) => c.regionId === r.id);
+					const unanswered = convs.filter((c) => isUnanswered(c));
+					const todayIn = convs.reduce(
+						(n, c) =>
+							n +
+							c.messages.filter(
+								(m) =>
+									m.direction === "in" &&
+									m.at >= day.from &&
+									m.at < day.to,
+							).length,
+						0,
+					);
+					const openTickets = state.tickets.filter(
+						(t) =>
+							t.regionId === r.id &&
+							(t.status === "open" || t.status === "pending"),
+					);
+					const breaching = openTickets.filter(
+						(t) =>
+							(!t.firstResponseAt && isBreached(t.firstResponseDueAt, now())) ||
+							isBreached(t.resolutionDueAt, now()),
+					);
+					return `<section class="card">
+						<h2>${esc(r.label)} <span class="mono muted" style="font-size:11.5px">${esc(r.displayNumber)}</span></h2>
+						<div style="display:flex;align-items:center;gap:8px;margin:2px 0 10px">
+							<span class="pill ${o.open ? "pill-open" : "pill-closed"}">${o.open ? "Open" : "Closed"}</span>
+							<span class="mono" style="font-size:13px">${esc(o.localTime)}</span>
+							<span class="muted" style="font-size:12px">${esc(o.nextChange ?? "")} in ${esc(ENGINE.describeMinutes(o.changesInMinutes))}</span>
+						</div>
+						<div class="stats" style="grid-template-columns:repeat(2,1fr)">
+							<div class="stat"><div class="n">${unanswered.length}</div><div class="l">Waiting on us</div><div class="h">${convs.length} open in total</div></div>
+							<div class="stat"><div class="n">${todayIn}</div><div class="l">Inbound today</div><div class="h">${esc(r.timezone)} day</div></div>
+							<div class="stat"><div class="n">${openTickets.length}</div><div class="l">Open tickets</div><div class="h">${breaching.length} past target</div></div>
+							<div class="stat"><div class="n">${state.presence[r.id] ? 1 : 0}</div><div class="l">Agents online</div><div class="h">${state.presence[r.id] ? "cover" : "nobody on"}</div></div>
+						</div>
+					</section>`;
+				}).join("");
+
+				const attention = state.conversations
+					.filter((c) => isUnanswered(c))
+					.map((c) => ({
+						c,
+						mins: Math.floor((now().getTime() - Date.parse(lastInboundAt(c))) / 60000),
+					}))
+					.sort((a, b) => b.mins - a.mins)
+					.slice(0, 8);
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>${esc(greet)}</h2>
+						<p class="muted" style="margin:2px 0 0">
+							Greeted in ${esc(currentRegion().label)} hours. A dashboard answers
+							what needs doing now; the reports answer how we did. An agent sees
+							this screen and not those.
+						</p>
+					</section>
+					<div class="grid2" style="grid-template-columns:repeat(3,1fr)">${strip}</div>
+					<section class="card">
+						<h2>Needs somebody now</h2>
+						${
+							attention.length === 0
+								? `<p class="muted">Nobody is waiting.</p>`
+								: `<div class="tablewrap"><table>
+							<thead><tr><th>Customer</th><th>Number</th><th>Waiting</th><th></th></tr></thead>
+							<tbody>${attention
+								.map(
+									({ c, mins }) => `<tr>
+								<td>${esc(customerFor(c)?.displayName ?? c.waId)}</td>
+								<td><span class="dot dot-${esc(c.regionId)}" style="display:inline-block;margin-right:6px"></span>${esc(findRegionById(REGIONS, c.regionId)?.label ?? c.regionId)}</td>
+								<td class="mono">${esc(ENGINE.describeMinutes(mins))}</td>
+								<td><button type="button" class="ghost" data-open-conv="${esc(c.id)}">Open</button></td>
+							</tr>`,
+								)
+								.join("")}</tbody></table></div>`
+						}
+					</section>
+				</div>`;
+			}
+
+			/* ----------------------------------------------------------- view: bot */
+
+			/*
+			 * The preview runs ENGINE.previewFlow, which calls the same runTurn a
+			 * live message goes through. It is not a second walk of the step graph:
+			 * if it were, it would drift, and a flow would behave one way here and
+			 * another in front of a customer.
+			 */
+			function viewBot() {
+				const region = currentRegion();
+				const starter = ENGINE.buildStarterFlow({ id: region.id, label: region.label });
+				const flow = {
+					id: "demo",
+					regionId: region.id,
+					name: starter.name,
+					version: 1,
+					status: "published",
+					entryStepId: starter.entryStepId,
+					steps: starter.steps,
+				};
+				const check = ENGINE.validateFlow(flow);
+				const errors = check.problems.filter((p) => p.severity === "error");
+				const warnings = check.problems.filter((p) => p.severity === "warning");
+
+				const script = state.botScript ?? DEFAULT_BOT_SCRIPT;
+				const messages = script
+					.split("\n")
+					.map((line) => line.trim())
+					.filter(Boolean)
+					.map((text) => ({
+						text,
+						facts: {
+							contactName: "Rashid",
+							references: ENGINE.extractTrackingNumbers(text),
+							booking: /088210/.test(text.replace(/[^0-9]/g, ""))
+								? { ref: "ABC-UAE-088210", milestone: "In transit" }
+								: null,
+						},
+					}));
+
+				let result = null;
+				try {
+					result = ENGINE.previewFlow({ flow, messages });
+				} catch (error) {
+					result = null;
+				}
+
+				const turns = (result?.turns ?? [])
+					.map(
+						(t) => `<div style="border-top:1px solid var(--rule-soft);padding:10px 0">
+						<div class="mono" style="font-size:12px;color:var(--ink-3)">customer</div>
+						<div style="margin:2px 0 8px">${esc(t.customer)}</div>
+						${t.replies
+							.map(
+								(r) =>
+									`<div class="bubble out" style="margin:4px 0"><div class="text">${esc(r)}</div></div>`,
+							)
+							.join("")}
+						${
+							t.effects.length
+								? `<div class="muted" style="font-size:12px;margin-top:6px">also: ${esc(
+										t.effects
+											.map((e) =>
+												e.kind === "handover"
+													? `hand to an agent (${e.reason})`
+													: e.kind === "open_ticket"
+														? `open a ${e.type} ticket`
+														: "open a lead",
+											)
+											.join(", "),
+									)}</div>`
+								: ""
+						}
+						<details style="margin-top:6px">
+							<summary class="muted" style="font-size:12px;cursor:pointer">why</summary>
+							<div class="mono" style="font-size:11.5px;color:var(--ink-3);padding-top:4px">
+								${t.trace.map((x) => esc(`${x.stepId} · ${x.kind} · ${x.note}`)).join("<br>")}
+							</div>
+						</details>
+					</div>`,
+					)
+					.join("");
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>${esc(region.label)} bot flow</h2>
+						<p class="muted" style="margin:2px 0 10px">
+							A starting point, <strong>not</strong> ABC Cargo's live Freshchat flow
+							for this number — those three have not been exported yet. The
+							machinery below is what will run them.
+						</p>
+						<div style="display:flex;gap:8px;flex-wrap:wrap">
+							<span class="pill ${errors.length ? "pill-closed" : "pill-open"}">
+								${errors.length ? `${errors.length} error${errors.length === 1 ? "" : "s"} — would be refused` : "Publishable"}
+							</span>
+							<span class="pill">${flow.steps.length} steps</span>
+							${warnings.length ? `<span class="pill">${warnings.length} warning${warnings.length === 1 ? "" : "s"}</span>` : ""}
+						</div>
+					</section>
+
+					<div class="grid2">
+						<section class="card">
+							<h2>Try a conversation</h2>
+							<p class="muted" style="margin:2px 0 8px">One customer message per line.</p>
+							<textarea id="botScript" rows="6" style="width:100%;font-family:inherit">${esc(script)}</textarea>
+							<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+								<button type="button" id="botRun">Run it</button>
+								<button type="button" class="ghost" id="botReset">Reset</button>
+							</div>
+							<p class="muted" style="font-size:12px;margin-top:8px">
+								Nothing is sent. The preview returns what the bot would say and
+								what it would ask the platform to do.
+							</p>
+						</section>
+						<section class="card">
+							<h2>What the customer would get</h2>
+							${turns || `<p class="muted">Add a message and run it.</p>`}
+							${
+								result?.handedOver
+									? `<p class="muted" style="font-size:12px;margin-top:8px">The conversation reached a person.</p>`
+									: ""
+							}
+						</section>
+					</div>
+				</div>`;
+			}
+
+			const DEFAULT_BOT_SCRIPT = [
+				"Hello",
+				"Where is my shipment ABC-UAE-088210",
+				"No, thank you",
+			].join("\n");
+
+			/* --------------------------------------------------- view: broadcasts */
+
+			/*
+			 * The audience rule is compiled by ENGINE.compileAudience, and the SQL
+			 * it produces is shown as-is. The point of showing it is the two
+			 * conditions nobody can switch off: the opt-out exclusion and the
+			 * missing-number exclusion are added by the compiler, not by the rule.
+			 */
+			function viewBroadcasts() {
+				const region = currentRegion();
+				const rule = state.broadcastRule ?? { notBookedWithinDays: 90 };
+				const kind = state.broadcastKind ?? "marketing";
+				const problems = ENGINE.validateAudience(rule);
+				const compiled = ENGINE.compileAudience({
+					regionId: region.id,
+					rule,
+					optedInOnly: kind === "marketing",
+					now: now(),
+				});
+
+				// Resolved against the demonstration's own customers, the same way
+				// the service does it: everyone the filters reach, with the
+				// marketing opt-in recorded as a skip rather than a silent drop.
+				const candidates = state.customers.filter((c) => c.regionId === region.id);
+				const audience = [];
+				const skipped = [];
+				for (const c of candidates) {
+					const booked = state.bookings.filter((b) => b.customerId === c.id);
+					const recent = booked.some(
+						(b) =>
+							now().getTime() - Date.parse(b.createdAt) <
+							(rule.notBookedWithinDays ?? 0) * 86400000,
+					);
+					if (rule.notBookedWithinDays !== undefined && recent) continue;
+					if (!c.waId) {
+						skipped.push([c, "no_wa_id"]);
+						continue;
+					}
+					if (kind === "marketing" && c.optInMarketing === false) {
+						skipped.push([c, "not_opted_in"]);
+						continue;
+					}
+					audience.push(c);
+				}
+
+				const bc = {
+					id: "bc_demo",
+					regionId: region.id,
+					status: state.broadcastStatus ?? "draft",
+					createdBy: "usr_hakkeem",
+					resolvedAt: state.broadcastResolvedAt ?? null,
+					resolvedCount: state.broadcastResolvedAt ? audience.length : null,
+					approvedBy: state.broadcastApprovedBy ?? null,
+					approvedAt: state.broadcastApprovedBy ? nowIso() : null,
+					startedAt: null,
+				};
+				const author = {
+					kind: "user",
+					id: "usr_hakkeem",
+					email: "h@abccargo.ae",
+					displayName: "Hakkeem M",
+					role: "master_admin",
+					status: "active",
+					regionIds: [region.id],
+					teamIds: [],
+				};
+				const colleague = { ...author, id: "usr_mariam", displayName: "Mariam" };
+
+				const selfApprove = ENGINE.canApproveBroadcast(author, bc);
+				const colleagueApprove = ENGINE.canApproveBroadcast(colleague, bc);
+				const send = ENGINE.checkReadyToSend({
+					caller: author,
+					broadcast: bc,
+					sendingEnabled: false,
+					now: now(),
+				});
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>Audience</h2>
+						<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+							<label>Kind
+								<select id="bcKind">
+									<option value="marketing" ${kind === "marketing" ? "selected" : ""}>Marketing — needs opt-in</option>
+									<option value="service" ${kind === "service" ? "selected" : ""}>Service notice — does not</option>
+								</select>
+							</label>
+							<label>Not shipped within
+								<select id="bcDays">
+									${[30, 90, 180]
+										.map(
+											(d) =>
+												`<option value="${d}" ${rule.notBookedWithinDays === d ? "selected" : ""}>${d} days</option>`,
+										)
+										.join("")}
+								</select>
+							</label>
+						</div>
+						<p style="margin:0 0 8px">${esc(ENGINE.describeAudience(rule, kind === "marketing"))}</p>
+						${
+							problems.length
+								? `<p class="muted" style="color:var(--critical)">${esc(problems.map((p) => p.message).join("; "))}</p>`
+								: ""
+						}
+						<details>
+							<summary class="muted" style="font-size:12px;cursor:pointer">the query this produces</summary>
+							<pre class="mono" style="font-size:11px;white-space:pre-wrap;color:var(--ink-3);margin-top:6px">${esc(compiled.sql)}</pre>
+							<p class="muted" style="font-size:11.5px">
+								The opt-out exclusion and the missing-number exclusion are added
+								by the compiler, not by the rule. No audience can be written
+								without them.
+							</p>
+						</details>
+					</section>
+
+					<div class="grid2">
+						<section class="card">
+							<h2>Who would get it</h2>
+							<div class="stats" style="grid-template-columns:repeat(2,1fr)">
+								<div class="stat"><div class="n">${audience.length}</div><div class="l">Would be messaged</div></div>
+								<div class="stat"><div class="n">${skipped.length}</div><div class="l">Skipped, with a reason</div></div>
+							</div>
+							${
+								skipped.length
+									? `<div class="tablewrap" style="margin-top:8px"><table><tbody>${skipped
+											.map(
+												([c, why]) =>
+													`<tr><td>${esc(c.displayName)}</td><td class="mono muted">${esc(why)}</td></tr>`,
+											)
+											.join("")}</tbody></table></div>`
+									: ""
+							}
+						</section>
+
+						<section class="card">
+							<h2>Before it can go out</h2>
+							<p class="muted" style="margin:2px 0 10px">Status: <span class="pill">${esc(bc.status)}</span></p>
+							<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+								<button type="button" id="bcResolve">Resolve the audience</button>
+								<button type="button" class="ghost" id="bcReview">Send for review</button>
+								<button type="button" class="ghost" id="bcApproveSelf">Approve it myself</button>
+								<button type="button" class="ghost" id="bcApproveOther">Mariam approves</button>
+								<button type="button" class="ghost" id="bcSend">Send</button>
+								<button type="button" class="ghost" id="bcResetBroadcast">Reset</button>
+							</div>
+							<ul style="margin:0;padding-left:18px;line-height:1.7">
+								<li>Approve it myself — <strong>${selfApprove.allowed ? "allowed" : "refused"}</strong>${selfApprove.allowed ? "" : `: ${esc(selfApprove.message)}`}</li>
+								<li>Mariam approves — <strong>${colleagueApprove.allowed ? "allowed" : "refused"}</strong>${colleagueApprove.allowed ? "" : `: ${esc(colleagueApprove.message)}`}</li>
+								<li>Send now — <strong>${send.allowed ? "allowed" : "refused"}</strong>${send.allowed ? "" : `: ${esc(send.message)}`}</li>
+							</ul>
+							<p class="muted" style="font-size:12px;margin-top:10px">
+								Sending is switched off for this deployment, and a broadcast is
+								approved by somebody other than its author. Both refusals above
+								come from the platform's own rules.
+							</p>
+						</section>
+					</div>
+				</div>`;
+			}
+
+			/* ----------------------------------------------------- view: contacts */
+
+			function viewContacts() {
+				const cards = ENGINE.CUSTOMER_STAGES.map((stage) => {
+					const inStage = state.customers
+						.map((c) => ({ c, life: lifecycleOf(c) }))
+						.filter((x) => x.life.stage === stage)
+						.sort((a, b) => b.life.temperature - a.life.temperature);
+					return `<section class="card">
+						<h2>${esc(ENGINE.CUSTOMER_STAGE_LABELS[stage])} <span class="muted" style="font-weight:400">${inStage.length}</span></h2>
+						${
+							inStage.length === 0
+								? `<p class="muted" style="font-size:12px">—</p>`
+								: inStage
+										.map(
+											({ c, life }) => `<div style="padding:6px 0;border-top:1px solid var(--rule-soft)">
+								<div>${esc(c.displayName)}</div>
+								<div class="muted" style="font-size:11.5px">${esc(c.company ?? "")}</div>
+								<div class="mono" style="font-size:11.5px;color:var(--ink-3)">${esc(life.band)} · ${life.temperature}</div>
+							</div>`,
+										)
+										.join("")
+						}
+					</section>`;
+				}).join("");
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>Contacts</h2>
+						<p class="muted" style="margin:2px 0 0">
+							The stage is <strong>derived</strong>, not stored — from each
+							customer's leads, quotations and shipments. It cannot go stale,
+							and nobody has to remember to move a card.
+						</p>
+					</section>
+					<div class="grid2" style="grid-template-columns:repeat(4,1fr);align-items:start">${cards}</div>
+				</div>`;
+			}
+
+			/* --------------------------------------------------------- view: chat */
+
+			function viewChat() {
+				const thread = {
+					id: "thr_demo",
+					kind: "direct",
+					participantIds: ["usr_hakkeem", "usr_mariam"],
+				};
+				const person = (id, name, role) => ({
+					kind: "user",
+					id,
+					email: `${id}@abccargo.ae`,
+					displayName: name,
+					role,
+					status: "active",
+					regionIds: ["uae"],
+					teamIds: ["team_uae"],
+				});
+				const rows = [
+					["Hakkeem — in the thread", person("usr_hakkeem", "Hakkeem", "agent")],
+					["Mariam — in the thread", person("usr_mariam", "Mariam", "agent")],
+					["Omar — not in it", person("usr_omar", "Omar", "agent")],
+					["A master admin, not in it", person("usr_admin", "Admin", "master_admin")],
+					["The shipment system", { kind: "service", name: "shipment-system" }],
+				];
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>Team chat</h2>
+						<p class="muted" style="margin:2px 0 0">
+							The one part of the platform that crosses regions on purpose. What
+							governs a thread is membership: you are in it, or you are not.
+						</p>
+					</section>
+					<section class="card">
+						<h2>Who can read this thread</h2>
+						<div class="tablewrap"><table>
+							<thead><tr><th>Who</th><th>Read</th><th>Post</th></tr></thead>
+							<tbody>${rows
+								.map(([label, caller]) => {
+									const read = ENGINE.canReadThread(caller, thread);
+									const post = ENGINE.canPostToThread(caller, thread, "hello");
+									return `<tr>
+										<td>${esc(label)}</td>
+										<td>${read.allowed ? "yes" : `<span class="mono muted">${esc(read.reason)}</span>`}</td>
+										<td>${post.allowed ? "yes" : `<span class="mono muted">${esc(post.reason)}</span>`}</td>
+									</tr>`;
+								})
+								.join("")}</tbody>
+						</table></div>
+						<p class="muted" style="font-size:12px;margin-top:10px">
+							A master admin has no back door. They can add themselves, which
+							leaves a record; reading silently would not.
+						</p>
+					</section>
+				</div>`;
+			}
+
+			/* -------------------------------------------------------- view: setup */
+
+			function viewSetup() {
+				const admins = state.staff.filter(
+					(u) => u.role === "master_admin" && u.status === "active",
+				);
+				const adminIds = admins.map((u) => u.id);
+
+				const rows = state.staff
+					.map((u) => {
+						const demote = ENGINE.checkUserChange({
+							actingUserId: "usr_hakkeem",
+							targetUserId: u.id,
+							activeAdminIds: adminIds,
+							next: { role: "agent" },
+						});
+						const suspend = ENGINE.checkUserChange({
+							actingUserId: "usr_hakkeem",
+							targetUserId: u.id,
+							activeAdminIds: adminIds,
+							next: { status: "suspended" },
+						});
+						return `<tr>
+							<td>${esc(u.displayName)}<div class="mono muted" style="font-size:11.5px">${esc(u.email)}</div></td>
+							<td><span class="pill">${esc(u.role.replace(/_/g, " "))}</span></td>
+							<td>${demote.ok ? `<button type="button" class="ghost" data-demote="${esc(u.id)}">Make agent</button>` : `<span class="mono muted" title="${esc(demote.message)}">${esc(demote.reason)}</span>`}</td>
+							<td>${suspend.ok ? `<button type="button" class="ghost" data-suspend="${esc(u.id)}">Suspend</button>` : `<span class="mono muted" title="${esc(suspend.message)}">${esc(suspend.reason)}</span>`}</td>
+						</tr>`;
+					})
+					.join("");
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>People</h2>
+						<p class="muted" style="margin:2px 0 10px">
+							Signed in as Hakkeem M. The refusals below are the platform's, not
+							the screen's — a platform nobody can administer is recovered by
+							writing SQL against production.
+						</p>
+						<div class="tablewrap"><table>
+							<thead><tr><th>Person</th><th>Role</th><th>Demote</th><th>Suspend</th></tr></thead>
+							<tbody>${rows}</tbody>
+						</table></div>
+					</section>
+					<section class="card">
+						<h2>Try it</h2>
+						<p class="muted" style="margin:2px 0 0">
+							Make the other administrator an agent, then try to change yourself.
+							The last active administrator cannot be demoted or suspended, and
+							nobody can remove their own administrator role even when others
+							remain — a clearer message than one about counts.
+						</p>
+					</section>
+				</div>`;
+			}
+
+
 			/* ------------------------------------------------------ view: overview */
 
 			function viewOverview() {
@@ -2876,27 +3589,69 @@
 			}
 
 			document.addEventListener("click", (event) => {
-				const t = event.target.closest("[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall]");
+				const t = event.target.closest("[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend]");
 				if (t) {
 					if (t.dataset.region) {
 						state.regionId = t.dataset.region;
 						state.selectedConversationId = null;
 						lastTrace = null;
 						save();
-						render();
+						renderApp();
 						return;
 					}
 					if (t.dataset.view) {
 						state.view = t.dataset.view;
 						save();
-						render();
+						renderApp();
 						return;
 					}
 					if (t.dataset.conv) {
 						state.selectedConversationId = t.dataset.conv;
 						lastTrace = null;
 						save();
-						render();
+						renderApp();
+						return;
+					}
+					// The dashboard's attention list jumps straight into the thread.
+					if (t.dataset.openConv) {
+						const conv = conversationById(t.dataset.openConv);
+						if (conv) state.regionId = conv.regionId;
+						state.selectedConversationId = t.dataset.openConv;
+						state.view = "inbox";
+						lastTrace = null;
+						save();
+						renderApp();
+						return;
+					}
+					// Setup: the guards have already decided whether the button is
+					// there at all, but they are asked again here. A screen that
+					// only hides a button is not an access rule.
+					if (t.dataset.demote || t.dataset.suspend) {
+						const targetId = t.dataset.demote || t.dataset.suspend;
+						const next = t.dataset.demote
+							? { role: "agent" }
+							: { status: "suspended" };
+						const check = ENGINE.checkUserChange({
+							actingUserId: "usr_hakkeem",
+							targetUserId: targetId,
+							activeAdminIds: state.staff
+								.filter((u) => u.role === "master_admin" && u.status === "active")
+								.map((u) => u.id),
+							next,
+						});
+						if (!check.ok) {
+							toast(check.message);
+							return;
+						}
+						const person = state.staff.find((u) => u.id === targetId);
+						if (person) Object.assign(person, next);
+						save();
+						renderApp();
+						toast(
+							`${person ? person.displayName : "That person"} is now ${
+								t.dataset.demote ? "an agent" : "suspended"
+							}.`,
+						);
 						return;
 					}
 					if (t.dataset.sample) {
@@ -2930,7 +3685,7 @@
 					if (t.dataset.logcall) {
 						state.view = "calls";
 						save();
-						render();
+						renderApp();
 						return;
 					}
 				}
@@ -2957,7 +3712,7 @@
 					}
 					lastTrace = receiveInbound(customerId, text);
 					state.selectedConversationId = lastTrace.conversationId;
-					render();
+					renderApp();
 					return;
 				}
 
@@ -2994,7 +3749,7 @@
 				if (id === "presenceBtn") {
 					state.presence[state.regionId] = !state.presence[state.regionId];
 					save();
-					render();
+					renderApp();
 					toast(
 						state.presence[state.regionId]
 							? `${currentRegion().label} agents are now online.`
@@ -3013,7 +3768,119 @@
 							`Clock moved to a time when ${currentRegion().label} is closed. Send a message now.`,
 						);
 					}
-					render();
+					renderApp();
+					return;
+				}
+
+				if (id === "botRun") {
+					const box = document.getElementById("botScript");
+					state.botScript = box ? box.value : null;
+					save();
+					renderApp();
+					return;
+				}
+
+				if (id === "botReset") {
+					state.botScript = null;
+					save();
+					renderApp();
+					return;
+				}
+
+				if (id === "bcResolve") {
+					// Resolving writes down exactly who will be messaged, and any
+					// approval given before it is void: the approval was of a
+					// particular list of people.
+					state.broadcastResolvedAt = nowIso();
+					state.broadcastApprovedBy = null;
+					if (state.broadcastStatus === "approved") {
+						state.broadcastStatus = "draft";
+					}
+					save();
+					renderApp();
+					toast("Audience resolved. Any approval given before now is void.");
+					return;
+				}
+
+				if (id === "bcReview" || id === "bcApproveSelf" || id === "bcApproveOther") {
+					const wanted = id === "bcReview" ? "review" : "approved";
+					const step = ENGINE.canTransition(state.broadcastStatus ?? "draft", wanted);
+					if (!step.allowed) {
+						toast(step.message);
+						return;
+					}
+					if (wanted === "approved") {
+						const who = id === "bcApproveSelf" ? "usr_hakkeem" : "usr_mariam";
+						const caller = {
+							kind: "user",
+							id: who,
+							email: "x@abccargo.ae",
+							displayName: who,
+							role: "master_admin",
+							status: "active",
+							regionIds: [state.regionId],
+							teamIds: [],
+						};
+						const may = ENGINE.canApproveBroadcast(caller, {
+							id: "bc_demo",
+							regionId: state.regionId,
+							status: state.broadcastStatus ?? "draft",
+							createdBy: "usr_hakkeem",
+							resolvedAt: state.broadcastResolvedAt,
+							resolvedCount: state.broadcastResolvedAt ? 1 : null,
+							approvedBy: null,
+							approvedAt: null,
+							startedAt: null,
+						});
+						if (!may.allowed) {
+							toast(may.message);
+							return;
+						}
+						state.broadcastApprovedBy = who;
+					}
+					state.broadcastStatus = wanted;
+					save();
+					renderApp();
+					return;
+				}
+
+				if (id === "bcSend") {
+					const may = ENGINE.checkReadyToSend({
+						caller: {
+							kind: "user",
+							id: "usr_hakkeem",
+							email: "h@abccargo.ae",
+							displayName: "Hakkeem",
+							role: "master_admin",
+							status: "active",
+							regionIds: [state.regionId],
+							teamIds: [],
+						},
+						broadcast: {
+							id: "bc_demo",
+							regionId: state.regionId,
+							status: state.broadcastStatus ?? "draft",
+							createdBy: "usr_hakkeem",
+							resolvedAt: state.broadcastResolvedAt,
+							resolvedCount: state.broadcastResolvedAt ? 1 : null,
+							approvedBy: state.broadcastApprovedBy,
+							approvedAt: state.broadcastApprovedBy ? nowIso() : null,
+							startedAt: null,
+						},
+						// Off, exactly as it is in the real configuration.
+						sendingEnabled: false,
+						now: now(),
+					});
+					toast(may.allowed ? "Would start sending." : may.message);
+					return;
+				}
+
+				if (id === "bcResetBroadcast") {
+					state.broadcastStatus = "draft";
+					state.broadcastResolvedAt = null;
+					state.broadcastApprovedBy = null;
+					save();
+					renderApp();
 					return;
 				}
 
@@ -3023,9 +3890,30 @@
 					clockOffsetMs = 0;
 					state = seed();
 					save();
-					render();
+					renderApp();
 					toast("Demonstration reset.");
 					return;
+				}
+			});
+
+			document.addEventListener("change", (event) => {
+				const id = event.target.id;
+				if (id === "bcKind" || id === "bcDays") {
+					if (id === "bcKind") state.broadcastKind = event.target.value;
+					else {
+						state.broadcastRule = {
+							...(state.broadcastRule ?? {}),
+							notBookedWithinDays: Number(event.target.value),
+						};
+					}
+					// Changing who is messaged voids an approval, for the same
+					// reason the platform does it: otherwise the thing a second
+					// person read is not the thing that goes out.
+					state.broadcastResolvedAt = null;
+					state.broadcastApprovedBy = null;
+					if (state.broadcastStatus !== "draft") state.broadcastStatus = "draft";
+					save();
+					renderApp();
 				}
 			});
 
@@ -3064,12 +3952,21 @@
 				activityId =
 					Math.max(...state.activities.map((a) => Number(a.id) || 0)) + 1;
 			}
-			render();
+			renderApp();
 
 			// The service clocks are the point, so they have to actually tick.
 			window.setInterval(() => {
-				if (state.view === "inbox" || state.view === "tickets" || state.view === "overview" || state.view === "bookings") {
-					render();
+				// The dashboard is included: its office countdowns and waiting times
+				// are the whole point of it, and a frozen clock on a screen that
+				// says "closes in 54 minutes" is worse than no clock.
+				if (
+					state.view === "dashboard" ||
+					state.view === "inbox" ||
+					state.view === "tickets" ||
+					state.view === "overview" ||
+					state.view === "bookings"
+				) {
+					renderApp();
 				} else {
 					renderTopbar();
 				}

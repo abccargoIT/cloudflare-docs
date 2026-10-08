@@ -424,6 +424,21 @@
 
 			/*__ENGINE__*/
 
+			/*
+			 * The platform's code is bundled above under one global, ENGINE, so
+			 * that each module keeps its own scope. The names this page calls are
+			 * unpacked here.
+			 */
+			const {
+				buildAutoReply,
+				classifyIntent,
+				isWithinBusinessHours,
+				outcomeFor,
+				ticketDueDates,
+				ticketTypeFor,
+			} = ENGINE;
+
+
 			/* ------------------------------------------------ page wiring only */
 
 			const REGIONS = {

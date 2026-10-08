@@ -424,13 +424,15 @@
 
 			/*
  * DO NOT EDIT THIS BLOCK.
- * Compiled from the platform source by the build script:
+ * Compiled and bundled from the platform source by the build script:
  *   src/business-hours.ts
  *   src/auto-reply.ts
  *   src/crm/types.ts
  *   src/crm/intent.ts
  *   src/crm/sla.ts
  * Rebuild with: npm run build:tester
+ *
+ * Everything is reached through the ENGINE global.
  */
 
 /*
@@ -468,208 +470,228 @@
 	});
 })();
 
-/* ---------- src/business-hours.ts ---------- */
-const WEEKDAYS = {
+var ENGINE = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // ../../../../../tmp/abc-engage-build-dw4rOW/entry.ts
+  var entry_exports = {};
+  __export(entry_exports, {
+    ACTIVITY_KINDS: () => ACTIVITY_KINDS,
+    CALL_DIRECTIONS: () => CALL_DIRECTIONS,
+    CONVERSATION_FIRST_RESPONSE_MINUTES: () => CONVERSATION_FIRST_RESPONSE_MINUTES,
+    DEFAULT_TICKET_TARGETS: () => DEFAULT_TICKET_TARGETS,
+    DEFAULT_TRACKING_PATTERN: () => DEFAULT_TRACKING_PATTERN,
+    INTENTS: () => INTENTS,
+    LEAD_STAGES: () => LEAD_STAGES,
+    MILESTONES: () => MILESTONES,
+    MILESTONE_LABELS: () => MILESTONE_LABELS,
+    QUOTATION_STATUSES: () => QUOTATION_STATUSES,
+    TICKET_PRIORITIES: () => TICKET_PRIORITIES,
+    TICKET_STATUSES: () => TICKET_STATUSES,
+    TICKET_TYPES: () => TICKET_TYPES,
+    TRACKING_MAX_DIGITS: () => TRACKING_MAX_DIGITS,
+    TRACKING_MIN_DIGITS: () => TRACKING_MIN_DIGITS,
+    TRANSPORT_MODES: () => TRANSPORT_MODES,
+    addBusinessMinutes: () => addBusinessMinutes,
+    buildAutoReply: () => buildAutoReply,
+    classifyIntent: () => classifyIntent,
+    describeDays: () => describeDays,
+    extractReferences: () => extractReferences,
+    extractTrackingMentions: () => extractTrackingMentions,
+    extractTrackingNumbers: () => extractTrackingNumbers,
+    isBreached: () => isBreached,
+    isWithinBusinessHours: () => isWithinBusinessHours,
+    localClock: () => localClock,
+    outcomeFor: () => outcomeFor,
+    remainingMs: () => remainingMs,
+    targetFor: () => targetFor,
+    ticketDueDates: () => ticketDueDates,
+    ticketTypeFor: () => ticketTypeFor,
+    toMinutes: () => toMinutes
+  });
+
+  // src/business-hours.ts
+  var WEEKDAYS = {
     Sun: 0,
     Mon: 1,
     Tue: 2,
     Wed: 3,
     Thu: 4,
     Fri: 5,
-    Sat: 6,
-};
-/** Local weekday and minutes-since-midnight for `now` in the given timezone. */
-function localClock(now, timezone) {
+    Sat: 6
+  };
+  function localClock(now, timezone) {
     const parts = new Intl.DateTimeFormat("en-US", {
-        timeZone: timezone,
-        weekday: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-        hourCycle: "h23",
+      timeZone: timezone,
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23"
     }).formatToParts(now);
     const get = (type) => parts.find((p) => p.type === type)?.value ?? "";
     const weekday = WEEKDAYS[get("weekday")] ?? 0;
     const minutes = Number(get("hour")) * 60 + Number(get("minute"));
     return { weekday, minutes };
-}
-function toMinutes(hhmm) {
+  }
+  function toMinutes(hhmm) {
     const [h, m] = hhmm.split(":").map(Number);
     return (h ?? 0) * 60 + (m ?? 0);
-}
-function isWithinBusinessHours(region, now = new Date()) {
+  }
+  function isWithinBusinessHours(region, now = /* @__PURE__ */ new Date()) {
     const { weekday, minutes } = localClock(now, region.timezone);
     const { days, start, end } = region.businessHours;
-    if (!days.includes(weekday))
-        return false;
+    if (!days.includes(weekday)) return false;
     return minutes >= toMinutes(start) && minutes < toMinutes(end);
-}
+  }
 
-/* ---------- src/auto-reply.ts ---------- */
-/**
- * Placeholder pattern: two to four letters, optionally a second dashed letter
- * group, then up to three groups of digits separated by a dash or a space.
- *
- * It has to match every way a customer writes the same reference —
- * ABC-471-88210, ABC 471 88210, ABC47188210 — and also the regional form the
- * platform itself issues, ABC-UAE-088210. The second letter group is allowed
- * only after a dash, so an ordinary phrase such as "ABC team 123456" does not
- * fold the word into a reference.
- *
- * Replace with the exact ABC Cargo AWB / tracking format before go-live; the
- * total digit bounds below are the second half of the guard and should be
- * tightened at the same time.
- */
-const DEFAULT_TRACKING_PATTERN = /\b[A-Z]{2,4}(?:-[A-Z]{2,4})?(?:[- ]?\d{2,12}){1,3}\b/gi;
-/** Total digits a candidate must carry to be treated as a reference. */
-const TRACKING_MIN_DIGITS = 6;
-const TRACKING_MAX_DIGITS = 12;
-/**
- * Finds every shipment reference in a message, keeping the customer's own
- * spelling alongside the normalised key. Deduplication is on the normalised
- * key, so "ABC-UAE-088210" and "ABC UAE 088210" count once; the first spelling
- * seen is the one kept.
- */
-function extractTrackingMentions(text, pattern = DEFAULT_TRACKING_PATTERN) {
-    if (!text)
-        return [];
-    const re = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
-    const found = new Map();
+  // src/auto-reply.ts
+  var DEFAULT_TRACKING_PATTERN = /\b[A-Z]{2,4}(?:-[A-Z]{2,4})?(?:[- ]?\d{2,12}){1,3}\b/gi;
+  var TRACKING_MIN_DIGITS = 6;
+  var TRACKING_MAX_DIGITS = 12;
+  function extractTrackingMentions(text, pattern = DEFAULT_TRACKING_PATTERN) {
+    if (!text) return [];
+    const re = new RegExp(
+      pattern.source,
+      pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`
+    );
+    const found = /* @__PURE__ */ new Map();
     for (const match of text.matchAll(re)) {
-        const written = match[0];
-        const normalised = written.replace(/[- ]/g, "").toUpperCase();
-        const digits = normalised.replace(/\D/g, "").length;
-        // The pattern alone would accept "here 12"; the digit count is what
-        // separates a reference from an ordinary word next to a number.
-        if (digits < TRACKING_MIN_DIGITS || digits > TRACKING_MAX_DIGITS)
-            continue;
-        if (!found.has(normalised))
-            found.set(normalised, { written, normalised });
+      const written = match[0];
+      const normalised = written.replace(/[- ]/g, "").toUpperCase();
+      const digits = normalised.replace(/\D/g, "").length;
+      if (digits < TRACKING_MIN_DIGITS || digits > TRACKING_MAX_DIGITS) continue;
+      if (!found.has(normalised)) found.set(normalised, { written, normalised });
     }
     return [...found.values()];
-}
-/**
- * The normalised references only — the form used to look a shipment up.
- */
-function extractTrackingNumbers(text, pattern = DEFAULT_TRACKING_PATTERN) {
+  }
+  function extractTrackingNumbers(text, pattern = DEFAULT_TRACKING_PATTERN) {
     return extractTrackingMentions(text, pattern).map((m) => m.normalised);
-}
-function buildAutoReply(input) {
-    const greeting = input.contactName
-        ? `Hello ${input.contactName.trim()},`
-        : "Hello,";
-    // Quoted back in the customer's own spelling: a reply that answers
-    // "ABC-UAE-088210" with "ABCUAE088210" does not match the reference on
-    // their paperwork, and invites a second message asking which is right.
-    const tracking = extractTrackingMentions(input.inboundText, input.trackingPattern).map((m) => m.written);
+  }
+  function buildAutoReply(input) {
+    const greeting = input.contactName ? `Hello ${input.contactName.trim()},` : "Hello,";
+    const tracking = extractTrackingMentions(
+      input.inboundText,
+      input.trackingPattern
+    ).map((m) => m.written);
     const lines = [greeting, ""];
-    lines.push(`Thank you for contacting ABC Cargo (${input.region.label}). This is an automated reply.`);
+    lines.push(
+      `Thank you for contacting ABC Cargo (${input.region.label}). This is an automated reply.`
+    );
     if (tracking.length > 0) {
-        lines.push("", `We have noted your shipment reference${tracking.length > 1 ? "s" : ""}: ${tracking.join(", ")}.`);
-        if (input.trackingUrl) {
-            lines.push(`You can check the latest status at ${input.trackingUrl}`);
-        }
+      lines.push(
+        "",
+        `We have noted your shipment reference${tracking.length > 1 ? "s" : ""}: ${tracking.join(", ")}.`
+      );
+      if (input.trackingUrl) {
+        lines.push(`You can check the latest status at ${input.trackingUrl}`);
+      }
     }
     if (input.reason === "outside-hours") {
-        const { days, start, end } = input.region.businessHours;
-        lines.push("", `Our ${input.region.label} customer service team is currently offline. Working hours are ${start} to ${end} (${input.region.timezone}) on ${describeDays(days)}.`, "A team member will reply as soon as we are back online.");
+      const { days, start, end } = input.region.businessHours;
+      lines.push(
+        "",
+        `Our ${input.region.label} customer service team is currently offline. Working hours are ${start} to ${end} (${input.region.timezone}) on ${describeDays(days)}.`,
+        "A team member will reply as soon as we are back online."
+      );
+    } else {
+      lines.push(
+        "",
+        "All our agents are currently assisting other customers. Your message has been queued and a team member will reply shortly."
+      );
     }
-    else {
-        lines.push("", "All our agents are currently assisting other customers. Your message has been queued and a team member will reply shortly.");
-    }
-    lines.push("", "Please include your shipment reference and a short description of your request so we can help you faster.");
+    lines.push(
+      "",
+      "Please include your shipment reference and a short description of your request so we can help you faster."
+    );
     return lines.join("\n");
-}
-const DAY_NAMES = [
+  }
+  var DAY_NAMES = [
     "Sunday",
     "Monday",
     "Tuesday",
     "Wednesday",
     "Thursday",
     "Friday",
-    "Saturday",
-];
-function describeDays(days) {
+    "Saturday"
+  ];
+  function describeDays(days) {
     const sorted = [...new Set(days)].sort((a, b) => a - b);
-    if (sorted.length === 7)
-        return "all days";
-    if (sorted.length === 0)
-        return "no days";
+    if (sorted.length === 7) return "all days";
+    if (sorted.length === 0) return "no days";
     const names = sorted.map((d) => DAY_NAMES[d] ?? String(d));
-    if (names.length === 1)
-        return names[0] ?? "";
+    if (names.length === 1) return names[0] ?? "";
     return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-}
+  }
 
-/* ---------- src/crm/types.ts ---------- */
-/**
- * Domain types for the commercial and service side of ABC Cargo Engage:
- * leads, quotations, bookings, tickets and calls, plus the activity stream
- * that gives a customer one history across every channel and record.
- */
-const LEAD_STAGES = [
+  // src/crm/types.ts
+  var LEAD_STAGES = [
     "new",
     "qualified",
     "quoted",
     "negotiating",
     "won",
-    "lost",
-];
-const QUOTATION_STATUSES = [
+    "lost"
+  ];
+  var QUOTATION_STATUSES = [
     "draft",
     "sent",
     "negotiating",
     "accepted",
     "lost",
-    "expired",
-];
-/**
- * Shipment milestones in the order they occur. The index is the progress,
- * so a milestone may never move backwards without an explicit correction.
- */
-const MILESTONES = [
+    "expired"
+  ];
+  var MILESTONES = [
     "booked",
     "collected",
     "departed",
     "in_transit",
     "arrived",
     "cleared",
-    "delivered",
-];
-/**
- * How a milestone is written when a customer is going to read it.
- *
- * The stored values are identifiers — "in_transit" is correct in a column and
- * wrong in a WhatsApp message. Kept here, beside the list, so a second screen
- * cannot invent its own wording for the same state.
- */
-const MILESTONE_LABELS = {
+    "delivered"
+  ];
+  var MILESTONE_LABELS = {
     booked: "Booked",
     collected: "Collected",
     departed: "Departed origin",
     in_transit: "In transit",
     arrived: "Arrived at destination",
     cleared: "Cleared customs",
-    delivered: "Delivered",
-};
-const TICKET_TYPES = [
+    delivered: "Delivered"
+  };
+  var TICKET_TYPES = [
     "claim",
     "delay",
     "billing",
     "documentation",
     "delivery",
-    "general",
-];
-const TICKET_STATUSES = [
+    "general"
+  ];
+  var TICKET_STATUSES = [
     "open",
     "pending",
     "resolved",
-    "closed",
-];
-const TICKET_PRIORITIES = ["low", "normal", "high", "urgent"];
-const TRANSPORT_MODES = ["air", "sea_lcl", "sea_fcl", "road"];
-const CALL_DIRECTIONS = ["in", "out"];
-/** Every record kind that can appear on a customer's timeline. */
-const ACTIVITY_KINDS = [
+    "closed"
+  ];
+  var TICKET_PRIORITIES = ["low", "normal", "high", "urgent"];
+  var TRANSPORT_MODES = ["air", "sea_lcl", "sea_fcl", "road"];
+  var CALL_DIRECTIONS = ["in", "out"];
+  var ACTIVITY_KINDS = [
     "whatsapp",
     "handover",
     "call",
@@ -678,23 +700,11 @@ const ACTIVITY_KINDS = [
     "booking",
     "milestone",
     "ticket",
-    "note",
-];
+    "note"
+  ];
 
-/* ---------- src/crm/intent.ts ---------- */
-/**
- * Intent recognition for inbound customer messages.
- *
- * Rule based on purpose. The bot's behaviour has to be explainable to a
- * supervisor and reproducible in a test, and a misrouted claim costs more
- * than a missed classification. A model-assisted pass can be added in front
- * of this without changing the contract: it returns the same Intent, and
- * this remains the fallback when the model is unavailable or unsure.
- *
- * Arabic keywords are included because the KSA and UAE numbers receive a
- * large share of Arabic messages.
- */
-const INTENTS = [
+  // src/crm/intent.ts
+  var INTENTS = [
     "track",
     "rate",
     "claim",
@@ -703,348 +713,334 @@ const INTENTS = [
     "documentation",
     "agent",
     "greeting",
-    "unknown",
-];
-/**
- * Claims sit at the top: routing a damage claim to a sales queue is the
- * most expensive mistake this classifier can make.
- */
-const RULES = [
+    "unknown"
+  ];
+  var RULES = [
     {
-        intent: "claim",
-        weight: 100,
-        keywords: [
-            "claim",
-            "damaged",
-            "damage",
-            "broken",
-            "missing",
-            "lost item",
-            "stolen",
-            "complaint",
-            "شكوى",
-            "تالف",
-            "مفقود",
-            "مكسور",
-        ],
+      intent: "claim",
+      weight: 100,
+      keywords: [
+        "claim",
+        "damaged",
+        "damage",
+        "broken",
+        "missing",
+        "lost item",
+        "stolen",
+        "complaint",
+        "\u0634\u0643\u0648\u0649",
+        "\u062A\u0627\u0644\u0641",
+        "\u0645\u0641\u0642\u0648\u062F",
+        "\u0645\u0643\u0633\u0648\u0631"
+      ]
     },
     {
-        intent: "billing",
-        weight: 80,
-        keywords: [
-            "invoice",
-            "bill",
-            "overcharged",
-            "refund",
-            "payment",
-            "duty",
-            "customs charge",
-            "فاتورة",
-            "دفع",
-            "رسوم",
-        ],
+      intent: "billing",
+      weight: 80,
+      keywords: [
+        "invoice",
+        "bill",
+        "overcharged",
+        "refund",
+        "payment",
+        "duty",
+        "customs charge",
+        "\u0641\u0627\u062A\u0648\u0631\u0629",
+        "\u062F\u0641\u0639",
+        "\u0631\u0633\u0648\u0645"
+      ]
     },
     {
-        intent: "booking_change",
-        weight: 70,
-        keywords: [
-            "change the address",
-            "change address",
-            "reschedule",
-            "cancel my booking",
-            "cancel booking",
-            "add a box",
-            "add one more",
-            "amend",
-            "تعديل",
-            "إلغاء",
-        ],
+      intent: "booking_change",
+      weight: 70,
+      keywords: [
+        "change the address",
+        "change address",
+        "reschedule",
+        "cancel my booking",
+        "cancel booking",
+        "add a box",
+        "add one more",
+        "amend",
+        "\u062A\u0639\u062F\u064A\u0644",
+        "\u0625\u0644\u063A\u0627\u0621"
+      ]
     },
     {
-        intent: "documentation",
-        weight: 60,
-        keywords: [
-            "invoice copy",
-            "commercial invoice",
-            "packing list",
-            "certificate",
-            "paperwork",
-            "documents",
-            "awb copy",
-            "مستندات",
-            "شهادة",
-        ],
+      intent: "documentation",
+      weight: 60,
+      keywords: [
+        "invoice copy",
+        "commercial invoice",
+        "packing list",
+        "certificate",
+        "paperwork",
+        "documents",
+        "awb copy",
+        "\u0645\u0633\u062A\u0646\u062F\u0627\u062A",
+        "\u0634\u0647\u0627\u062F\u0629"
+      ]
     },
     {
-        intent: "rate",
-        weight: 50,
-        keywords: [
-            "rate",
-            "quote",
-            "quotation",
-            "price",
-            "how much",
-            "cost to send",
-            "charges to",
-            "سعر",
-            "عرض سعر",
-            "كم",
-            "تكلفة",
-        ],
+      intent: "rate",
+      weight: 50,
+      keywords: [
+        "rate",
+        "quote",
+        "quotation",
+        "price",
+        "how much",
+        "cost to send",
+        "charges to",
+        "\u0633\u0639\u0631",
+        "\u0639\u0631\u0636 \u0633\u0639\u0631",
+        "\u0643\u0645",
+        "\u062A\u0643\u0644\u0641\u0629"
+      ]
     },
     {
-        intent: "track",
-        weight: 40,
-        keywords: [
-            "where is my",
-            "track",
-            "tracking",
-            "status",
-            "delivered",
-            "shipment update",
-            "any update",
-            "تتبع",
-            "اين شحنتي",
-            "أين شحنتي",
-            "حالة",
-        ],
+      intent: "track",
+      weight: 40,
+      keywords: [
+        "where is my",
+        "track",
+        "tracking",
+        "status",
+        "delivered",
+        "shipment update",
+        "any update",
+        "\u062A\u062A\u0628\u0639",
+        "\u0627\u064A\u0646 \u0634\u062D\u0646\u062A\u064A",
+        "\u0623\u064A\u0646 \u0634\u062D\u0646\u062A\u064A",
+        "\u062D\u0627\u0644\u0629"
+      ]
     },
     {
-        intent: "agent",
-        weight: 30,
-        keywords: [
-            "talk to an agent",
-            "speak to someone",
-            "speak to a person",
-            "human",
-            "customer service",
-            "موظف",
-            "خدمة العملاء",
-        ],
+      intent: "agent",
+      weight: 30,
+      keywords: [
+        "talk to an agent",
+        "speak to someone",
+        "speak to a person",
+        "human",
+        "customer service",
+        "\u0645\u0648\u0638\u0641",
+        "\u062E\u062F\u0645\u0629 \u0627\u0644\u0639\u0645\u0644\u0627\u0621"
+      ]
     },
     {
-        intent: "greeting",
-        weight: 10,
-        keywords: [
-            "hi",
-            "hello",
-            "hey",
-            "good morning",
-            "good evening",
-            "مرحبا",
-            "السلام عليكم",
-        ],
-    },
-];
-/** Greetings only count when they are effectively the whole message. */
-const GREETING_MAX_WORDS = 3;
-function classifyIntent(text, trackingPattern = DEFAULT_TRACKING_PATTERN) {
+      intent: "greeting",
+      weight: 10,
+      keywords: [
+        "hi",
+        "hello",
+        "hey",
+        "good morning",
+        "good evening",
+        "\u0645\u0631\u062D\u0628\u0627",
+        "\u0627\u0644\u0633\u0644\u0627\u0645 \u0639\u0644\u064A\u0643\u0645"
+      ]
+    }
+  ];
+  var GREETING_MAX_WORDS = 3;
+  function classifyIntent(text, trackingPattern = DEFAULT_TRACKING_PATTERN) {
     const raw = (text ?? "").trim();
     const references = extractReferences(raw, trackingPattern);
     if (raw === "") {
-        return { intent: "unknown", confidence: 0, references, matched: null };
+      return { intent: "unknown", confidence: 0, references, matched: null };
     }
     const haystack = raw.toLowerCase();
     const words = haystack.split(/\s+/).filter(Boolean).length;
     let best = null;
     for (const rule of RULES) {
-        if (rule.intent === "greeting" && words > GREETING_MAX_WORDS)
-            continue;
-        for (const keyword of rule.keywords) {
-            if (!containsKeyword(haystack, keyword))
-                continue;
-            if (!best || rule.weight > best.rule.weight) {
-                best = { rule, keyword };
-            }
-            break;
+      if (rule.intent === "greeting" && words > GREETING_MAX_WORDS) continue;
+      for (const keyword of rule.keywords) {
+        if (!containsKeyword(haystack, keyword)) continue;
+        if (!best || rule.weight > best.rule.weight) {
+          best = { rule, keyword };
         }
+        break;
+      }
     }
-    // A bare reference with no other signal is a tracking request.
     if (!best && references.length > 0) {
-        return { intent: "track", confidence: 0.75, references, matched: null };
+      return { intent: "track", confidence: 0.75, references, matched: null };
     }
     if (!best) {
-        return { intent: "unknown", confidence: 0, references, matched: null };
+      return { intent: "unknown", confidence: 0, references, matched: null };
     }
     let confidence = best.rule.weight / 100;
     if (best.rule.intent === "track" && references.length > 0) {
-        confidence = Math.min(1, confidence + 0.4);
+      confidence = Math.min(1, confidence + 0.4);
     }
     return {
-        intent: best.rule.intent,
-        confidence: Number(confidence.toFixed(2)),
-        references,
-        matched: best.keyword,
+      intent: best.rule.intent,
+      confidence: Number(confidence.toFixed(2)),
+      references,
+      matched: best.keyword
     };
-}
-/**
- * Word-boundary match for Latin keywords so "hi" does not fire inside
- * "shipping". Arabic and multi-word phrases fall back to a substring test,
- * which is correct for a script without the same boundary semantics.
- */
-function containsKeyword(haystack, keyword) {
-    if (!/^[a-z0-9 ']+$/.test(keyword))
-        return haystack.includes(keyword);
+  }
+  function containsKeyword(haystack, keyword) {
+    if (!/^[a-z0-9 ']+$/.test(keyword)) return haystack.includes(keyword);
     const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i").test(haystack);
-}
-/**
- * Shipment references in a message. Delegates to the single extractor in
- * auto-reply so the bot and the classifier can never disagree about what
- * counts as a reference.
- */
-function extractReferences(text, pattern = DEFAULT_TRACKING_PATTERN) {
+  }
+  function extractReferences(text, pattern = DEFAULT_TRACKING_PATTERN) {
     return extractTrackingNumbers(text, pattern);
-}
-function outcomeFor(intent) {
+  }
+  function outcomeFor(intent) {
     switch (intent) {
-        case "rate":
-            return "lead";
-        case "claim":
-        case "billing":
-        case "documentation":
-        case "booking_change":
-            return "ticket";
-        case "track":
-        case "agent":
-        case "greeting":
-        case "unknown":
-            return null;
+      case "rate":
+        return "lead";
+      case "claim":
+      case "billing":
+      case "documentation":
+      case "booking_change":
+        return "ticket";
+      case "track":
+      case "agent":
+      case "greeting":
+      case "unknown":
+        return null;
     }
-}
-/** Ticket type for an intent that opens a ticket. */
-function ticketTypeFor(intent) {
+  }
+  function ticketTypeFor(intent) {
     switch (intent) {
-        case "claim":
-            return "claim";
-        case "billing":
-            return "billing";
-        case "documentation":
-            return "documentation";
-        case "booking_change":
-            return "delivery";
-        default:
-            return "general";
+      case "claim":
+        return "claim";
+      case "billing":
+        return "billing";
+      case "documentation":
+        return "documentation";
+      case "booking_change":
+        return "delivery";
+      default:
+        return "general";
     }
-}
+  }
 
-/* ---------- src/crm/sla.ts ---------- */
-/**
- * Service targets measured in business minutes.
- *
- * A target counted in wall-clock time is unfair to a region and misleading
- * to management: a ticket raised at 17:55 in the UK is not late at 09:05 the
- * next morning. Every due date here is computed by walking the region's own
- * business calendar, so the clock only runs while the team is open.
- */
-
-const MINUTE = 60_000;
-const DAY_MINUTES = 1440;
-/** Guard against an unreachable target when a calendar has no working days. */
-const MAX_DAYS_SCANNED = 400;
-/**
- * Defaults pending the SLA policy export from Freshworks. They are written
- * here rather than scattered through the code so that replacing them with
- * ABC Cargo's real policy is a single edit.
- */
-const DEFAULT_TICKET_TARGETS = {
+  // src/crm/sla.ts
+  var MINUTE = 6e4;
+  var DAY_MINUTES = 1440;
+  var MAX_DAYS_SCANNED = 400;
+  var DEFAULT_TICKET_TARGETS = {
     claim: { firstResponseMinutes: 30, resolutionMinutes: 8 * 60 },
     delay: { firstResponseMinutes: 30, resolutionMinutes: 8 * 60 },
     billing: { firstResponseMinutes: 120, resolutionMinutes: 24 * 60 },
     documentation: { firstResponseMinutes: 120, resolutionMinutes: 24 * 60 },
     delivery: { firstResponseMinutes: 60, resolutionMinutes: 12 * 60 },
-    general: { firstResponseMinutes: 120, resolutionMinutes: 24 * 60 },
-};
-/** Priority shortens the clock; it never lengthens it. */
-const PRIORITY_FACTOR = {
+    general: { firstResponseMinutes: 120, resolutionMinutes: 24 * 60 }
+  };
+  var PRIORITY_FACTOR = {
     urgent: 0.25,
     high: 0.5,
     normal: 1,
-    low: 1,
-};
-/** First response target for a conversation, before any ticket exists. */
-const CONVERSATION_FIRST_RESPONSE_MINUTES = 5;
-function targetFor(type, priority, targets = DEFAULT_TICKET_TARGETS) {
+    low: 1
+  };
+  var CONVERSATION_FIRST_RESPONSE_MINUTES = 5;
+  function targetFor(type, priority, targets = DEFAULT_TICKET_TARGETS) {
     const base = targets[type];
     const factor = PRIORITY_FACTOR[priority];
     return {
-        firstResponseMinutes: Math.max(5, Math.round(base.firstResponseMinutes * factor)),
-        resolutionMinutes: Math.max(15, Math.round(base.resolutionMinutes * factor)),
+      firstResponseMinutes: Math.max(
+        5,
+        Math.round(base.firstResponseMinutes * factor)
+      ),
+      resolutionMinutes: Math.max(
+        15,
+        Math.round(base.resolutionMinutes * factor)
+      )
     };
-}
-/**
- * Adds business minutes to an instant, skipping closed hours and closed
- * days in the region's own timezone.
- *
- * The walk is minute-accurate at the boundaries and day-accurate in between,
- * so a 24-hour target on a 9-hour calendar lands on the correct day rather
- * than the same evening.
- */
-function addBusinessMinutes(region, from, minutes) {
+  }
+  function addBusinessMinutes(region, from, minutes) {
     if (!Number.isFinite(minutes) || minutes < 0) {
-        throw new Error("minutes must be a non-negative number");
+      throw new Error("minutes must be a non-negative number");
     }
     const { days, start, end } = region.businessHours;
     if (days.length === 0) {
-        throw new Error(`region ${region.id} has no working days; cannot compute a target`);
+      throw new Error(
+        `region ${region.id} has no working days; cannot compute a target`
+      );
     }
     const openAt = toMinutes(start);
     const closeAt = toMinutes(end);
     if (closeAt <= openAt) {
-        throw new Error(`region ${region.id} business hours must end after they start`);
+      throw new Error(
+        `region ${region.id} business hours must end after they start`
+      );
     }
     const dayCapacity = closeAt - openAt;
     let cursor = new Date(from.getTime());
     let remaining = minutes;
     for (let guard = 0; guard <= MAX_DAYS_SCANNED; guard++) {
-        const { weekday, minutes: nowMinutes } = localClock(cursor, region.timezone);
-        if (!days.includes(weekday)) {
-            cursor = advanceToNextOpen(cursor, nowMinutes, openAt);
-            continue;
-        }
-        if (nowMinutes < openAt) {
-            // Before opening: jump forward to the opening bell, same day.
-            cursor = new Date(cursor.getTime() + (openAt - nowMinutes) * MINUTE);
-            continue;
-        }
-        if (nowMinutes >= closeAt) {
-            cursor = advanceToNextOpen(cursor, nowMinutes, openAt);
-            continue;
-        }
-        const availableToday = closeAt - nowMinutes;
-        if (remaining <= availableToday) {
-            return new Date(cursor.getTime() + remaining * MINUTE);
-        }
-        remaining -= availableToday;
-        // Move to closing time, then on to the next opening.
-        cursor = advanceToNextOpen(cursor, closeAt, openAt);
-        if (remaining > dayCapacity * MAX_DAYS_SCANNED)
-            break;
+      const { weekday, minutes: nowMinutes } = localClock(
+        cursor,
+        region.timezone
+      );
+      if (!days.includes(weekday)) {
+        cursor = advanceToNextOpen(cursor, nowMinutes, openAt);
+        continue;
+      }
+      if (nowMinutes < openAt) {
+        cursor = new Date(cursor.getTime() + (openAt - nowMinutes) * MINUTE);
+        continue;
+      }
+      if (nowMinutes >= closeAt) {
+        cursor = advanceToNextOpen(cursor, nowMinutes, openAt);
+        continue;
+      }
+      const availableToday = closeAt - nowMinutes;
+      if (remaining <= availableToday) {
+        return new Date(cursor.getTime() + remaining * MINUTE);
+      }
+      remaining -= availableToday;
+      cursor = advanceToNextOpen(cursor, closeAt, openAt);
+      if (remaining > dayCapacity * MAX_DAYS_SCANNED) break;
     }
-    throw new Error(`could not place an SLA target for region ${region.id} within ${MAX_DAYS_SCANNED} days`);
-}
-/**
- * Moves the cursor to the opening time of the following calendar day.
- * `currentMinutes` is the local minute-of-day the cursor is sitting on.
- */
-function advanceToNextOpen(cursor, currentMinutes, openAt) {
+    throw new Error(
+      `could not place an SLA target for region ${region.id} within ${MAX_DAYS_SCANNED} days`
+    );
+  }
+  function advanceToNextOpen(cursor, currentMinutes, openAt) {
     const toMidnight = DAY_MINUTES - currentMinutes;
     return new Date(cursor.getTime() + (toMidnight + openAt) * MINUTE);
-}
-function ticketDueDates(region, type, priority, from = new Date(), targets) {
+  }
+  function ticketDueDates(region, type, priority, from = /* @__PURE__ */ new Date(), targets) {
     const target = targetFor(type, priority, targets);
     return {
-        firstResponseDueAt: addBusinessMinutes(region, from, target.firstResponseMinutes).toISOString(),
-        resolutionDueAt: addBusinessMinutes(region, from, target.resolutionMinutes).toISOString(),
+      firstResponseDueAt: addBusinessMinutes(
+        region,
+        from,
+        target.firstResponseMinutes
+      ).toISOString(),
+      resolutionDueAt: addBusinessMinutes(
+        region,
+        from,
+        target.resolutionMinutes
+      ).toISOString()
     };
-}
-/** Milliseconds remaining against a due date; negative once it has passed. */
-function remainingMs(dueAt, now = new Date()) {
+  }
+  function remainingMs(dueAt, now = /* @__PURE__ */ new Date()) {
     return Date.parse(dueAt) - now.getTime();
-}
-function isBreached(dueAt, now = new Date()) {
+  }
+  function isBreached(dueAt, now = /* @__PURE__ */ new Date()) {
     return remainingMs(dueAt, now) < 0;
-}
+  }
+  return __toCommonJS(entry_exports);
+})();
+
+			/*
+			 * The platform's code is bundled above under one global, ENGINE, so
+			 * that each module keeps its own scope. The names this page calls are
+			 * unpacked here.
+			 */
+			const {
+				buildAutoReply,
+				classifyIntent,
+				isWithinBusinessHours,
+				outcomeFor,
+				ticketDueDates,
+				ticketTypeFor,
+			} = ENGINE;
 
 
 			/* ------------------------------------------------ page wiring only */

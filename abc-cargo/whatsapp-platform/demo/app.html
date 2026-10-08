@@ -963,7 +963,7 @@
 		<script>
 			/*
  * DO NOT EDIT THIS BLOCK.
- * Compiled from the platform source by the build script:
+ * Compiled and bundled from the platform source by the build script:
  *   src/regions.ts
  *   src/business-hours.ts
  *   src/auto-reply.ts
@@ -972,7 +972,27 @@
  *   src/crm/sla.ts
  *   src/crm/refs.ts
  *   src/crm/lifecycle.ts
+ *   src/crm/customer-lifecycle.ts
+ *   src/auth/policy.ts
+ *   src/admin/guards.ts
+ *   src/chat/policy.ts
+ *   src/dashboard/clock.ts
+ *   src/dashboard/presence.ts
+ *   src/composer/media.ts
+ *   src/composer/notes.ts
+ *   src/bots/types.ts
+ *   src/bots/validate.ts
+ *   src/bots/parse.ts
+ *   src/bots/runtime.ts
+ *   src/bots/templates.ts
+ *   src/bots/preview.ts
+ *   src/broadcasts/types.ts
+ *   src/broadcasts/audience.ts
+ *   src/broadcasts/template.ts
+ *   src/broadcasts/policy.ts
  * Rebuild with: npm run build:app
+ *
+ * Everything is reached through the ENGINE global.
  */
 
 /*
@@ -1010,278 +1030,424 @@
 	});
 })();
 
-/* ---------- src/regions.ts ---------- */
-/**
- * Region configuration: one entry per WhatsApp phone number attached to the
- * ABC Cargo WhatsApp Business Account. Loaded from the REGION_NUMBERS
- * variable so that numbers can be added without a code change.
- */
-const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
-function parseRegionConfig(json) {
+var ENGINE = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target2, all) => {
+    for (var name in all)
+      __defProp(target2, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // ../../../../../tmp/abc-engage-build-jsNYT6/entry.ts
+  var entry_exports = {};
+  __export(entry_exports, {
+    ACTIVITY_KINDS: () => ACTIVITY_KINDS,
+    ANSWER_SHAPES: () => ANSWER_SHAPES,
+    APPROVAL_VOIDING_FIELDS: () => APPROVAL_VOIDING_FIELDS,
+    BROADCAST_KINDS: () => BROADCAST_KINDS,
+    BROADCAST_STATUSES: () => BROADCAST_STATUSES,
+    CALL_DIRECTIONS: () => CALL_DIRECTIONS,
+    CONVERSATION_FIRST_RESPONSE_MINUTES: () => CONVERSATION_FIRST_RESPONSE_MINUTES,
+    CUSTOMER_STAGES: () => CUSTOMER_STAGES,
+    CUSTOMER_STAGE_LABELS: () => CUSTOMER_STAGE_LABELS,
+    DEFAULT_THRESHOLDS: () => DEFAULT_THRESHOLDS,
+    DEFAULT_TICKET_TARGETS: () => DEFAULT_TICKET_TARGETS,
+    DEFAULT_TRACKING_PATTERN: () => DEFAULT_TRACKING_PATTERN,
+    DELIVERY_ORDER: () => DELIVERY_ORDER,
+    FLOW_STATUSES: () => FLOW_STATUSES,
+    INTENTS: () => INTENTS,
+    InvalidTransitionError: () => InvalidTransitionError,
+    KNOWN_ACCOUNT_TYPES: () => KNOWN_ACCOUNT_TYPES,
+    LEAD_STAGES: () => LEAD_STAGES,
+    MAX_AUDIENCE: () => MAX_AUDIENCE,
+    MAX_INVALID_REPLIES: () => MAX_INVALID_REPLIES,
+    MAX_NOTE_LENGTH: () => MAX_NOTE_LENGTH,
+    MAX_STEPS_PER_TURN: () => MAX_STEPS_PER_TURN,
+    MAX_TEXT_LENGTH: () => MAX_TEXT_LENGTH,
+    MEDIA_KINDS: () => MEDIA_KINDS,
+    MILESTONES: () => MILESTONES,
+    MILESTONE_LABELS: () => MILESTONE_LABELS,
+    Notes: () => Notes,
+    PRESENCE_TTL_MINUTES: () => PRESENCE_TTL_MINUTES,
+    PROBLEM_CODES: () => PROBLEM_CODES,
+    Presence: () => Presence,
+    QUOTATION_STATUSES: () => QUOTATION_STATUSES,
+    RECIPIENT_STATES: () => RECIPIENT_STATES,
+    REPLY_ATTRIBUTION_HOURS: () => REPLY_ATTRIBUTION_HOURS,
+    RESOLUTION_FRESHNESS_HOURS: () => RESOLUTION_FRESHNESS_HOURS,
+    ROLES: () => ROLES,
+    SESSION_END_REASONS: () => SESSION_END_REASONS,
+    SESSION_TTL_HOURS: () => SESSION_TTL_HOURS,
+    SKIP_REASONS: () => SKIP_REASONS,
+    STALL_HOURS: () => STALL_HOURS,
+    STEP_KINDS: () => STEP_KINDS,
+    THREAD_KINDS: () => THREAD_KINDS,
+    TICKET_PRIORITIES: () => TICKET_PRIORITIES,
+    TICKET_STATUSES: () => TICKET_STATUSES,
+    TICKET_TYPES: () => TICKET_TYPES,
+    TRACKING_MAX_DIGITS: () => TRACKING_MAX_DIGITS,
+    TRACKING_MIN_DIGITS: () => TRACKING_MIN_DIGITS,
+    TRANSPORT_MODES: () => TRANSPORT_MODES,
+    USER_STATUSES: () => USER_STATUSES,
+    addBusinessMinutes: () => addBusinessMinutes,
+    advances: () => advances,
+    asksForAPerson: () => asksForAPerson,
+    assertLeadTransition: () => assertLeadTransition,
+    assertMilestoneAdvance: () => assertMilestoneAdvance,
+    assertQuotationTransition: () => assertQuotationTransition,
+    baseMimeType: () => baseMimeType,
+    buildAutoReply: () => buildAutoReply,
+    buildRef: () => buildRef,
+    buildStarterFlow: () => buildStarterFlow,
+    canAccessRegion: () => canAccessRegion,
+    canAdminister: () => canAdminister,
+    canAdvanceLead: () => canAdvanceLead,
+    canAdvanceMilestone: () => canAdvanceMilestone,
+    canApproveBroadcast: () => canApproveBroadcast,
+    canAssignConversation: () => canAssignConversation,
+    canComposeBroadcast: () => canComposeBroadcast,
+    canEditMessage: () => canEditMessage,
+    canEditNote: () => canEditNote,
+    canMoveQuotation: () => canMoveQuotation,
+    canPostToThread: () => canPostToThread,
+    canReadConversation: () => canReadConversation,
+    canReadRegionalRecord: () => canReadRegionalRecord,
+    canReadThread: () => canReadThread,
+    canReplyToConversation: () => canReplyToConversation,
+    canResolveAudience: () => canResolveAudience,
+    canSeeAgentWorkload: () => canSeeAgentWorkload,
+    canSeeOwnQueue: () => canSeeOwnQueue,
+    canSendBroadcast: () => canSendBroadcast,
+    canStartDirect: () => canStartDirect,
+    canStopBroadcast: () => canStopBroadcast,
+    canTransition: () => canTransition,
+    canViewDashboard: () => canViewDashboard,
+    canViewReports: () => canViewReports,
+    checkAdministratorRemains: () => checkAdministratorRemains,
+    checkLocation: () => checkLocation,
+    checkMedia: () => checkMedia,
+    checkNotSelfDemotion: () => checkNotSelfDemotion,
+    checkNoteBody: () => checkNoteBody,
+    checkReadyToSend: () => checkReadyToSend,
+    checkStall: () => checkStall,
+    checkUserChange: () => checkUserChange,
+    classifyIntent: () => classifyIntent,
+    classifyRef: () => classifyRef,
+    compileAudience: () => compileAudience,
+    countOnlineIn: () => countOnlineIn,
+    coversRegion: () => coversRegion,
+    deriveCustomerStage: () => deriveCustomerStage,
+    describeAudience: () => describeAudience,
+    describeDays: () => describeDays,
+    describeMinutes: () => describeMinutes,
+    directKey: () => directKey,
+    extractReferences: () => extractReferences,
+    extractTrackingMentions: () => extractTrackingMentions,
+    extractTrackingNumbers: () => extractTrackingNumbers,
+    findRegionById: () => findRegionById,
+    findRegionByPhoneNumberId: () => findRegionByPhoneNumberId,
+    greeting: () => greeting,
+    greetingBand: () => greetingBand,
+    isBreached: () => isBreached,
+    isBroadcastKind: () => isBroadcastKind,
+    isDelivered: () => isDelivered,
+    isLeadOpen: () => isLeadOpen,
+    isMediaKind: () => isMediaKind,
+    isRef: () => isRef,
+    isRole: () => isRole,
+    isService: () => isService,
+    isUserStatus: () => isUserStatus,
+    isWithinBusinessHours: () => isWithinBusinessHours,
+    leadStageForQuotation: () => leadStageForQuotation,
+    leadStageIndex: () => leadStageIndex,
+    leadTemperature: () => leadTemperature,
+    lifecycleFor: () => lifecycleFor,
+    localClock: () => localClock,
+    localMidnight: () => localMidnight,
+    looksLikeEmail: () => looksLikeEmail,
+    looksLikeLanguageCode: () => looksLikeLanguageCode,
+    looksLikeTemplateName: () => looksLikeTemplateName,
+    milestoneIndex: () => milestoneIndex,
+    minutesSince: () => minutesSince,
+    normaliseEmail: () => normaliseEmail,
+    normaliseRef: () => normaliseRef,
+    officeState: () => officeState,
+    outcomeFor: () => outcomeFor,
+    parseRegionConfig: () => parseRegionConfig,
+    parseSteps: () => parseSteps,
+    parseTemplateComponents: () => parseTemplateComponents,
+    previewFlow: () => previewFlow,
+    regionCode: () => regionCode,
+    regionScope: () => regionScope,
+    regionalDay: () => regionalDay,
+    remainingMs: () => remainingMs,
+    render: () => render,
+    rendersAsVoiceNote: () => rendersAsVoiceNote,
+    reportableRegions: () => reportableRegions,
+    resolutionIsFresh: () => resolutionIsFresh,
+    resolveRegionFilter: () => resolveRegionFilter,
+    resumableSession: () => resumableSession,
+    runTurn: () => runTurn,
+    safeFilename: () => safeFilename,
+    seesEveryConversationInRegion: () => seesEveryConversationInRegion,
+    shortCode: () => shortCode,
+    shouldNotifyCustomer: () => shouldNotifyCustomer,
+    staleBefore: () => staleBefore,
+    targetFor: () => targetFor,
+    targetsOf: () => targetsOf,
+    temperatureBand: () => temperatureBand,
+    templateForMilestone: () => templateForMilestone,
+    ticketDueDates: () => ticketDueDates,
+    ticketTypeFor: () => ticketTypeFor,
+    toMinutes: () => toMinutes,
+    unreadCount: () => unreadCount,
+    validateAudience: () => validateAudience,
+    validateFlow: () => validateFlow,
+    validateTeam: () => validateTeam,
+    validateUser: () => validateUser,
+    voidsApproval: () => voidsApproval,
+    zoneOffsetMs: () => zoneOffsetMs
+  });
+
+  // src/regions.ts
+  var TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+  function parseRegionConfig(json) {
     let raw;
     try {
-        raw = JSON.parse(json);
-    }
-    catch {
-        throw new Error("REGION_NUMBERS is not valid JSON");
+      raw = JSON.parse(json);
+    } catch {
+      throw new Error("REGION_NUMBERS is not valid JSON");
     }
     if (!Array.isArray(raw) || raw.length === 0) {
-        throw new Error("REGION_NUMBERS must be a non-empty JSON array");
+      throw new Error("REGION_NUMBERS must be a non-empty JSON array");
     }
-    const seenIds = new Set();
-    const seenPhoneNumberIds = new Set();
+    const seenIds = /* @__PURE__ */ new Set();
+    const seenPhoneNumberIds = /* @__PURE__ */ new Set();
     const regions = [];
     for (const [index, item] of raw.entries()) {
-        const r = item;
-        const where = `REGION_NUMBERS[${index}]`;
-        requireString(r.id, `${where}.id`);
-        requireString(r.label, `${where}.label`);
-        requireString(r.phoneNumberId, `${where}.phoneNumberId`);
-        requireString(r.displayNumber, `${where}.displayNumber`);
-        requireString(r.timezone, `${where}.timezone`);
-        requireString(r.language, `${where}.language`);
-        if (!r.businessHours)
-            throw new Error(`${where}.businessHours missing`);
-        const bh = r.businessHours;
-        if (!Array.isArray(bh.days) || bh.days.some((d) => d < 0 || d > 6)) {
-            throw new Error(`${where}.businessHours.days must be 0-6`);
-        }
-        if (!TIME_RE.test(bh.start) || !TIME_RE.test(bh.end)) {
-            throw new Error(`${where}.businessHours start/end must be HH:mm`);
-        }
-        if (seenIds.has(r.id))
-            throw new Error(`Duplicate region id ${r.id}`);
-        if (seenPhoneNumberIds.has(r.phoneNumberId)) {
-            throw new Error(`Duplicate phoneNumberId ${r.phoneNumberId}`);
-        }
-        seenIds.add(r.id);
-        seenPhoneNumberIds.add(r.phoneNumberId);
-        regions.push({
-            id: r.id,
-            label: r.label,
-            phoneNumberId: r.phoneNumberId,
-            displayNumber: r.displayNumber,
-            timezone: r.timezone,
-            language: r.language,
-            businessHours: { days: [...bh.days], start: bh.start, end: bh.end },
-        });
+      const r = item;
+      const where = `REGION_NUMBERS[${index}]`;
+      requireString(r.id, `${where}.id`);
+      requireString(r.label, `${where}.label`);
+      requireString(r.phoneNumberId, `${where}.phoneNumberId`);
+      requireString(r.displayNumber, `${where}.displayNumber`);
+      requireString(r.timezone, `${where}.timezone`);
+      requireString(r.language, `${where}.language`);
+      if (!r.businessHours) throw new Error(`${where}.businessHours missing`);
+      const bh = r.businessHours;
+      if (!Array.isArray(bh.days) || bh.days.some((d) => d < 0 || d > 6)) {
+        throw new Error(`${where}.businessHours.days must be 0-6`);
+      }
+      if (!TIME_RE.test(bh.start) || !TIME_RE.test(bh.end)) {
+        throw new Error(`${where}.businessHours start/end must be HH:mm`);
+      }
+      if (seenIds.has(r.id)) throw new Error(`Duplicate region id ${r.id}`);
+      if (seenPhoneNumberIds.has(r.phoneNumberId)) {
+        throw new Error(`Duplicate phoneNumberId ${r.phoneNumberId}`);
+      }
+      seenIds.add(r.id);
+      seenPhoneNumberIds.add(r.phoneNumberId);
+      regions.push({
+        id: r.id,
+        label: r.label,
+        phoneNumberId: r.phoneNumberId,
+        displayNumber: r.displayNumber,
+        timezone: r.timezone,
+        language: r.language,
+        businessHours: { days: [...bh.days], start: bh.start, end: bh.end }
+      });
     }
     return regions;
-}
-function findRegionByPhoneNumberId(regions, phoneNumberId) {
+  }
+  function findRegionByPhoneNumberId(regions, phoneNumberId) {
     return regions.find((r) => r.phoneNumberId === phoneNumberId);
-}
-function findRegionById(regions, id) {
+  }
+  function findRegionById(regions, id) {
     return regions.find((r) => r.id === id);
-}
-function requireString(value, name) {
+  }
+  function requireString(value, name) {
     if (typeof value !== "string" || value.trim() === "") {
-        throw new Error(`${name} must be a non-empty string`);
+      throw new Error(`${name} must be a non-empty string`);
     }
-}
+  }
 
-/* ---------- src/business-hours.ts ---------- */
-const WEEKDAYS = {
+  // src/business-hours.ts
+  var WEEKDAYS = {
     Sun: 0,
     Mon: 1,
     Tue: 2,
     Wed: 3,
     Thu: 4,
     Fri: 5,
-    Sat: 6,
-};
-/** Local weekday and minutes-since-midnight for `now` in the given timezone. */
-function localClock(now, timezone) {
+    Sat: 6
+  };
+  function localClock(now, timezone) {
     const parts = new Intl.DateTimeFormat("en-US", {
-        timeZone: timezone,
-        weekday: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-        hourCycle: "h23",
+      timeZone: timezone,
+      weekday: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23"
     }).formatToParts(now);
     const get = (type) => parts.find((p) => p.type === type)?.value ?? "";
     const weekday = WEEKDAYS[get("weekday")] ?? 0;
     const minutes = Number(get("hour")) * 60 + Number(get("minute"));
     return { weekday, minutes };
-}
-function toMinutes(hhmm) {
+  }
+  function toMinutes(hhmm) {
     const [h, m] = hhmm.split(":").map(Number);
     return (h ?? 0) * 60 + (m ?? 0);
-}
-function isWithinBusinessHours(region, now = new Date()) {
+  }
+  function isWithinBusinessHours(region, now = /* @__PURE__ */ new Date()) {
     const { weekday, minutes } = localClock(now, region.timezone);
     const { days, start, end } = region.businessHours;
-    if (!days.includes(weekday))
-        return false;
+    if (!days.includes(weekday)) return false;
     return minutes >= toMinutes(start) && minutes < toMinutes(end);
-}
+  }
 
-/* ---------- src/auto-reply.ts ---------- */
-/**
- * Placeholder pattern: two to four letters, optionally a second dashed letter
- * group, then up to three groups of digits separated by a dash or a space.
- *
- * It has to match every way a customer writes the same reference —
- * ABC-471-88210, ABC 471 88210, ABC47188210 — and also the regional form the
- * platform itself issues, ABC-UAE-088210. The second letter group is allowed
- * only after a dash, so an ordinary phrase such as "ABC team 123456" does not
- * fold the word into a reference.
- *
- * Replace with the exact ABC Cargo AWB / tracking format before go-live; the
- * total digit bounds below are the second half of the guard and should be
- * tightened at the same time.
- */
-const DEFAULT_TRACKING_PATTERN = /\b[A-Z]{2,4}(?:-[A-Z]{2,4})?(?:[- ]?\d{2,12}){1,3}\b/gi;
-/** Total digits a candidate must carry to be treated as a reference. */
-const TRACKING_MIN_DIGITS = 6;
-const TRACKING_MAX_DIGITS = 12;
-/**
- * Finds every shipment reference in a message, keeping the customer's own
- * spelling alongside the normalised key. Deduplication is on the normalised
- * key, so "ABC-UAE-088210" and "ABC UAE 088210" count once; the first spelling
- * seen is the one kept.
- */
-function extractTrackingMentions(text, pattern = DEFAULT_TRACKING_PATTERN) {
-    if (!text)
-        return [];
-    const re = new RegExp(pattern.source, pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`);
-    const found = new Map();
+  // src/auto-reply.ts
+  var DEFAULT_TRACKING_PATTERN = /\b[A-Z]{2,4}(?:-[A-Z]{2,4})?(?:[- ]?\d{2,12}){1,3}\b/gi;
+  var TRACKING_MIN_DIGITS = 6;
+  var TRACKING_MAX_DIGITS = 12;
+  function extractTrackingMentions(text, pattern = DEFAULT_TRACKING_PATTERN) {
+    if (!text) return [];
+    const re = new RegExp(
+      pattern.source,
+      pattern.flags.includes("g") ? pattern.flags : `${pattern.flags}g`
+    );
+    const found = /* @__PURE__ */ new Map();
     for (const match of text.matchAll(re)) {
-        const written = match[0];
-        const normalised = written.replace(/[- ]/g, "").toUpperCase();
-        const digits = normalised.replace(/\D/g, "").length;
-        // The pattern alone would accept "here 12"; the digit count is what
-        // separates a reference from an ordinary word next to a number.
-        if (digits < TRACKING_MIN_DIGITS || digits > TRACKING_MAX_DIGITS)
-            continue;
-        if (!found.has(normalised))
-            found.set(normalised, { written, normalised });
+      const written = match[0];
+      const normalised = written.replace(/[- ]/g, "").toUpperCase();
+      const digits = normalised.replace(/\D/g, "").length;
+      if (digits < TRACKING_MIN_DIGITS || digits > TRACKING_MAX_DIGITS) continue;
+      if (!found.has(normalised)) found.set(normalised, { written, normalised });
     }
     return [...found.values()];
-}
-/**
- * The normalised references only — the form used to look a shipment up.
- */
-function extractTrackingNumbers(text, pattern = DEFAULT_TRACKING_PATTERN) {
+  }
+  function extractTrackingNumbers(text, pattern = DEFAULT_TRACKING_PATTERN) {
     return extractTrackingMentions(text, pattern).map((m) => m.normalised);
-}
-function buildAutoReply(input) {
-    const greeting = input.contactName
-        ? `Hello ${input.contactName.trim()},`
-        : "Hello,";
-    // Quoted back in the customer's own spelling: a reply that answers
-    // "ABC-UAE-088210" with "ABCUAE088210" does not match the reference on
-    // their paperwork, and invites a second message asking which is right.
-    const tracking = extractTrackingMentions(input.inboundText, input.trackingPattern).map((m) => m.written);
-    const lines = [greeting, ""];
-    lines.push(`Thank you for contacting ABC Cargo (${input.region.label}). This is an automated reply.`);
+  }
+  function buildAutoReply(input) {
+    const greeting2 = input.contactName ? `Hello ${input.contactName.trim()},` : "Hello,";
+    const tracking = extractTrackingMentions(
+      input.inboundText,
+      input.trackingPattern
+    ).map((m) => m.written);
+    const lines = [greeting2, ""];
+    lines.push(
+      `Thank you for contacting ABC Cargo (${input.region.label}). This is an automated reply.`
+    );
     if (tracking.length > 0) {
-        lines.push("", `We have noted your shipment reference${tracking.length > 1 ? "s" : ""}: ${tracking.join(", ")}.`);
-        if (input.trackingUrl) {
-            lines.push(`You can check the latest status at ${input.trackingUrl}`);
-        }
+      lines.push(
+        "",
+        `We have noted your shipment reference${tracking.length > 1 ? "s" : ""}: ${tracking.join(", ")}.`
+      );
+      if (input.trackingUrl) {
+        lines.push(`You can check the latest status at ${input.trackingUrl}`);
+      }
     }
     if (input.reason === "outside-hours") {
-        const { days, start, end } = input.region.businessHours;
-        lines.push("", `Our ${input.region.label} customer service team is currently offline. Working hours are ${start} to ${end} (${input.region.timezone}) on ${describeDays(days)}.`, "A team member will reply as soon as we are back online.");
+      const { days, start, end } = input.region.businessHours;
+      lines.push(
+        "",
+        `Our ${input.region.label} customer service team is currently offline. Working hours are ${start} to ${end} (${input.region.timezone}) on ${describeDays(days)}.`,
+        "A team member will reply as soon as we are back online."
+      );
+    } else {
+      lines.push(
+        "",
+        "All our agents are currently assisting other customers. Your message has been queued and a team member will reply shortly."
+      );
     }
-    else {
-        lines.push("", "All our agents are currently assisting other customers. Your message has been queued and a team member will reply shortly.");
-    }
-    lines.push("", "Please include your shipment reference and a short description of your request so we can help you faster.");
+    lines.push(
+      "",
+      "Please include your shipment reference and a short description of your request so we can help you faster."
+    );
     return lines.join("\n");
-}
-const DAY_NAMES = [
+  }
+  var DAY_NAMES = [
     "Sunday",
     "Monday",
     "Tuesday",
     "Wednesday",
     "Thursday",
     "Friday",
-    "Saturday",
-];
-function describeDays(days) {
+    "Saturday"
+  ];
+  function describeDays(days) {
     const sorted = [...new Set(days)].sort((a, b) => a - b);
-    if (sorted.length === 7)
-        return "all days";
-    if (sorted.length === 0)
-        return "no days";
+    if (sorted.length === 7) return "all days";
+    if (sorted.length === 0) return "no days";
     const names = sorted.map((d) => DAY_NAMES[d] ?? String(d));
-    if (names.length === 1)
-        return names[0] ?? "";
+    if (names.length === 1) return names[0] ?? "";
     return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
-}
+  }
 
-/* ---------- src/crm/types.ts ---------- */
-/**
- * Domain types for the commercial and service side of ABC Cargo Engage:
- * leads, quotations, bookings, tickets and calls, plus the activity stream
- * that gives a customer one history across every channel and record.
- */
-const LEAD_STAGES = [
+  // src/crm/types.ts
+  var LEAD_STAGES = [
     "new",
     "qualified",
     "quoted",
     "negotiating",
     "won",
-    "lost",
-];
-const QUOTATION_STATUSES = [
+    "lost"
+  ];
+  var QUOTATION_STATUSES = [
     "draft",
     "sent",
     "negotiating",
     "accepted",
     "lost",
-    "expired",
-];
-/**
- * Shipment milestones in the order they occur. The index is the progress,
- * so a milestone may never move backwards without an explicit correction.
- */
-const MILESTONES = [
+    "expired"
+  ];
+  var MILESTONES = [
     "booked",
     "collected",
     "departed",
     "in_transit",
     "arrived",
     "cleared",
-    "delivered",
-];
-/**
- * How a milestone is written when a customer is going to read it.
- *
- * The stored values are identifiers — "in_transit" is correct in a column and
- * wrong in a WhatsApp message. Kept here, beside the list, so a second screen
- * cannot invent its own wording for the same state.
- */
-const MILESTONE_LABELS = {
+    "delivered"
+  ];
+  var MILESTONE_LABELS = {
     booked: "Booked",
     collected: "Collected",
     departed: "Departed origin",
     in_transit: "In transit",
     arrived: "Arrived at destination",
     cleared: "Cleared customs",
-    delivered: "Delivered",
-};
-const TICKET_TYPES = [
+    delivered: "Delivered"
+  };
+  var TICKET_TYPES = [
     "claim",
     "delay",
     "billing",
     "documentation",
     "delivery",
-    "general",
-];
-const TICKET_STATUSES = [
+    "general"
+  ];
+  var TICKET_STATUSES = [
     "open",
     "pending",
     "resolved",
-    "closed",
-];
-const TICKET_PRIORITIES = ["low", "normal", "high", "urgent"];
-const TRANSPORT_MODES = ["air", "sea_lcl", "sea_fcl", "road"];
-const CALL_DIRECTIONS = ["in", "out"];
-/** Every record kind that can appear on a customer's timeline. */
-const ACTIVITY_KINDS = [
+    "closed"
+  ];
+  var TICKET_PRIORITIES = ["low", "normal", "high", "urgent"];
+  var TRANSPORT_MODES = ["air", "sea_lcl", "sea_fcl", "road"];
+  var CALL_DIRECTIONS = ["in", "out"];
+  var ACTIVITY_KINDS = [
     "whatsapp",
     "handover",
     "call",
@@ -1290,23 +1456,11 @@ const ACTIVITY_KINDS = [
     "booking",
     "milestone",
     "ticket",
-    "note",
-];
+    "note"
+  ];
 
-/* ---------- src/crm/intent.ts ---------- */
-/**
- * Intent recognition for inbound customer messages.
- *
- * Rule based on purpose. The bot's behaviour has to be explainable to a
- * supervisor and reproducible in a test, and a misrouted claim costs more
- * than a missed classification. A model-assisted pass can be added in front
- * of this without changing the contract: it returns the same Intent, and
- * this remains the fallback when the model is unavailable or unsure.
- *
- * Arabic keywords are included because the KSA and UAE numbers receive a
- * large share of Arabic messages.
- */
-const INTENTS = [
+  // src/crm/intent.ts
+  var INTENTS = [
     "track",
     "rate",
     "claim",
@@ -1315,582 +1469,2814 @@ const INTENTS = [
     "documentation",
     "agent",
     "greeting",
-    "unknown",
-];
-/**
- * Claims sit at the top: routing a damage claim to a sales queue is the
- * most expensive mistake this classifier can make.
- */
-const RULES = [
+    "unknown"
+  ];
+  var RULES = [
     {
-        intent: "claim",
-        weight: 100,
-        keywords: [
-            "claim",
-            "damaged",
-            "damage",
-            "broken",
-            "missing",
-            "lost item",
-            "stolen",
-            "complaint",
-            "شكوى",
-            "تالف",
-            "مفقود",
-            "مكسور",
-        ],
+      intent: "claim",
+      weight: 100,
+      keywords: [
+        "claim",
+        "damaged",
+        "damage",
+        "broken",
+        "missing",
+        "lost item",
+        "stolen",
+        "complaint",
+        "\u0634\u0643\u0648\u0649",
+        "\u062A\u0627\u0644\u0641",
+        "\u0645\u0641\u0642\u0648\u062F",
+        "\u0645\u0643\u0633\u0648\u0631"
+      ]
     },
     {
-        intent: "billing",
-        weight: 80,
-        keywords: [
-            "invoice",
-            "bill",
-            "overcharged",
-            "refund",
-            "payment",
-            "duty",
-            "customs charge",
-            "فاتورة",
-            "دفع",
-            "رسوم",
-        ],
+      intent: "billing",
+      weight: 80,
+      keywords: [
+        "invoice",
+        "bill",
+        "overcharged",
+        "refund",
+        "payment",
+        "duty",
+        "customs charge",
+        "\u0641\u0627\u062A\u0648\u0631\u0629",
+        "\u062F\u0641\u0639",
+        "\u0631\u0633\u0648\u0645"
+      ]
     },
     {
-        intent: "booking_change",
-        weight: 70,
-        keywords: [
-            "change the address",
-            "change address",
-            "reschedule",
-            "cancel my booking",
-            "cancel booking",
-            "add a box",
-            "add one more",
-            "amend",
-            "تعديل",
-            "إلغاء",
-        ],
+      intent: "booking_change",
+      weight: 70,
+      keywords: [
+        "change the address",
+        "change address",
+        "reschedule",
+        "cancel my booking",
+        "cancel booking",
+        "add a box",
+        "add one more",
+        "amend",
+        "\u062A\u0639\u062F\u064A\u0644",
+        "\u0625\u0644\u063A\u0627\u0621"
+      ]
     },
     {
-        intent: "documentation",
-        weight: 60,
-        keywords: [
-            "invoice copy",
-            "commercial invoice",
-            "packing list",
-            "certificate",
-            "paperwork",
-            "documents",
-            "awb copy",
-            "مستندات",
-            "شهادة",
-        ],
+      intent: "documentation",
+      weight: 60,
+      keywords: [
+        "invoice copy",
+        "commercial invoice",
+        "packing list",
+        "certificate",
+        "paperwork",
+        "documents",
+        "awb copy",
+        "\u0645\u0633\u062A\u0646\u062F\u0627\u062A",
+        "\u0634\u0647\u0627\u062F\u0629"
+      ]
     },
     {
-        intent: "rate",
-        weight: 50,
-        keywords: [
-            "rate",
-            "quote",
-            "quotation",
-            "price",
-            "how much",
-            "cost to send",
-            "charges to",
-            "سعر",
-            "عرض سعر",
-            "كم",
-            "تكلفة",
-        ],
+      intent: "rate",
+      weight: 50,
+      keywords: [
+        "rate",
+        "quote",
+        "quotation",
+        "price",
+        "how much",
+        "cost to send",
+        "charges to",
+        "\u0633\u0639\u0631",
+        "\u0639\u0631\u0636 \u0633\u0639\u0631",
+        "\u0643\u0645",
+        "\u062A\u0643\u0644\u0641\u0629"
+      ]
     },
     {
-        intent: "track",
-        weight: 40,
-        keywords: [
-            "where is my",
-            "track",
-            "tracking",
-            "status",
-            "delivered",
-            "shipment update",
-            "any update",
-            "تتبع",
-            "اين شحنتي",
-            "أين شحنتي",
-            "حالة",
-        ],
+      intent: "track",
+      weight: 40,
+      keywords: [
+        "where is my",
+        "track",
+        "tracking",
+        "status",
+        "delivered",
+        "shipment update",
+        "any update",
+        "\u062A\u062A\u0628\u0639",
+        "\u0627\u064A\u0646 \u0634\u062D\u0646\u062A\u064A",
+        "\u0623\u064A\u0646 \u0634\u062D\u0646\u062A\u064A",
+        "\u062D\u0627\u0644\u0629"
+      ]
     },
     {
-        intent: "agent",
-        weight: 30,
-        keywords: [
-            "talk to an agent",
-            "speak to someone",
-            "speak to a person",
-            "human",
-            "customer service",
-            "موظف",
-            "خدمة العملاء",
-        ],
+      intent: "agent",
+      weight: 30,
+      keywords: [
+        "talk to an agent",
+        "speak to someone",
+        "speak to a person",
+        "human",
+        "customer service",
+        "\u0645\u0648\u0638\u0641",
+        "\u062E\u062F\u0645\u0629 \u0627\u0644\u0639\u0645\u0644\u0627\u0621"
+      ]
     },
     {
-        intent: "greeting",
-        weight: 10,
-        keywords: [
-            "hi",
-            "hello",
-            "hey",
-            "good morning",
-            "good evening",
-            "مرحبا",
-            "السلام عليكم",
-        ],
-    },
-];
-/** Greetings only count when they are effectively the whole message. */
-const GREETING_MAX_WORDS = 3;
-function classifyIntent(text, trackingPattern = DEFAULT_TRACKING_PATTERN) {
+      intent: "greeting",
+      weight: 10,
+      keywords: [
+        "hi",
+        "hello",
+        "hey",
+        "good morning",
+        "good evening",
+        "\u0645\u0631\u062D\u0628\u0627",
+        "\u0627\u0644\u0633\u0644\u0627\u0645 \u0639\u0644\u064A\u0643\u0645"
+      ]
+    }
+  ];
+  var GREETING_MAX_WORDS = 3;
+  function classifyIntent(text, trackingPattern = DEFAULT_TRACKING_PATTERN) {
     const raw = (text ?? "").trim();
     const references = extractReferences(raw, trackingPattern);
     if (raw === "") {
-        return { intent: "unknown", confidence: 0, references, matched: null };
+      return { intent: "unknown", confidence: 0, references, matched: null };
     }
     const haystack = raw.toLowerCase();
     const words = haystack.split(/\s+/).filter(Boolean).length;
     let best = null;
     for (const rule of RULES) {
-        if (rule.intent === "greeting" && words > GREETING_MAX_WORDS)
-            continue;
-        for (const keyword of rule.keywords) {
-            if (!containsKeyword(haystack, keyword))
-                continue;
-            if (!best || rule.weight > best.rule.weight) {
-                best = { rule, keyword };
-            }
-            break;
+      if (rule.intent === "greeting" && words > GREETING_MAX_WORDS) continue;
+      for (const keyword of rule.keywords) {
+        if (!containsKeyword(haystack, keyword)) continue;
+        if (!best || rule.weight > best.rule.weight) {
+          best = { rule, keyword };
         }
+        break;
+      }
     }
-    // A bare reference with no other signal is a tracking request.
     if (!best && references.length > 0) {
-        return { intent: "track", confidence: 0.75, references, matched: null };
+      return { intent: "track", confidence: 0.75, references, matched: null };
     }
     if (!best) {
-        return { intent: "unknown", confidence: 0, references, matched: null };
+      return { intent: "unknown", confidence: 0, references, matched: null };
     }
     let confidence = best.rule.weight / 100;
     if (best.rule.intent === "track" && references.length > 0) {
-        confidence = Math.min(1, confidence + 0.4);
+      confidence = Math.min(1, confidence + 0.4);
     }
     return {
-        intent: best.rule.intent,
-        confidence: Number(confidence.toFixed(2)),
-        references,
-        matched: best.keyword,
+      intent: best.rule.intent,
+      confidence: Number(confidence.toFixed(2)),
+      references,
+      matched: best.keyword
     };
-}
-/**
- * Word-boundary match for Latin keywords so "hi" does not fire inside
- * "shipping". Arabic and multi-word phrases fall back to a substring test,
- * which is correct for a script without the same boundary semantics.
- */
-function containsKeyword(haystack, keyword) {
-    if (!/^[a-z0-9 ']+$/.test(keyword))
-        return haystack.includes(keyword);
+  }
+  function containsKeyword(haystack, keyword) {
+    if (!/^[a-z0-9 ']+$/.test(keyword)) return haystack.includes(keyword);
     const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
     return new RegExp(`(^|[^a-z0-9])${escaped}([^a-z0-9]|$)`, "i").test(haystack);
-}
-/**
- * Shipment references in a message. Delegates to the single extractor in
- * auto-reply so the bot and the classifier can never disagree about what
- * counts as a reference.
- */
-function extractReferences(text, pattern = DEFAULT_TRACKING_PATTERN) {
+  }
+  function extractReferences(text, pattern = DEFAULT_TRACKING_PATTERN) {
     return extractTrackingNumbers(text, pattern);
-}
-function outcomeFor(intent) {
+  }
+  function outcomeFor(intent) {
     switch (intent) {
-        case "rate":
-            return "lead";
-        case "claim":
-        case "billing":
-        case "documentation":
-        case "booking_change":
-            return "ticket";
-        case "track":
-        case "agent":
-        case "greeting":
-        case "unknown":
-            return null;
+      case "rate":
+        return "lead";
+      case "claim":
+      case "billing":
+      case "documentation":
+      case "booking_change":
+        return "ticket";
+      case "track":
+      case "agent":
+      case "greeting":
+      case "unknown":
+        return null;
     }
-}
-/** Ticket type for an intent that opens a ticket. */
-function ticketTypeFor(intent) {
+  }
+  function ticketTypeFor(intent) {
     switch (intent) {
-        case "claim":
-            return "claim";
-        case "billing":
-            return "billing";
-        case "documentation":
-            return "documentation";
-        case "booking_change":
-            return "delivery";
-        default:
-            return "general";
+      case "claim":
+        return "claim";
+      case "billing":
+        return "billing";
+      case "documentation":
+        return "documentation";
+      case "booking_change":
+        return "delivery";
+      default:
+        return "general";
     }
-}
+  }
 
-/* ---------- src/crm/sla.ts ---------- */
-/**
- * Service targets measured in business minutes.
- *
- * A target counted in wall-clock time is unfair to a region and misleading
- * to management: a ticket raised at 17:55 in the UK is not late at 09:05 the
- * next morning. Every due date here is computed by walking the region's own
- * business calendar, so the clock only runs while the team is open.
- */
-
-const MINUTE = 60_000;
-const DAY_MINUTES = 1440;
-/** Guard against an unreachable target when a calendar has no working days. */
-const MAX_DAYS_SCANNED = 400;
-/**
- * Defaults pending the SLA policy export from Freshworks. They are written
- * here rather than scattered through the code so that replacing them with
- * ABC Cargo's real policy is a single edit.
- */
-const DEFAULT_TICKET_TARGETS = {
+  // src/crm/sla.ts
+  var MINUTE = 6e4;
+  var DAY_MINUTES = 1440;
+  var MAX_DAYS_SCANNED = 400;
+  var DEFAULT_TICKET_TARGETS = {
     claim: { firstResponseMinutes: 30, resolutionMinutes: 8 * 60 },
     delay: { firstResponseMinutes: 30, resolutionMinutes: 8 * 60 },
     billing: { firstResponseMinutes: 120, resolutionMinutes: 24 * 60 },
     documentation: { firstResponseMinutes: 120, resolutionMinutes: 24 * 60 },
     delivery: { firstResponseMinutes: 60, resolutionMinutes: 12 * 60 },
-    general: { firstResponseMinutes: 120, resolutionMinutes: 24 * 60 },
-};
-/** Priority shortens the clock; it never lengthens it. */
-const PRIORITY_FACTOR = {
+    general: { firstResponseMinutes: 120, resolutionMinutes: 24 * 60 }
+  };
+  var PRIORITY_FACTOR = {
     urgent: 0.25,
     high: 0.5,
     normal: 1,
-    low: 1,
-};
-/** First response target for a conversation, before any ticket exists. */
-const CONVERSATION_FIRST_RESPONSE_MINUTES = 5;
-function targetFor(type, priority, targets = DEFAULT_TICKET_TARGETS) {
+    low: 1
+  };
+  var CONVERSATION_FIRST_RESPONSE_MINUTES = 5;
+  function targetFor(type, priority, targets = DEFAULT_TICKET_TARGETS) {
     const base = targets[type];
     const factor = PRIORITY_FACTOR[priority];
     return {
-        firstResponseMinutes: Math.max(5, Math.round(base.firstResponseMinutes * factor)),
-        resolutionMinutes: Math.max(15, Math.round(base.resolutionMinutes * factor)),
+      firstResponseMinutes: Math.max(
+        5,
+        Math.round(base.firstResponseMinutes * factor)
+      ),
+      resolutionMinutes: Math.max(
+        15,
+        Math.round(base.resolutionMinutes * factor)
+      )
     };
-}
-/**
- * Adds business minutes to an instant, skipping closed hours and closed
- * days in the region's own timezone.
- *
- * The walk is minute-accurate at the boundaries and day-accurate in between,
- * so a 24-hour target on a 9-hour calendar lands on the correct day rather
- * than the same evening.
- */
-function addBusinessMinutes(region, from, minutes) {
+  }
+  function addBusinessMinutes(region, from, minutes) {
     if (!Number.isFinite(minutes) || minutes < 0) {
-        throw new Error("minutes must be a non-negative number");
+      throw new Error("minutes must be a non-negative number");
     }
     const { days, start, end } = region.businessHours;
     if (days.length === 0) {
-        throw new Error(`region ${region.id} has no working days; cannot compute a target`);
+      throw new Error(
+        `region ${region.id} has no working days; cannot compute a target`
+      );
     }
     const openAt = toMinutes(start);
     const closeAt = toMinutes(end);
     if (closeAt <= openAt) {
-        throw new Error(`region ${region.id} business hours must end after they start`);
+      throw new Error(
+        `region ${region.id} business hours must end after they start`
+      );
     }
     const dayCapacity = closeAt - openAt;
     let cursor = new Date(from.getTime());
     let remaining = minutes;
     for (let guard = 0; guard <= MAX_DAYS_SCANNED; guard++) {
-        const { weekday, minutes: nowMinutes } = localClock(cursor, region.timezone);
-        if (!days.includes(weekday)) {
-            cursor = advanceToNextOpen(cursor, nowMinutes, openAt);
-            continue;
-        }
-        if (nowMinutes < openAt) {
-            // Before opening: jump forward to the opening bell, same day.
-            cursor = new Date(cursor.getTime() + (openAt - nowMinutes) * MINUTE);
-            continue;
-        }
-        if (nowMinutes >= closeAt) {
-            cursor = advanceToNextOpen(cursor, nowMinutes, openAt);
-            continue;
-        }
-        const availableToday = closeAt - nowMinutes;
-        if (remaining <= availableToday) {
-            return new Date(cursor.getTime() + remaining * MINUTE);
-        }
-        remaining -= availableToday;
-        // Move to closing time, then on to the next opening.
-        cursor = advanceToNextOpen(cursor, closeAt, openAt);
-        if (remaining > dayCapacity * MAX_DAYS_SCANNED)
-            break;
+      const { weekday, minutes: nowMinutes } = localClock(
+        cursor,
+        region.timezone
+      );
+      if (!days.includes(weekday)) {
+        cursor = advanceToNextOpen(cursor, nowMinutes, openAt);
+        continue;
+      }
+      if (nowMinutes < openAt) {
+        cursor = new Date(cursor.getTime() + (openAt - nowMinutes) * MINUTE);
+        continue;
+      }
+      if (nowMinutes >= closeAt) {
+        cursor = advanceToNextOpen(cursor, nowMinutes, openAt);
+        continue;
+      }
+      const availableToday = closeAt - nowMinutes;
+      if (remaining <= availableToday) {
+        return new Date(cursor.getTime() + remaining * MINUTE);
+      }
+      remaining -= availableToday;
+      cursor = advanceToNextOpen(cursor, closeAt, openAt);
+      if (remaining > dayCapacity * MAX_DAYS_SCANNED) break;
     }
-    throw new Error(`could not place an SLA target for region ${region.id} within ${MAX_DAYS_SCANNED} days`);
-}
-/**
- * Moves the cursor to the opening time of the following calendar day.
- * `currentMinutes` is the local minute-of-day the cursor is sitting on.
- */
-function advanceToNextOpen(cursor, currentMinutes, openAt) {
+    throw new Error(
+      `could not place an SLA target for region ${region.id} within ${MAX_DAYS_SCANNED} days`
+    );
+  }
+  function advanceToNextOpen(cursor, currentMinutes, openAt) {
     const toMidnight = DAY_MINUTES - currentMinutes;
     return new Date(cursor.getTime() + (toMidnight + openAt) * MINUTE);
-}
-function ticketDueDates(region, type, priority, from = new Date(), targets) {
-    const target = targetFor(type, priority, targets);
+  }
+  function ticketDueDates(region, type, priority, from = /* @__PURE__ */ new Date(), targets) {
+    const target2 = targetFor(type, priority, targets);
     return {
-        firstResponseDueAt: addBusinessMinutes(region, from, target.firstResponseMinutes).toISOString(),
-        resolutionDueAt: addBusinessMinutes(region, from, target.resolutionMinutes).toISOString(),
+      firstResponseDueAt: addBusinessMinutes(
+        region,
+        from,
+        target2.firstResponseMinutes
+      ).toISOString(),
+      resolutionDueAt: addBusinessMinutes(
+        region,
+        from,
+        target2.resolutionMinutes
+      ).toISOString()
     };
-}
-/** Milliseconds remaining against a due date; negative once it has passed. */
-function remainingMs(dueAt, now = new Date()) {
+  }
+  function remainingMs(dueAt, now = /* @__PURE__ */ new Date()) {
     return Date.parse(dueAt) - now.getTime();
-}
-function isBreached(dueAt, now = new Date()) {
+  }
+  function isBreached(dueAt, now = /* @__PURE__ */ new Date()) {
     return remainingMs(dueAt, now) < 0;
-}
+  }
 
-/* ---------- src/crm/refs.ts ---------- */
-/**
- * Human-readable references. Agents read these out on calls and customers
- * quote them back over WhatsApp, so they must be short, unambiguous and
- * impossible to confuse when spoken or handwritten.
- */
-/**
- * Deliberately excludes characters that are misread aloud or on paper:
- * I/1, O/0, S/5, Z/2, B/8.
- */
-const ALPHABET = "ACDEFGHJKLMNPQRTUVWXY34679";
-const PREFIX = {
+  // src/crm/refs.ts
+  var ALPHABET = "ACDEFGHJKLMNPQRTUVWXY34679";
+  var PREFIX = {
     lead: "L",
     quotation: "Q",
     ticket: "T",
-    booking: "ABC",
-};
-/**
- * Region codes appear in the booking reference so a customer service agent
- * can tell at a glance which office owns the shipment.
- */
-function regionCode(regionId) {
+    booking: "ABC"
+  };
+  function regionCode(regionId) {
     const cleaned = regionId.replace(/[^A-Za-z]/g, "").toUpperCase();
     return (cleaned.slice(0, 3) || "GEN").padEnd(3, "X");
-}
-/**
- * Sequence-based reference. The caller supplies the next number for the
- * kind, which keeps references dense and predictable rather than random.
- */
-function buildRef(kind, sequence, regionId) {
+  }
+  function buildRef(kind, sequence, regionId) {
     if (!Number.isInteger(sequence) || sequence < 1) {
-        throw new Error("sequence must be a positive integer");
+      throw new Error("sequence must be a positive integer");
     }
     if (kind === "booking") {
-        if (!regionId)
-            throw new Error("booking references need a region");
-        return `${PREFIX.booking}-${regionCode(regionId)}-${String(sequence).padStart(6, "0")}`;
+      if (!regionId) throw new Error("booking references need a region");
+      return `${PREFIX.booking}-${regionCode(regionId)}-${String(sequence).padStart(6, "0")}`;
     }
     return `${PREFIX[kind]}-${String(sequence).padStart(5, "0")}`;
-}
-/**
- * Short code for anything that has no sequence to draw on — an idempotency
- * key, or a reference minted before the row is written.
- */
-function shortCode(length = 6, random = Math.random) {
-    if (length < 1)
-        throw new Error("length must be at least 1");
+  }
+  function shortCode(length = 6, random = Math.random) {
+    if (length < 1) throw new Error("length must be at least 1");
     let out = "";
     for (let i = 0; i < length; i++) {
-        const index = Math.floor(random() * ALPHABET.length) % ALPHABET.length;
-        out += ALPHABET[index];
+      const index = Math.floor(random() * ALPHABET.length) % ALPHABET.length;
+      out += ALPHABET[index];
     }
     return out;
-}
-const REF_PATTERNS = {
+  }
+  var REF_PATTERNS = {
     lead: /^L-\d{5,}$/,
     quotation: /^Q-\d{5,}$/,
     ticket: /^T-\d{5,}$/,
-    booking: /^ABC-[A-Z]{3}-\d{6,}$/,
-};
-/**
- * The comparison form of a reference: punctuation and case removed.
- *
- * Intent recognition hands back references in this form, because it is the
- * only way one key matches the several ways a customer types the same number.
- * Anything looking a reference up has to compare in the same form, or a
- * customer quoting exactly what we printed is not matched to their own
- * shipment. The `ref_key` column in migration 0004 is this function in SQL.
- */
-function normaliseRef(value) {
+    booking: /^ABC-[A-Z]{3}-\d{6,}$/
+  };
+  function normaliseRef(value) {
     return value.replace(/[\s-]/g, "").toUpperCase();
-}
-function isRef(kind, value) {
+  }
+  function isRef(kind, value) {
     return REF_PATTERNS[kind].test(value.trim().toUpperCase());
-}
-/** Identifies which kind of record a reference belongs to, if any. */
-function classifyRef(value) {
+  }
+  function classifyRef(value) {
     const v = value.trim().toUpperCase();
     for (const kind of Object.keys(REF_PATTERNS)) {
-        if (REF_PATTERNS[kind].test(v))
-            return kind;
+      if (REF_PATTERNS[kind].test(v)) return kind;
     }
     return null;
-}
+  }
 
-/* ---------- src/crm/lifecycle.ts ---------- */
-/**
- * The rules that govern how a lead, a quotation and a shipment move.
- *
- * Kept free of I/O so the transitions can be tested exhaustively. A booking
- * milestone that jumps backwards, or a lead that is quoted before anyone
- * qualified it, is a data problem that should be rejected at the boundary
- * rather than discovered in a report three weeks later.
- */
-
-/* -------------------------------------------------------------- lead stages */
-const LEAD_TRANSITIONS = {
+  // src/crm/lifecycle.ts
+  var LEAD_TRANSITIONS = {
     new: ["qualified", "lost"],
     qualified: ["quoted", "lost"],
     quoted: ["negotiating", "won", "lost"],
     negotiating: ["won", "lost"],
     won: [],
-    lost: [],
-};
-function canAdvanceLead(from, to) {
+    lost: []
+  };
+  function canAdvanceLead(from, to) {
     return LEAD_TRANSITIONS[from].includes(to);
-}
-class InvalidTransitionError extends Error {
+  }
+  var InvalidTransitionError = class extends Error {
     constructor(what, from, to) {
-        super(`${what} cannot move from ${from} to ${to}`);
-        this.name = "InvalidTransitionError";
+      super(`${what} cannot move from ${from} to ${to}`);
+      this.name = "InvalidTransitionError";
     }
-}
-function assertLeadTransition(from, to) {
+  };
+  function assertLeadTransition(from, to) {
     if (!canAdvanceLead(from, to)) {
-        throw new InvalidTransitionError("lead", from, to);
+      throw new InvalidTransitionError("lead", from, to);
     }
-}
-function isLeadOpen(stage) {
+  }
+  function isLeadOpen(stage) {
     return stage !== "won" && stage !== "lost";
-}
-function leadStageIndex(stage) {
+  }
+  function leadStageIndex(stage) {
     return LEAD_STAGES.indexOf(stage);
-}
-/* -------------------------------------------------------- quotation statuses */
-const QUOTATION_TRANSITIONS = {
+  }
+  var QUOTATION_TRANSITIONS = {
     draft: ["sent", "lost"],
     sent: ["negotiating", "accepted", "lost", "expired"],
     negotiating: ["accepted", "lost", "expired"],
     accepted: [],
     lost: [],
-    expired: ["sent"],
-};
-function canMoveQuotation(from, to) {
+    expired: ["sent"]
+  };
+  function canMoveQuotation(from, to) {
     return QUOTATION_TRANSITIONS[from].includes(to);
-}
-function assertQuotationTransition(from, to) {
+  }
+  function assertQuotationTransition(from, to) {
     if (!canMoveQuotation(from, to)) {
-        throw new InvalidTransitionError("quotation", from, to);
+      throw new InvalidTransitionError("quotation", from, to);
     }
-}
-/** The lead stage implied by a quotation reaching a given status. */
-function leadStageForQuotation(status) {
+  }
+  function leadStageForQuotation(status) {
     switch (status) {
-        case "sent":
-            return "quoted";
-        case "negotiating":
-            return "negotiating";
-        case "accepted":
-            return "won";
-        case "lost":
-            return "lost";
-        case "draft":
-        case "expired":
-            return null;
+      case "sent":
+        return "quoted";
+      case "negotiating":
+        return "negotiating";
+      case "accepted":
+        return "won";
+      case "lost":
+        return "lost";
+      case "draft":
+      case "expired":
+        return null;
     }
-}
-/* -------------------------------------------------------------- milestones */
-function milestoneIndex(milestone) {
+  }
+  function milestoneIndex(milestone) {
     return MILESTONES.indexOf(milestone);
-}
-/**
- * Milestones only move forward. A correction is a deliberate act with its
- * own audit entry, not something a late webhook should be able to do by
- * arriving out of order.
- */
-function canAdvanceMilestone(from, to) {
+  }
+  function canAdvanceMilestone(from, to) {
     return milestoneIndex(to) > milestoneIndex(from);
-}
-function assertMilestoneAdvance(from, to) {
+  }
+  function assertMilestoneAdvance(from, to) {
     if (!canAdvanceMilestone(from, to)) {
-        throw new InvalidTransitionError("milestone", from, to);
+      throw new InvalidTransitionError("milestone", from, to);
     }
-}
-function isDelivered(milestone) {
+  }
+  function isDelivered(milestone) {
     return milestone === "delivered";
-}
-/**
- * How long a shipment may sit on each milestone before the silence is
- * itself the problem. Customs clearance legitimately takes days; a
- * collection that has not moved in two is a shipment nobody is watching.
- */
-const STALL_HOURS = {
+  }
+  var STALL_HOURS = {
     booked: 48,
     collected: 24,
     departed: 72,
     in_transit: 72,
     arrived: 48,
     cleared: 24,
-    delivered: Number.POSITIVE_INFINITY,
-};
-/**
- * A stalled shipment is the trigger that turns a quiet booking into an
- * after-sales ticket before the customer has to chase it.
- */
-function checkStall(milestone, milestoneAt, now = new Date()) {
+    delivered: Number.POSITIVE_INFINITY
+  };
+  function checkStall(milestone, milestoneAt, now = /* @__PURE__ */ new Date()) {
     const thresholdHours = STALL_HOURS[milestone];
     const since = Date.parse(milestoneAt);
     if (Number.isNaN(since)) {
-        throw new Error("milestoneAt is not a valid ISO 8601 timestamp");
+      throw new Error("milestoneAt is not a valid ISO 8601 timestamp");
     }
-    const hoursSinceMilestone = (now.getTime() - since) / 3_600_000;
+    const hoursSinceMilestone = (now.getTime() - since) / 36e5;
     return {
-        stalled: Number.isFinite(thresholdHours) && hoursSinceMilestone >= thresholdHours,
-        hoursSinceMilestone: Number(hoursSinceMilestone.toFixed(2)),
-        thresholdHours,
+      stalled: Number.isFinite(thresholdHours) && hoursSinceMilestone >= thresholdHours,
+      hoursSinceMilestone: Number(hoursSinceMilestone.toFixed(2)),
+      thresholdHours
     };
-}
-/**
- * Milestones that are worth telling the customer about unprompted. The rest
- * are internal: a customer does not need a message when a shipment moves
- * from "departed" to "in transit".
- */
-const NOTIFIABLE = new Set([
+  }
+  var NOTIFIABLE = /* @__PURE__ */ new Set([
     "booked",
     "collected",
     "departed",
     "arrived",
     "cleared",
-    "delivered",
-]);
-function shouldNotifyCustomer(milestone) {
+    "delivered"
+  ]);
+  function shouldNotifyCustomer(milestone) {
     return NOTIFIABLE.has(milestone);
-}
-/** Template name used for the proactive update at each milestone. */
-function templateForMilestone(milestone) {
-    if (!shouldNotifyCustomer(milestone))
-        return null;
-    return milestone === "delivered"
-        ? "abc_delivery_completed"
-        : "abc_shipment_status_update";
-}
+  }
+  function templateForMilestone(milestone) {
+    if (!shouldNotifyCustomer(milestone)) return null;
+    return milestone === "delivered" ? "abc_delivery_completed" : "abc_shipment_status_update";
+  }
 
+  // src/crm/customer-lifecycle.ts
+  var CUSTOMER_STAGES = [
+    /** Known to us, with no sign of interest yet. */
+    "prospect",
+    /** An open enquiry, not yet quoted. The design's "New Lead". */
+    "lead",
+    /** A live enquiry being actively worked. The design's "Hot Lead". */
+    "engaged",
+    /** A quotation they accepted, with no shipment yet. */
+    "committed",
+    /** At least one shipment booked. The design's "Customer". */
+    "customer",
+    /** More than one shipment: the relationship, not just the sale. */
+    "repeat_customer",
+    /** Was a customer, has gone quiet for longer than the threshold. */
+    "dormant",
+    /** Only ever enquired, and that enquiry was lost. */
+    "lapsed"
+  ];
+  var CUSTOMER_STAGE_LABELS = {
+    prospect: "Prospect",
+    lead: "New lead",
+    engaged: "Active lead",
+    committed: "Won, awaiting shipment",
+    customer: "Customer",
+    repeat_customer: "Repeat customer",
+    dormant: "Dormant",
+    lapsed: "Lapsed enquiry"
+  };
+  var DEFAULT_THRESHOLDS = {
+    dormantAfterDays: 180,
+    engagedWithinDays: 30
+  };
+  function daysBetween(from, to) {
+    if (!from) return Number.POSITIVE_INFINITY;
+    const parsed = Date.parse(from);
+    if (!Number.isFinite(parsed)) return Number.POSITIVE_INFINITY;
+    return (to.getTime() - parsed) / 864e5;
+  }
+  function mostRecent(values) {
+    let best = null;
+    for (const value of values) {
+      if (!value) continue;
+      const parsed = Date.parse(value);
+      if (!Number.isFinite(parsed)) continue;
+      if (best === null || parsed > Date.parse(best)) best = value;
+    }
+    return best;
+  }
+  function deriveCustomerStage(facts, now = /* @__PURE__ */ new Date(), thresholds = DEFAULT_THRESHOLDS) {
+    const bookings = facts.bookings ?? [];
+    const leads = facts.leads ?? [];
+    const quotations = facts.quotations ?? [];
+    if (bookings.length > 0) {
+      const lastActivity = mostRecent([
+        facts.lastInboundAt,
+        ...bookings.map((b) => b.createdAt),
+        ...leads.map((l) => l.updatedAt)
+      ]);
+      const hasOpenLead = leads.some((lead) => isLeadOpen(lead.stage));
+      if (!hasOpenLead && daysBetween(lastActivity, now) > thresholds.dormantAfterDays) {
+        return "dormant";
+      }
+      return bookings.length > 1 ? "repeat_customer" : "customer";
+    }
+    if (quotations.some((q) => q.status === "accepted")) return "committed";
+    if (leads.some((lead) => lead.stage === "won")) return "committed";
+    const openLeads = leads.filter((lead) => isLeadOpen(lead.stage));
+    if (openLeads.length > 0) {
+      const quoted = quotations.some(
+        (q) => q.status === "sent" || q.status === "negotiating"
+      );
+      const working = openLeads.some(
+        (lead) => lead.stage === "quoted" || lead.stage === "negotiating" || lead.stage === "qualified"
+      );
+      const recent = openLeads.some(
+        (lead) => daysBetween(lead.updatedAt, now) <= thresholds.engagedWithinDays
+      );
+      return quoted || working || recent ? "engaged" : "lead";
+    }
+    if (leads.length > 0) return "lapsed";
+    return "prospect";
+  }
+  function leadTemperature(facts, now = /* @__PURE__ */ new Date()) {
+    const leads = (facts.leads ?? []).filter((lead) => isLeadOpen(lead.stage));
+    if (leads.length === 0) return 0;
+    let score = 20;
+    if (leads.some((l) => l.stage === "qualified")) score += 15;
+    if (leads.some((l) => l.stage === "quoted")) score += 25;
+    if (leads.some((l) => l.stage === "negotiating")) score += 30;
+    const quotations = facts.quotations ?? [];
+    if (quotations.some((q) => q.status === "sent")) score += 10;
+    if (quotations.some((q) => q.status === "negotiating")) score += 15;
+    const touched = mostRecent([
+      facts.lastInboundAt,
+      ...leads.map((l) => l.updatedAt)
+    ]);
+    const age = daysBetween(touched, now);
+    if (age <= 2) score += 20;
+    else if (age <= 7) score += 12;
+    else if (age <= 30) score += 4;
+    else if (age > 60) score -= 20;
+    if ((facts.bookings ?? []).length > 0) score += 10;
+    return Math.max(0, Math.min(100, score));
+  }
+  function temperatureBand(score) {
+    if (score >= 70) return "hot";
+    if (score >= 40) return "warm";
+    return "cold";
+  }
+  function lifecycleFor(facts, now = /* @__PURE__ */ new Date(), thresholds = DEFAULT_THRESHOLDS) {
+    const stage = deriveCustomerStage(facts, now, thresholds);
+    const temperature = leadTemperature(facts, now);
+    return {
+      stage,
+      label: CUSTOMER_STAGE_LABELS[stage],
+      temperature,
+      band: temperatureBand(temperature)
+    };
+  }
+
+  // src/auth/policy.ts
+  var ROLES = ["agent", "team_lead", "master_admin"];
+  function isRole(value) {
+    return ROLES.includes(value);
+  }
+  function isService(caller) {
+    return caller.kind === "service";
+  }
+  var ALLOW = { allowed: true, reason: "ok" };
+  var deny = (reason) => ({ allowed: false, reason });
+  function canAccessRegion(caller, regionId) {
+    if (isService(caller)) return true;
+    if (caller.status !== "active") return false;
+    if (caller.role === "master_admin") return true;
+    return caller.regionIds.includes(regionId);
+  }
+  function regionScope(caller) {
+    if (isService(caller)) return null;
+    if (caller.status !== "active") return [];
+    if (caller.role === "master_admin") return null;
+    return [...caller.regionIds];
+  }
+  function canReadConversation(caller, conversation) {
+    if (isService(caller)) return ALLOW;
+    if (caller.status !== "active") return deny("suspended");
+    if (caller.role === "master_admin") return ALLOW;
+    if (!caller.regionIds.includes(conversation.regionId)) {
+      return deny("wrong_region");
+    }
+    if (caller.role === "team_lead") return ALLOW;
+    const owner = conversation.assignedAgentId;
+    if (!owner) return ALLOW;
+    if (owner === caller.id) return ALLOW;
+    return deny("not_assigned");
+  }
+  function canReplyToConversation(caller, conversation) {
+    if (isService(caller)) return ALLOW;
+    if (caller.status !== "active") return deny("suspended");
+    if (caller.role === "master_admin") return ALLOW;
+    if (!caller.regionIds.includes(conversation.regionId)) {
+      return deny("wrong_region");
+    }
+    if (caller.role === "team_lead") return ALLOW;
+    return conversation.assignedAgentId === caller.id ? ALLOW : deny("not_assigned");
+  }
+  function canAssignConversation(caller, conversation, targetAgentId) {
+    if (isService(caller)) return ALLOW;
+    if (caller.status !== "active") return deny("suspended");
+    if (caller.role === "master_admin") return ALLOW;
+    if (!caller.regionIds.includes(conversation.regionId)) {
+      return deny("wrong_region");
+    }
+    if (caller.role === "team_lead") return ALLOW;
+    const owner = conversation.assignedAgentId ?? null;
+    const takingUnclaimed = owner === null && targetAgentId === caller.id;
+    const releasingOwn = owner === caller.id && targetAgentId === null;
+    return takingUnclaimed || releasingOwn ? ALLOW : deny("insufficient_role");
+  }
+  function canReadRegionalRecord(caller, regionId) {
+    if (isService(caller)) return ALLOW;
+    if (caller.status !== "active") return deny("suspended");
+    if (caller.role === "master_admin") return ALLOW;
+    return caller.regionIds.includes(regionId) ? ALLOW : deny("wrong_region");
+  }
+  function canAdminister(caller) {
+    if (isService(caller)) return deny("insufficient_role");
+    if (caller.status !== "active") return deny("suspended");
+    return caller.role === "master_admin" ? ALLOW : deny("insufficient_role");
+  }
+  function canViewReports(caller) {
+    if (isService(caller)) return ALLOW;
+    if (caller.status !== "active") return deny("suspended");
+    if (caller.role === "agent") return deny("insufficient_role");
+    return ALLOW;
+  }
+  function canViewDashboard(caller) {
+    if (isService(caller)) return ALLOW;
+    if (caller.status !== "active") return deny("suspended");
+    return ALLOW;
+  }
+  function canSeeOwnQueue(caller) {
+    return caller.kind === "user" && caller.status === "active";
+  }
+  function seesEveryConversationInRegion(caller) {
+    if (isService(caller)) return true;
+    if (caller.status !== "active") return false;
+    return caller.role !== "agent";
+  }
+  function canSeeAgentWorkload(caller) {
+    return canViewReports(caller);
+  }
+  function reportableRegions(caller) {
+    return canViewReports(caller).allowed ? regionScope(caller) : [];
+  }
+  function resolveRegionFilter(caller, requested) {
+    const scope = regionScope(caller);
+    if (!requested) return scope;
+    if (scope === null) return [requested];
+    return scope.includes(requested) ? [requested] : [];
+  }
+
+  // src/admin/guards.ts
+  var OK = { ok: true };
+  var no = (reason, message) => ({
+    ok: false,
+    reason,
+    message
+  });
+  var USER_STATUSES = ["active", "suspended"];
+  function isUserStatus(value) {
+    return USER_STATUSES.includes(value);
+  }
+  function normaliseEmail(value) {
+    return value.trim().toLowerCase();
+  }
+  function looksLikeEmail(value) {
+    const trimmed = value.trim();
+    if (trimmed.length < 3 || trimmed.length > 320) return false;
+    if (/\s/.test(trimmed)) return false;
+    const at = trimmed.indexOf("@");
+    if (at <= 0 || at !== trimmed.lastIndexOf("@")) return false;
+    return at < trimmed.length - 1;
+  }
+  function validateUser(input) {
+    if (!looksLikeEmail(input.email)) {
+      return no("invalid_email", "a work email address is required");
+    }
+    if (input.displayName.trim().length === 0) {
+      return no("invalid_name", "a display name is required");
+    }
+    if (!isRole(input.role)) {
+      return no("invalid_role", "role must be agent, team_lead or master_admin");
+    }
+    if (input.status !== void 0 && !isUserStatus(input.status)) {
+      return no("invalid_status", "status must be active or suspended");
+    }
+    return OK;
+  }
+  function checkAdministratorRemains(activeAdminIds, targetUserId, next) {
+    const stillAdmin = (next.role === void 0 || next.role === "master_admin") && (next.status === void 0 || next.status === "active");
+    if (stillAdmin) return OK;
+    const remaining = activeAdminIds.filter((id) => id !== targetUserId);
+    if (remaining.length > 0) return OK;
+    return no(
+      "last_administrator",
+      "this is the only active administrator; appoint another before changing this one"
+    );
+  }
+  function checkNotSelfDemotion(actingUserId, targetUserId, next) {
+    if (actingUserId !== targetUserId) return OK;
+    if (next.role !== void 0 && next.role !== "master_admin") {
+      return no(
+        "self_demotion",
+        "you cannot remove your own administrator role; ask another administrator"
+      );
+    }
+    if (next.status === "suspended") {
+      return no("self_demotion", "you cannot suspend your own account");
+    }
+    return OK;
+  }
+  function validateTeam(input, knownRegionIds) {
+    if (input.name.trim().length === 0) {
+      return no("invalid_name", "a team name is required");
+    }
+    if (!knownRegionIds.includes(input.regionId)) {
+      return no(
+        "unknown_region",
+        `region must be one of ${knownRegionIds.join(", ")}`
+      );
+    }
+    return OK;
+  }
+  function checkUserChange(input) {
+    const selfCheck = checkNotSelfDemotion(
+      input.actingUserId,
+      input.targetUserId,
+      input.next
+    );
+    if (!selfCheck.ok) return selfCheck;
+    return checkAdministratorRemains(
+      input.activeAdminIds,
+      input.targetUserId,
+      input.next
+    );
+  }
+
+  // src/chat/policy.ts
+  var THREAD_KINDS = ["direct", "team"];
+  var ALLOW2 = { allowed: true, reason: "ok" };
+  var deny2 = (reason) => ({ allowed: false, reason });
+  function requirePerson(caller) {
+    if (caller.kind === "service") return deny2("service_caller");
+    if (caller.status !== "active") return deny2("suspended");
+    return null;
+  }
+  function canReadThread(caller, thread) {
+    const refused = requirePerson(caller);
+    if (refused) return refused;
+    return thread.participantIds.includes(caller.id) ? ALLOW2 : deny2("not_a_participant");
+  }
+  function canPostToThread(caller, thread, body) {
+    const readable = canReadThread(caller, thread);
+    if (!readable.allowed) return readable;
+    return body.trim().length > 0 ? ALLOW2 : deny2("empty_message");
+  }
+  function canEditMessage(caller, thread, authorId) {
+    const readable = canReadThread(caller, thread);
+    if (!readable.allowed) return readable;
+    return caller.id === authorId ? ALLOW2 : deny2("not_the_author");
+  }
+  function directKey(a, b) {
+    if (!a || !b) throw new Error("both participants are required");
+    if (a === b) throw new Error("a direct thread needs two different people");
+    return [a, b].sort().join("|");
+  }
+  function canStartDirect(caller, otherUserId) {
+    const refused = requirePerson(caller);
+    if (refused) return refused;
+    if (!otherUserId || otherUserId === caller.id) {
+      return deny2("not_a_participant");
+    }
+    return ALLOW2;
+  }
+  function unreadCount(messages, lastReadAt, readerId) {
+    const since = lastReadAt ? Date.parse(lastReadAt) : 0;
+    const from = Number.isFinite(since) ? since : 0;
+    return messages.filter((message) => {
+      if (message.authorId === readerId) return false;
+      const at = Date.parse(message.createdAt);
+      return Number.isFinite(at) && at > from;
+    }).length;
+  }
+
+  // src/dashboard/clock.ts
+  var MINUTE_MS = 6e4;
+  var DAY_MINUTES2 = 24 * 60;
+  function localParts(instant, timezone) {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone: timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23"
+    }).formatToParts(instant);
+    const get = (type) => Number(parts.find((p) => p.type === type)?.value ?? "0");
+    return {
+      year: get("year"),
+      month: get("month"),
+      day: get("day"),
+      hour: get("hour"),
+      minute: get("minute"),
+      second: get("second")
+    };
+  }
+  function zoneOffsetMs(instant, timezone) {
+    const p = localParts(instant, timezone);
+    const asIfUtc = Date.UTC(
+      p.year,
+      p.month - 1,
+      p.day,
+      p.hour,
+      p.minute,
+      p.second
+    );
+    const whole = instant.getTime() - instant.getUTCMilliseconds();
+    return asIfUtc - whole;
+  }
+  function localMidnight(now, timezone, dayOffset = 0) {
+    const p = localParts(now, timezone);
+    const wallClock = Date.UTC(p.year, p.month - 1, p.day + dayOffset, 0, 0, 0);
+    const firstPass = wallClock - zoneOffsetMs(now, timezone);
+    const corrected = wallClock - zoneOffsetMs(new Date(firstPass), timezone);
+    return new Date(corrected);
+  }
+  function regionalDay(now, timezone) {
+    return {
+      from: localMidnight(now, timezone, 0).toISOString(),
+      to: localMidnight(now, timezone, 1).toISOString()
+    };
+  }
+  function greetingBand(now, timezone) {
+    const { minutes } = localClock(now, timezone);
+    if (minutes < 12 * 60) return "morning";
+    if (minutes < 17 * 60) return "afternoon";
+    return "evening";
+  }
+  function greeting(input) {
+    const band = greetingBand(input.now, input.timezone);
+    const word = band === "morning" ? "Good morning" : band === "afternoon" ? "Good afternoon" : "Good evening";
+    const name = input.displayName?.trim();
+    return name ? `${word}, ${name}` : word;
+  }
+  function officeState(region, now) {
+    const { weekday, minutes } = localClock(now, region.timezone);
+    const { days, start, end } = region.businessHours;
+    const localTime = `${String(Math.floor(minutes / 60)).padStart(2, "0")}:${String(
+      minutes % 60
+    ).padStart(2, "0")}`;
+    const working = [...new Set(days)].filter((d) => d >= 0 && d <= 6);
+    if (working.length === 0) {
+      return { open: false, changesInMinutes: null, nextChange: null, localTime };
+    }
+    const opensAt = toMinutes(start);
+    const closesAt = toMinutes(end);
+    if (working.includes(weekday) && minutes >= opensAt && minutes < closesAt) {
+      return {
+        open: true,
+        changesInMinutes: closesAt - minutes,
+        nextChange: "closes",
+        localTime
+      };
+    }
+    for (let offset = 0; offset <= 7; offset++) {
+      const day = (weekday + offset) % 7;
+      if (!working.includes(day)) continue;
+      if (offset === 0 && minutes >= opensAt) continue;
+      return {
+        open: false,
+        changesInMinutes: offset * DAY_MINUTES2 + opensAt - minutes,
+        nextChange: "opens",
+        localTime
+      };
+    }
+    return { open: false, changesInMinutes: null, nextChange: null, localTime };
+  }
+  function describeMinutes(total) {
+    if (total === null) return "unknown";
+    const minutes = Math.max(0, Math.round(total));
+    if (minutes === 0) return "now";
+    if (minutes < 60) return `${minutes} minute${minutes === 1 ? "" : "s"}`;
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    if (hours < 24) {
+      const h = `${hours} hour${hours === 1 ? "" : "s"}`;
+      return rest === 0 ? h : `${h} ${rest} minute${rest === 1 ? "" : "s"}`;
+    }
+    const days = Math.floor(hours / 24);
+    const restHours = hours % 24;
+    const d = `${days} day${days === 1 ? "" : "s"}`;
+    return restHours === 0 ? d : `${d} ${restHours} hour${restHours === 1 ? "" : "s"}`;
+  }
+  function minutesSince(iso, now) {
+    if (!iso) return null;
+    const then = Date.parse(iso);
+    if (!Number.isFinite(then)) return null;
+    return Math.max(0, Math.floor((now.getTime() - then) / MINUTE_MS));
+  }
+
+  // src/dashboard/presence.ts
+  var PRESENCE_TTL_MINUTES = 15;
+  function staleBefore(now, ttlMinutes = PRESENCE_TTL_MINUTES) {
+    return new Date(now.getTime() - ttlMinutes * 6e4).toISOString();
+  }
+  var Presence = class {
+    constructor(db) {
+      this.db = db;
+    }
+    /**
+     * Everyone online, however their presence row is keyed.
+     *
+     * Two queries rather than a union, because each side carries its regions
+     * differently and merging them in SQL would make both harder to read than
+     * the merge below.
+     */
+    async online(now = /* @__PURE__ */ new Date()) {
+      const cutoff = staleBefore(now);
+      const [identity, legacy] = await this.db.batch([
+        // A person with no team covers every region, which is how a master
+        // admin appears here. That matches the legacy table's NULL region.
+        this.db.prepare(
+          `SELECT p.agent_id AS id, u.display_name AS name, t.region_id
+					 FROM agent_presence p
+					 JOIN users u ON u.id = p.agent_id
+					 LEFT JOIN user_teams ut ON ut.user_id = u.id
+					 LEFT JOIN teams t ON t.id = ut.team_id
+					 WHERE p.status = 'online' AND u.status = 'active'
+					   AND p.updated_at >= ?1`
+        ).bind(cutoff),
+        this.db.prepare(
+          `SELECT p.agent_id AS id, a.name AS name, a.region_id
+					 FROM agent_presence p
+					 JOIN agents a ON a.id = p.agent_id
+					 WHERE p.status = 'online' AND a.active = 1
+					   AND p.updated_at >= ?1
+					   AND NOT EXISTS (SELECT 1 FROM users u WHERE u.id = p.agent_id)`
+        ).bind(cutoff)
+      ]);
+      const people = /* @__PURE__ */ new Map();
+      const add = (row, source) => {
+        const existing = people.get(row.id);
+        if (!existing) {
+          people.set(row.id, {
+            id: row.id,
+            name: row.name ?? row.id,
+            regionIds: row.region_id === null ? null : [row.region_id],
+            source
+          });
+          return;
+        }
+        if (existing.regionIds === null) return;
+        if (row.region_id === null) existing.regionIds = null;
+        else if (!existing.regionIds.includes(row.region_id)) {
+          existing.regionIds.push(row.region_id);
+        }
+      };
+      for (const row of identity?.results ?? []) add(row, "user");
+      for (const row of legacy?.results ?? []) add(row, "legacy");
+      return [...people.values()];
+    }
+    /** How many of them cover a given region. */
+    async countIn(regionId, now = /* @__PURE__ */ new Date()) {
+      return countOnlineIn(await this.online(now), regionId);
+    }
+  };
+  function countOnlineIn(people, regionId) {
+    return people.filter((p) => coversRegion(p, regionId)).length;
+  }
+  function coversRegion(person, regionId) {
+    return person.regionIds === null || person.regionIds.includes(regionId);
+  }
+
+  // src/composer/media.ts
+  var MEDIA_KINDS = [
+    "image",
+    "document",
+    "audio",
+    "video",
+    "sticker"
+  ];
+  function isMediaKind(value) {
+    return MEDIA_KINDS.includes(value);
+  }
+  var MB = 1024 * 1024;
+  var RULES2 = {
+    image: { maxBytes: 5 * MB, types: ["image/jpeg", "image/png"] },
+    // Documents are deliberately open: an agent sending a customs declaration
+    // should not be stopped because nobody listed that file type.
+    document: { maxBytes: 100 * MB, types: [] },
+    audio: {
+      maxBytes: 16 * MB,
+      types: [
+        "audio/aac",
+        "audio/mp4",
+        "audio/mpeg",
+        "audio/amr",
+        "audio/ogg",
+        "audio/opus"
+      ]
+    },
+    video: { maxBytes: 16 * MB, types: ["video/mp4", "video/3gp"] },
+    sticker: { maxBytes: 100 * 1024, types: ["image/webp"] }
+  };
+  function rendersAsVoiceNote(mimeType) {
+    const normalised = mimeType.toLowerCase();
+    if (!normalised.startsWith("audio/ogg")) return false;
+    const codecs = /codecs\s*=\s*"?([^";]+)"?/.exec(normalised)?.[1];
+    return codecs === void 0 || codecs.trim() === "opus";
+  }
+  function baseMimeType(value) {
+    return (value.split(";")[0] ?? "").trim().toLowerCase();
+  }
+  function checkMedia(input) {
+    if (!isMediaKind(input.kind)) {
+      return {
+        ok: false,
+        reason: "unknown_kind",
+        message: `attachments are ${MEDIA_KINDS.join(", ")}`
+      };
+    }
+    const kind = input.kind;
+    const rules = RULES2[kind];
+    const mimeType = baseMimeType(input.mimeType);
+    const warnings = [];
+    if (input.sizeBytes <= 0) {
+      return { ok: false, reason: "empty_file", message: "the file is empty" };
+    }
+    if (input.sizeBytes > rules.maxBytes) {
+      return {
+        ok: false,
+        reason: "too_large",
+        message: `${article(kind)} may be up to ${describeBytes(rules.maxBytes)}; this is ${describeBytes(input.sizeBytes)}`
+      };
+    }
+    if (rules.types.length > 0 && !rules.types.includes(mimeType)) {
+      return {
+        ok: false,
+        reason: "wrong_type",
+        message: `${article(kind)} must be ${rules.types.join(", ")}; this is ${mimeType || "of no stated type"}`
+      };
+    }
+    let filename;
+    if (kind === "document") {
+      filename = safeFilename(input.filename);
+      if (!filename) {
+        return {
+          ok: false,
+          reason: "missing_filename",
+          message: "a document needs a filename; it is what the customer sees in the chat"
+        };
+      }
+      if (filename !== input.filename?.trim()) {
+        warnings.push(`the filename was adjusted to "${filename}"`);
+      }
+    }
+    const voiceNote = kind === "audio" && rendersAsVoiceNote(input.mimeType);
+    if (kind === "audio" && !voiceNote) {
+      warnings.push(
+        "this will arrive as an audio file, not a voice note; only Ogg Opus shows as push-to-talk"
+      );
+    }
+    return { ok: true, kind, mimeType, filename, voiceNote, warnings };
+  }
+  function safeFilename(value) {
+    if (!value) return void 0;
+    const withoutControls = [...value].filter((character) => {
+      const code = character.codePointAt(0) ?? 0;
+      return code >= 32 && code !== 127;
+    }).join("");
+    const cleaned = withoutControls.replace(/[\\/]+/g, "/").split("/").filter((part) => part !== "" && part !== "." && part !== "..").pop();
+    if (!cleaned) return void 0;
+    const trimmed = cleaned.trim().slice(0, 240);
+    return trimmed.length > 0 ? trimmed : void 0;
+  }
+  function article(kind) {
+    return /^[aeiou]/.test(kind) ? `an ${kind}` : `a ${kind}`;
+  }
+  function describeBytes(bytes) {
+    if (bytes >= MB) {
+      const mb = bytes / MB;
+      return `${Number.isInteger(mb) ? mb : mb.toFixed(1)} MB`;
+    }
+    return `${Math.ceil(bytes / 1024)} KB`;
+  }
+  function checkLocation(input) {
+    const latitude = Number(input.latitude);
+    const longitude = Number(input.longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return {
+        ok: false,
+        reason: "not_a_number",
+        message: "a location needs a numeric latitude and longitude"
+      };
+    }
+    if (latitude < -90 || latitude > 90) {
+      return {
+        ok: false,
+        reason: "out_of_range",
+        message: "latitude runs from -90 to 90"
+      };
+    }
+    if (longitude < -180 || longitude > 180) {
+      return {
+        ok: false,
+        reason: "out_of_range",
+        message: "longitude runs from -180 to 180"
+      };
+    }
+    if (latitude === 0 && longitude === 0) {
+      return {
+        ok: false,
+        reason: "null_island",
+        message: "0, 0 is in the Atlantic; this is usually an empty coordinate rather than a place"
+      };
+    }
+    const name = input.name?.trim() || void 0;
+    const address = input.address?.trim() || void 0;
+    if (name && !address) {
+      return {
+        ok: false,
+        reason: "name_without_address",
+        message: "a named location needs an address too; the name alone gives the customer nothing to navigate to"
+      };
+    }
+    return { ok: true, latitude, longitude, name, address };
+  }
+
+  // src/composer/notes.ts
+  var MAX_NOTE_LENGTH = 4e3;
+  function checkNoteBody(body) {
+    if (!body || body.trim().length === 0) {
+      return {
+        ok: false,
+        reason: "empty_note",
+        message: "a note needs some text"
+      };
+    }
+    return { ok: true };
+  }
+  function canEditNote(actorId, note) {
+    if (note.author_id !== actorId) {
+      return {
+        ok: false,
+        reason: "not_the_author",
+        message: "only the person who wrote a note may change it"
+      };
+    }
+    return { ok: true };
+  }
+  function newId() {
+    return `note_${crypto.randomUUID()}`;
+  }
+  var Notes = class {
+    constructor(db) {
+      this.db = db;
+    }
+    /** Pinned first, then newest. The handover note has to be visible. */
+    async forConversation(conversationId, limit = 100) {
+      const { results } = await this.db.prepare(
+        `SELECT * FROM conversation_notes WHERE conversation_id = ?1
+				 ORDER BY pinned DESC, created_at DESC LIMIT ?2`
+      ).bind(conversationId, Math.min(Math.max(limit, 1), 500)).all();
+      return results ?? [];
+    }
+    async get(id) {
+      return this.db.prepare(`SELECT * FROM conversation_notes WHERE id = ?1`).bind(id).first();
+    }
+    async add(input) {
+      const nowIso = (input.now ?? /* @__PURE__ */ new Date()).toISOString();
+      const id = newId();
+      await this.db.prepare(
+        `INSERT INTO conversation_notes
+				   (id, conversation_id, region_id, author_id, body, pinned, created_at)
+				 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`
+      ).bind(
+        id,
+        input.conversationId,
+        input.regionId,
+        input.authorId,
+        input.body.trim().slice(0, MAX_NOTE_LENGTH),
+        input.pinned ? 1 : 0,
+        nowIso
+      ).run();
+      const created = await this.get(id);
+      if (!created) throw new Error("failed to add the note");
+      return created;
+    }
+    async edit(input) {
+      const nowIso = (input.now ?? /* @__PURE__ */ new Date()).toISOString();
+      await this.db.prepare(
+        `UPDATE conversation_notes SET body = ?2, edited_at = ?3 WHERE id = ?1`
+      ).bind(input.id, input.body.trim().slice(0, MAX_NOTE_LENGTH), nowIso).run();
+      const updated = await this.get(input.id);
+      if (!updated) throw new Error("the note disappeared");
+      return updated;
+    }
+    async setPinned(id, pinned) {
+      await this.db.prepare(`UPDATE conversation_notes SET pinned = ?2 WHERE id = ?1`).bind(id, pinned ? 1 : 0).run();
+    }
+    async remove(id) {
+      await this.db.prepare(`DELETE FROM conversation_notes WHERE id = ?1`).bind(id).run();
+    }
+  };
+
+  // src/bots/types.ts
+  var STEP_KINDS = [
+    "message",
+    "ask",
+    "menu",
+    "classify",
+    "lookup",
+    "create",
+    "handover",
+    "end"
+  ];
+  var ANSWER_SHAPES = ["any", "reference", "number", "email"];
+  var FLOW_STATUSES = ["draft", "published", "retired"];
+  var SESSION_END_REASONS = [
+    "completed",
+    "handover",
+    "customer_asked_for_agent",
+    "too_many_invalid_replies",
+    "flow_stuck",
+    "expired"
+  ];
+
+  // src/bots/validate.ts
+  var PROBLEM_CODES = [
+    "duplicate_step_id",
+    "unknown_entry_step",
+    "no_steps",
+    "unknown_step_kind",
+    "malformed_step",
+    "dangling_next",
+    "empty_text",
+    "text_too_long",
+    "empty_menu",
+    "duplicate_menu_keyword",
+    "missing_slot",
+    "unknown_answer_shape",
+    "tight_loop",
+    "unreachable_step",
+    "no_route_to_a_person"
+  ];
+  var MAX_TEXT_LENGTH = 4096;
+  var WAITING_KINDS = /* @__PURE__ */ new Set(["ask", "menu"]);
+  function validateFlow(flow) {
+    const problems = [];
+    const error = (code, stepId, message) => problems.push({ severity: "error", code, stepId, message });
+    const warn = (code, stepId, message) => problems.push({ severity: "warning", code, stepId, message });
+    if (flow.steps.length === 0) {
+      error("no_steps", null, "the flow has no steps");
+      return { ok: false, problems };
+    }
+    const byId = /* @__PURE__ */ new Map();
+    for (const step of flow.steps) {
+      if (byId.has(step.id)) {
+        error(
+          "duplicate_step_id",
+          step.id,
+          `two steps share the id "${step.id}"; one of them is unreachable and which one is undefined`
+        );
+        continue;
+      }
+      byId.set(step.id, step);
+    }
+    if (!byId.has(flow.entryStepId)) {
+      error(
+        "unknown_entry_step",
+        flow.entryStepId,
+        `the flow starts at "${flow.entryStepId}", which is not a step in it`
+      );
+    }
+    for (const step of byId.values()) {
+      if (!STEP_KINDS.includes(step.kind)) {
+        error(
+          "unknown_step_kind",
+          step.id,
+          `"${step.kind}" is not a step kind this platform runs`
+        );
+        continue;
+      }
+      for (const target2 of targetsOf(step)) {
+        if (target2 !== null && !byId.has(target2)) {
+          error(
+            "dangling_next",
+            step.id,
+            `points at "${target2}", which is not a step in this flow`
+          );
+        }
+      }
+      const text = "text" in step ? step.text : void 0;
+      if (step.kind === "message" || step.kind === "ask" || step.kind === "menu") {
+        if (!text || text.trim().length === 0) {
+          error("empty_text", step.id, "has nothing to say");
+        }
+      }
+      for (const [label, value] of textsOf(step)) {
+        if (value && value.length > MAX_TEXT_LENGTH) {
+          error(
+            "text_too_long",
+            step.id,
+            `${label} is ${value.length} characters; WhatsApp refuses anything over ${MAX_TEXT_LENGTH}`
+          );
+        }
+      }
+      if (step.kind === "ask") {
+        if (step.slot.trim().length === 0) {
+          error("missing_slot", step.id, "asks a question but keeps no answer");
+        }
+        if (step.expect !== void 0 && !ANSWER_SHAPES.includes(step.expect)) {
+          error(
+            "unknown_answer_shape",
+            step.id,
+            `expects "${step.expect}", which is not a shape this platform checks`
+          );
+        }
+      }
+      if (step.kind === "menu") {
+        if (step.options.length === 0) {
+          error("empty_menu", step.id, "is a menu with no options");
+        }
+        const seen = /* @__PURE__ */ new Map();
+        for (const [index, option] of step.options.entries()) {
+          for (const keyword of option.keywords) {
+            const key = keyword.trim().toLowerCase();
+            if (key.length === 0) continue;
+            const first = seen.get(key);
+            if (first !== void 0) {
+              error(
+                "duplicate_menu_keyword",
+                step.id,
+                `options ${first + 1} and ${index + 1} both answer to "${key}"`
+              );
+            } else {
+              seen.set(key, index);
+            }
+          }
+        }
+      }
+    }
+    problems.push(...findTightLoops(byId, flow.entryStepId));
+    const reachable = reachableFrom(byId, flow.entryStepId);
+    for (const step of byId.values()) {
+      if (!reachable.has(step.id) && step.id !== flow.entryStepId) {
+        warn(
+          "unreachable_step",
+          step.id,
+          "cannot be reached from the start of the flow"
+        );
+      }
+    }
+    const reachesAPerson = [...reachable].map((id) => byId.get(id)).some((step) => step?.kind === "handover");
+    if (!reachesAPerson) {
+      warn(
+        "no_route_to_a_person",
+        null,
+        "no reachable step hands the conversation to an agent; the bot can still be escaped by asking for one, but nothing in the flow offers it"
+      );
+    }
+    return { ok: !problems.some((p) => p.severity === "error"), problems };
+  }
+  function targetsOf(step) {
+    switch (step.kind) {
+      case "message":
+      case "create":
+        return [step.next];
+      case "ask":
+        return [step.next];
+      case "menu":
+        return step.options.map((o) => o.next);
+      case "classify":
+        return [...Object.values(step.branches), step.otherwise];
+      case "lookup":
+        return [step.found, step.notFound];
+      case "handover":
+      case "end":
+        return [];
+    }
+  }
+  function textsOf(step) {
+    const out = [];
+    if ("text" in step) out.push(["the message", step.text]);
+    if ("retryText" in step) out.push(["the retry message", step.retryText]);
+    return out;
+  }
+  function reachableFrom(byId, entryStepId) {
+    const seen = /* @__PURE__ */ new Set();
+    const queue = [entryStepId];
+    while (queue.length > 0) {
+      const id = queue.pop();
+      if (id === void 0 || id === null || seen.has(id)) continue;
+      const step = byId.get(id);
+      if (!step) continue;
+      seen.add(id);
+      for (const target2 of targetsOf(step)) {
+        if (target2 !== null && !seen.has(target2)) queue.push(target2);
+      }
+    }
+    return seen;
+  }
+  function findTightLoops(byId, entryStepId) {
+    const problems = [];
+    const reported = /* @__PURE__ */ new Set();
+    const settled = /* @__PURE__ */ new Set();
+    const rootsSeen = /* @__PURE__ */ new Set();
+    const roots = [];
+    const addRoot = (id) => {
+      if (rootsSeen.has(id)) return;
+      rootsSeen.add(id);
+      roots.push(id);
+    };
+    addRoot(entryStepId);
+    for (const id of byId.keys()) addRoot(id);
+    for (let i = 0; i < roots.length; i++) {
+      const root = roots[i];
+      if (root === void 0) continue;
+      const grey = /* @__PURE__ */ new Set();
+      const walk = (id, path) => {
+        const step = byId.get(id);
+        if (!step) return;
+        if (grey.has(id)) {
+          const from = path.indexOf(id);
+          const cycle = from >= 0 ? path.slice(from) : [id];
+          const key = [...cycle].sort().join(">");
+          if (!reported.has(key)) {
+            reported.add(key);
+            problems.push({
+              severity: "error",
+              code: "tight_loop",
+              stepId: id,
+              message: `${cycle.join(" \u2192 ")} \u2192 ${id} runs round without ever waiting for the customer`
+            });
+          }
+          return;
+        }
+        if (settled.has(id)) return;
+        if (WAITING_KINDS.has(step.kind)) {
+          settled.add(id);
+          for (const target2 of targetsOf(step)) {
+            if (target2 !== null) addRoot(target2);
+          }
+          return;
+        }
+        grey.add(id);
+        for (const target2 of targetsOf(step)) {
+          if (target2 !== null) walk(target2, [...path, id]);
+        }
+        grey.delete(id);
+        settled.add(id);
+      };
+      walk(root, []);
+    }
+    return problems;
+  }
+
+  // src/bots/parse.ts
+  var TICKET_TYPES2 = [
+    "claim",
+    "billing",
+    "documentation",
+    "delivery",
+    "general"
+  ];
+  var bad = (stepId, message) => ({
+    severity: "error",
+    code: "malformed_step",
+    stepId,
+    message
+  });
+  function parseSteps(input) {
+    const problems = [];
+    const steps = [];
+    let raw = input;
+    if (typeof input === "string") {
+      try {
+        raw = JSON.parse(input);
+      } catch {
+        return {
+          steps: [],
+          problems: [bad(null, "the steps are not valid JSON")]
+        };
+      }
+    }
+    if (!Array.isArray(raw)) {
+      return {
+        steps: [],
+        problems: [bad(null, "the steps must be a JSON array")]
+      };
+    }
+    for (const [index, item] of raw.entries()) {
+      const where = `step ${index + 1}`;
+      if (typeof item !== "object" || item === null) {
+        problems.push(bad(null, `${where} is not an object`));
+        continue;
+      }
+      const obj = item;
+      const id = obj["id"];
+      if (typeof id !== "string" || id.trim().length === 0) {
+        problems.push(bad(null, `${where} has no id`));
+        continue;
+      }
+      const kind = obj["kind"];
+      if (typeof kind !== "string" || !STEP_KINDS.includes(kind)) {
+        problems.push(
+          bad(id, `"${String(kind)}" is not a step kind this platform runs`)
+        );
+        continue;
+      }
+      const step = coerce(id, kind, obj, problems);
+      if (step) steps.push(step);
+    }
+    return { steps, problems };
+  }
+  function coerce(id, kind, obj, problems) {
+    const text = str(obj["text"]);
+    const next = target(obj["next"]);
+    switch (kind) {
+      case "message":
+        return { id, kind, text: text ?? "", next };
+      case "ask": {
+        if (next === null) {
+          problems.push(bad(id, "a question must say where the answer leads"));
+          return null;
+        }
+        const expect = str(obj["expect"]);
+        if (expect !== void 0 && !ANSWER_SHAPES.includes(expect)) {
+          problems.push(
+            bad(
+              id,
+              `expects "${expect}", which is not a shape this platform checks`
+            )
+          );
+          return null;
+        }
+        return {
+          id,
+          kind: "ask",
+          text: text ?? "",
+          slot: str(obj["slot"]) ?? "",
+          expect,
+          retryText: str(obj["retryText"]),
+          next
+        };
+      }
+      case "menu": {
+        const rawOptions = obj["options"];
+        if (!Array.isArray(rawOptions)) {
+          problems.push(bad(id, "a menu needs an options array"));
+          return null;
+        }
+        const options = [];
+        for (const [i, rawOption] of rawOptions.entries()) {
+          if (typeof rawOption !== "object" || rawOption === null) {
+            problems.push(bad(id, `option ${i + 1} is not an object`));
+            continue;
+          }
+          const o = rawOption;
+          const label = str(o["label"]);
+          const optionNext = target(o["next"]);
+          if (!label || optionNext === null) {
+            problems.push(
+              bad(id, `option ${i + 1} needs a label and a next step`)
+            );
+            continue;
+          }
+          const keywords = Array.isArray(o["keywords"]) ? o["keywords"].filter((k) => typeof k === "string") : [];
+          options.push({ label, next: optionNext, keywords });
+        }
+        return {
+          id,
+          kind,
+          text: text ?? "",
+          options,
+          retryText: str(obj["retryText"])
+        };
+      }
+      case "classify": {
+        const rawBranches = obj["branches"];
+        const branches = {};
+        if (rawBranches !== void 0) {
+          if (typeof rawBranches !== "object" || rawBranches === null) {
+            problems.push(
+              bad(id, "branches must be an object of intent to step")
+            );
+            return null;
+          }
+          for (const [intent, value] of Object.entries(rawBranches)) {
+            const to = target(value);
+            if (to === null) {
+              problems.push(bad(id, `the "${intent}" branch has no step`));
+              continue;
+            }
+            branches[intent] = to;
+          }
+        }
+        const otherwise = target(obj["otherwise"]);
+        if (otherwise === null) {
+          problems.push(bad(id, "a classify step needs an otherwise branch"));
+          return null;
+        }
+        return { id, kind: "classify", branches, otherwise };
+      }
+      case "lookup": {
+        const found = target(obj["found"]);
+        const notFound = target(obj["notFound"]);
+        if (found === null || notFound === null) {
+          problems.push(
+            bad(id, "a lookup needs both a found and a notFound step")
+          );
+          return null;
+        }
+        return { id, kind, slot: str(obj["slot"]), found, notFound };
+      }
+      case "create": {
+        const create = str(obj["create"]);
+        if (create !== "lead" && create !== "ticket") {
+          problems.push(bad(id, 'create must be "lead" or "ticket"'));
+          return null;
+        }
+        const ticketType = str(obj["ticketType"]);
+        if (ticketType !== void 0 && !TICKET_TYPES2.includes(ticketType)) {
+          problems.push(
+            bad(id, `"${ticketType}" is not a ticket type this platform opens`)
+          );
+          return null;
+        }
+        return {
+          id,
+          kind: "create",
+          create,
+          ticketType,
+          next
+        };
+      }
+      case "handover":
+        return { id, kind, text, queue: str(obj["queue"]) };
+      case "end":
+        return { id, kind, text };
+    }
+  }
+  function str(value) {
+    return typeof value === "string" ? value : void 0;
+  }
+  function target(value) {
+    return typeof value === "string" && value.trim().length > 0 ? value : null;
+  }
+
+  // src/bots/runtime.ts
+  var MAX_INVALID_REPLIES = 2;
+  var MAX_STEPS_PER_TURN = 16;
+  var SESSION_TTL_HOURS = 24;
+  function runTurn(input) {
+    const { flow, now } = input;
+    const facts = input.facts ?? {};
+    const nowIso = now.toISOString();
+    const effects = [];
+    const trace = [];
+    const byId = new Map(flow.steps.map((step) => [step.id, step]));
+    let session = resumableSession(input.session, flow, now) ?? freshSession(flow, nowIso);
+    session = { ...session, turns: session.turns + 1, updatedAt: nowIso };
+    const say = (text) => {
+      const rendered = render(text, session.slots, facts);
+      if (rendered.trim().length > 0)
+        effects.push({ kind: "send_text", text: rendered });
+    };
+    const finish = (reason, queue) => {
+      if (reason !== "completed") {
+        effects.push({
+          kind: "handover",
+          queue: queue ?? null,
+          reason,
+          // The answers already given, so the agent opens the conversation
+          // knowing them rather than asking again.
+          slots: { ...session.slots }
+        });
+      }
+      return {
+        session: {
+          ...session,
+          stepId: null,
+          endedAt: nowIso,
+          endedReason: reason
+        },
+        effects,
+        trace
+      };
+    };
+    let cursor;
+    const waiting = session.stepId === null ? null : byId.get(session.stepId) ?? null;
+    if (waiting && (waiting.kind === "ask" || waiting.kind === "menu")) {
+      const answered = acceptAnswer(waiting, input.text, session);
+      if (answered.escape) {
+        trace.push({ stepId: waiting.id, kind: "escape", note: answered.note });
+        say(ASKED_FOR_A_PERSON);
+        return finish("customer_asked_for_agent");
+      }
+      if (!answered.accepted) {
+        const invalidReplies = session.invalidReplies + 1;
+        session = { ...session, invalidReplies };
+        trace.push({
+          stepId: waiting.id,
+          kind: waiting.kind,
+          note: answered.note
+        });
+        if (invalidReplies > MAX_INVALID_REPLIES) {
+          say(GIVING_UP);
+          return finish("too_many_invalid_replies");
+        }
+        say(answered.retryText ?? defaultRetry(waiting));
+        return { session, effects, trace };
+      }
+      session = { ...session, slots: answered.slots, invalidReplies: 0 };
+      trace.push({ stepId: waiting.id, kind: waiting.kind, note: answered.note });
+      cursor = answered.next;
+    } else {
+      if (asksForAPerson(input.text)) {
+        trace.push({
+          stepId: flow.entryStepId,
+          kind: "escape",
+          note: "asked for an agent before the flow started"
+        });
+        say(ASKED_FOR_A_PERSON);
+        return finish("customer_asked_for_agent");
+      }
+      cursor = session.stepId ?? flow.entryStepId;
+    }
+    let budget = MAX_STEPS_PER_TURN;
+    let lastStepId = session.stepId ?? flow.entryStepId;
+    while (cursor !== null) {
+      if (budget-- <= 0) {
+        trace.push({
+          stepId: cursor,
+          kind: "budget",
+          note: `stopped after ${MAX_STEPS_PER_TURN} steps without waiting for the customer`
+        });
+        say(SOMETHING_WRONG);
+        return finish("flow_stuck");
+      }
+      lastStepId = cursor;
+      const step = byId.get(cursor);
+      if (!step) {
+        trace.push({
+          stepId: cursor,
+          kind: "budget",
+          note: `step "${cursor}" is not in this flow`
+        });
+        say(SOMETHING_WRONG);
+        return finish("flow_stuck");
+      }
+      switch (step.kind) {
+        case "message": {
+          say(step.text);
+          trace.push({ stepId: step.id, kind: "message", note: "sent" });
+          cursor = step.next;
+          break;
+        }
+        case "ask": {
+          say(step.text);
+          trace.push({
+            stepId: step.id,
+            kind: "ask",
+            note: `waiting for ${step.slot}`
+          });
+          return {
+            session: { ...session, stepId: step.id, invalidReplies: 0 },
+            effects,
+            trace
+          };
+        }
+        case "menu": {
+          say(
+            withOptions(
+              step.text,
+              step.options.map((o) => o.label)
+            )
+          );
+          trace.push({
+            stepId: step.id,
+            kind: "menu",
+            note: `waiting on ${step.options.length} options`
+          });
+          return {
+            session: { ...session, stepId: step.id, invalidReplies: 0 },
+            effects,
+            trace
+          };
+        }
+        case "classify": {
+          const result = classifyIntent(input.text);
+          const branch = step.branches[result.intent];
+          trace.push({
+            stepId: step.id,
+            kind: "classify",
+            note: `${result.intent} at ${result.confidence}${branch ? "" : " \u2192 otherwise"}`
+          });
+          cursor = branch ?? step.otherwise;
+          break;
+        }
+        case "lookup": {
+          const wanted = step.slot ? session.slots[step.slot] : (facts.references ?? [])[0];
+          const booking = facts.booking ?? null;
+          const found = Boolean(booking) && wanted !== void 0;
+          trace.push({
+            stepId: step.id,
+            kind: "lookup",
+            note: found ? `matched ${booking?.ref}` : `no shipment for ${wanted ?? "no reference"}`
+          });
+          cursor = found ? step.found : step.notFound;
+          break;
+        }
+        case "create": {
+          if (step.create === "lead") {
+            effects.push({ kind: "open_lead", source: "whatsapp_bot" });
+          } else {
+            effects.push({
+              kind: "open_ticket",
+              type: step.ticketType ?? "general",
+              subject: subjectFrom(session.slots, step.ticketType ?? "general")
+            });
+          }
+          trace.push({
+            stepId: step.id,
+            kind: "create",
+            note: `queued a ${step.create}`
+          });
+          cursor = step.next;
+          break;
+        }
+        case "handover": {
+          if (step.text) say(step.text);
+          trace.push({ stepId: step.id, kind: "handover", note: "to an agent" });
+          return finish("handover", step.queue ?? null);
+        }
+        case "end": {
+          if (step.text) say(step.text);
+          trace.push({ stepId: step.id, kind: "end", note: "flow finished" });
+          return finish("completed");
+        }
+      }
+    }
+    trace.push({ stepId: lastStepId, kind: "end", note: "flow ran to its end" });
+    return finish("completed");
+  }
+  function acceptAnswer(step, text, session) {
+    const raw = (text ?? "").trim();
+    const base = {
+      slots: session.slots,
+      next: null,
+      escape: false
+    };
+    if (step.kind === "menu") {
+      const chosen = matchOption(step.options, raw);
+      if (chosen) {
+        return {
+          ...base,
+          accepted: true,
+          next: chosen.option.next,
+          slots: { ...session.slots, [`${step.id}_choice`]: chosen.option.label },
+          note: `chose "${chosen.option.label}" by ${chosen.how}`
+        };
+      }
+      if (asksForAPerson(raw)) {
+        return {
+          ...base,
+          accepted: false,
+          escape: true,
+          note: "asked for an agent at a menu"
+        };
+      }
+      return {
+        ...base,
+        accepted: false,
+        retryText: step.retryText,
+        note: raw.length === 0 ? "empty reply at a menu" : `"${raw}" matched no option`
+      };
+    }
+    if (asksForAPerson(raw)) {
+      return {
+        ...base,
+        accepted: false,
+        escape: true,
+        note: "asked for an agent at a question"
+      };
+    }
+    const value = shapeAnswer(raw, step.expect ?? "any");
+    if (value === null) {
+      return {
+        ...base,
+        accepted: false,
+        retryText: step.retryText,
+        note: raw.length === 0 ? "empty answer" : `"${raw}" is not a ${step.expect}`
+      };
+    }
+    return {
+      ...base,
+      accepted: true,
+      next: step.next,
+      slots: { ...session.slots, [step.slot]: value },
+      note: `${step.slot} = ${value}`
+    };
+  }
+  function shapeAnswer(raw, expect) {
+    if (raw.length === 0) return null;
+    switch (expect) {
+      case "any":
+        return raw;
+      case "reference": {
+        const found = extractTrackingNumbers(raw);
+        return found[0] ?? null;
+      }
+      case "number": {
+        const digits = raw.replace(/[^\d.]/g, "");
+        return digits.length > 0 && Number.isFinite(Number(digits)) ? digits : null;
+      }
+      case "email": {
+        const at = raw.indexOf("@");
+        if (at <= 0 || at !== raw.lastIndexOf("@")) return null;
+        return at < raw.length - 1 && !/\s/.test(raw) ? raw.toLowerCase() : null;
+      }
+    }
+  }
+  function matchOption(options, raw) {
+    if (raw.length === 0) return null;
+    const asNumber = Number(raw);
+    if (Number.isInteger(asNumber) && asNumber >= 1 && asNumber <= options.length) {
+      const option = options[asNumber - 1];
+      if (option) return { option, how: "number" };
+    }
+    const lowered = raw.toLowerCase();
+    for (const option of options) {
+      for (const keyword of option.keywords) {
+        const key = keyword.trim().toLowerCase();
+        if (key.length === 0) continue;
+        if (lowered === key) return { option, how: `keyword "${key}"` };
+      }
+    }
+    for (const option of options) {
+      for (const keyword of option.keywords) {
+        const key = keyword.trim().toLowerCase();
+        if (key.length > 2 && lowered.includes(key)) {
+          return { option, how: `keyword "${key}"` };
+        }
+      }
+    }
+    return null;
+  }
+  function asksForAPerson(text) {
+    if (!text || text.trim().length === 0) return false;
+    return classifyIntent(text).intent === "agent";
+  }
+  function freshSession(flow, nowIso) {
+    return {
+      flowId: flow.id,
+      flowVersion: flow.version,
+      stepId: null,
+      slots: {},
+      invalidReplies: 0,
+      turns: 0,
+      startedAt: nowIso,
+      updatedAt: nowIso,
+      endedAt: null,
+      endedReason: null
+    };
+  }
+  function resumableSession(session, flow, now) {
+    if (!session || session.endedAt !== null || session.stepId === null)
+      return null;
+    if (session.flowId !== flow.id || session.flowVersion !== flow.version)
+      return null;
+    const updated = Date.parse(session.updatedAt);
+    if (!Number.isFinite(updated)) return null;
+    const hours = (now.getTime() - updated) / 36e5;
+    return hours >= 0 && hours < SESSION_TTL_HOURS ? session : null;
+  }
+  var ASKED_FOR_A_PERSON = "Of course \u2014 I am passing you to a member of our team now. They will reply here.";
+  var GIVING_UP = "I am sorry, I am not following. Let me pass you to a member of our team.";
+  var SOMETHING_WRONG = "Something has gone wrong at our end. I am passing you to a member of our team.";
+  function render(text, slots, facts) {
+    const values = {
+      ...slots,
+      "contact.name": facts.contactName ?? "",
+      "booking.ref": facts.booking?.ref ?? "",
+      "booking.milestone": facts.booking?.milestone ?? "",
+      "booking.updated": facts.booking?.updatedAt ?? ""
+    };
+    return text.replace(
+      /\{\{\s*([\w.]+)\s*\}\}/g,
+      (_match, name) => values[name] ?? ""
+    ).replace(/[ \t]{2,}/g, " ").replace(/ +([,.!?])/g, "$1").trim();
+  }
+  function withOptions(text, labels) {
+    if (labels.length === 0) return text;
+    return [text, "", ...labels.map((label, i) => `${i + 1}. ${label}`)].join(
+      "\n"
+    );
+  }
+  function defaultRetry(step) {
+    if (step.kind === "menu") {
+      return withOptions(
+        "Sorry, I did not catch that. Please reply with the number of one of these:",
+        step.options.map((o) => o.label)
+      );
+    }
+    switch (step.expect ?? "any") {
+      case "reference":
+        return "Could you send the shipment reference? It looks like ABC-UAE-088210.";
+      case "number":
+        return "Could you reply with a number?";
+      case "email":
+        return "Could you send an email address?";
+      case "any":
+        return "Sorry, I did not catch that. Could you say it again?";
+    }
+  }
+  function subjectFrom(slots, type) {
+    const first = Object.values(slots).find((v) => v.trim().length > 0);
+    return first ? `${type}: ${first.slice(0, 120)}` : `${type} raised on WhatsApp`;
+  }
+
+  // src/bots/templates.ts
+  function buildStarterFlow(region) {
+    const steps = [
+      // The first message is classified rather than answered with a menu. A
+      // customer who opens with "where is ABC-UAE-088210" has already said
+      // what they want, and making them pick it from a list is the thing
+      // people dislike most about bots.
+      {
+        id: "triage",
+        kind: "classify",
+        branches: {
+          track: "find_shipment",
+          rate: "quote_start",
+          claim: "claim_start",
+          billing: "billing_ticket",
+          documentation: "documents_ticket",
+          booking_change: "change_ticket",
+          agent: "to_agent",
+          greeting: "main_menu"
+        },
+        otherwise: "main_menu"
+      },
+      {
+        id: "main_menu",
+        kind: "menu",
+        text: `Hello {{contact.name}} \u2014 thank you for contacting ABC Cargo ${region.label}. How can we help?`,
+        options: [
+          {
+            label: "Track a shipment",
+            keywords: ["track", "tracking", "\u062A\u062A\u0628\u0639"],
+            next: "find_shipment"
+          },
+          {
+            label: "Get a quotation",
+            keywords: ["quote", "quotation", "rate", "\u0633\u0639\u0631"],
+            next: "quote_start"
+          },
+          {
+            label: "Report damage or a missing item",
+            keywords: ["damage", "claim", "\u0634\u0643\u0648\u0649"],
+            next: "claim_start"
+          },
+          {
+            label: "Invoice or payment",
+            keywords: ["invoice", "payment", "\u0641\u0627\u062A\u0648\u0631\u0629"],
+            next: "billing_ticket"
+          },
+          {
+            label: "Documents",
+            keywords: ["documents", "paperwork", "\u0645\u0633\u062A\u0646\u062F\u0627\u062A"],
+            next: "documents_ticket"
+          },
+          {
+            label: "Speak to our team",
+            keywords: ["agent", "team", "person", "\u0645\u0648\u0638\u0641"],
+            next: "to_agent"
+          }
+        ]
+      },
+      /* --------------------------------------------------------- tracking */
+      // Takes the reference out of the message the customer already sent,
+      // before asking for one they have already given.
+      {
+        id: "find_shipment",
+        kind: "lookup",
+        found: "shipment_status",
+        notFound: "ask_reference"
+      },
+      {
+        id: "ask_reference",
+        kind: "ask",
+        text: "Could you send the shipment reference? It looks like ABC-UAE-088210.",
+        slot: "reference",
+        expect: "reference",
+        next: "find_by_reference"
+      },
+      {
+        id: "find_by_reference",
+        kind: "lookup",
+        slot: "reference",
+        found: "shipment_status",
+        notFound: "reference_unknown"
+      },
+      {
+        id: "shipment_status",
+        kind: "message",
+        text: "Shipment {{booking.ref}} \u2014 latest update: {{booking.milestone}}.",
+        next: "anything_else"
+      },
+      // A reference we hold no record of is not a dead end. It is also what an
+      // unreachable shipment system looks like, and in both cases a person is
+      // the right answer.
+      {
+        id: "reference_unknown",
+        kind: "message",
+        text: "I cannot find {{reference}} on our system. Let me pass you to a member of our team who can check.",
+        next: "to_agent"
+      },
+      /* ------------------------------------------------------ quotations */
+      {
+        id: "quote_start",
+        kind: "ask",
+        text: "I can arrange a quotation. Where is the shipment going from, and where to?",
+        slot: "route",
+        next: "quote_goods"
+      },
+      {
+        id: "quote_goods",
+        kind: "ask",
+        text: "Thank you. What are you sending, and roughly what weight?",
+        slot: "goods",
+        next: "quote_lead"
+      },
+      { id: "quote_lead", kind: "create", create: "lead", next: "to_agent" },
+      /* ----------------------------------------------------------- claims */
+      // Straight to a person, with the account taken first so they do not have
+      // to tell it twice. A damage claim is the last thing to leave in a bot.
+      {
+        id: "claim_start",
+        kind: "ask",
+        text: "I am sorry to hear that. Please tell me what has happened, and include the shipment reference if you have it.",
+        slot: "what_happened",
+        next: "claim_ticket"
+      },
+      {
+        id: "claim_ticket",
+        kind: "create",
+        create: "ticket",
+        ticketType: "claim",
+        next: "to_agent"
+      },
+      /* --------------------------------------------------- other requests */
+      {
+        id: "billing_ticket",
+        kind: "create",
+        create: "ticket",
+        ticketType: "billing",
+        next: "to_agent"
+      },
+      {
+        id: "documents_ticket",
+        kind: "create",
+        create: "ticket",
+        ticketType: "documentation",
+        next: "to_agent"
+      },
+      {
+        id: "change_ticket",
+        kind: "create",
+        create: "ticket",
+        ticketType: "delivery",
+        next: "to_agent"
+      },
+      /* ------------------------------------------------------------- close */
+      {
+        id: "anything_else",
+        kind: "menu",
+        text: "Is there anything else I can help with?",
+        options: [
+          { label: "Yes", keywords: ["yes", "\u0646\u0639\u0645"], next: "main_menu" },
+          { label: "No, thank you", keywords: ["no", "\u0644\u0627"], next: "goodbye" }
+        ]
+      },
+      {
+        id: "goodbye",
+        kind: "end",
+        text: "Thank you for contacting ABC Cargo. We are here whenever you need us."
+      },
+      {
+        id: "to_agent",
+        kind: "handover",
+        text: "I am passing you to a member of our team now. They will reply here.",
+        queue: region.id
+      }
+    ];
+    return {
+      name: `ABC Cargo ${region.label} \u2014 starter flow (not the live Freshchat flow)`,
+      entryStepId: "triage",
+      steps
+    };
+  }
+
+  // src/bots/preview.ts
+  var GAP_MS = 6e4;
+  function previewFlow(input) {
+    const validation = validateFlow(input.flow);
+    const turns = [];
+    let session = input.session ?? null;
+    let clock = (input.start ?? /* @__PURE__ */ new Date("2026-01-01T09:00:00.000Z")).getTime();
+    let handedOver = false;
+    for (const message of input.messages) {
+      const result = runTurn({
+        flow: input.flow,
+        session,
+        text: message.text,
+        facts: message.facts,
+        now: new Date(clock)
+      });
+      session = result.session;
+      clock += GAP_MS;
+      const replies = [];
+      const effects = [];
+      for (const effect of result.effects) {
+        if (effect.kind === "send_text") replies.push(effect.text);
+        else {
+          effects.push(effect);
+          if (effect.kind === "handover") handedOver = true;
+        }
+      }
+      turns.push({
+        customer: message.text,
+        replies,
+        effects,
+        trace: result.trace,
+        stepId: result.session.stepId,
+        endedReason: result.session.endedReason
+      });
+    }
+    return {
+      validation,
+      turns,
+      slots: session?.slots ?? {},
+      handedOver
+    };
+  }
+
+  // src/broadcasts/types.ts
+  var BROADCAST_KINDS = ["marketing", "service"];
+  function isBroadcastKind(value) {
+    return BROADCAST_KINDS.includes(value);
+  }
+  var BROADCAST_STATUSES = [
+    "draft",
+    "review",
+    "approved",
+    "sending",
+    "paused",
+    "sent",
+    "cancelled"
+  ];
+  var RECIPIENT_STATES = [
+    "pending",
+    "skipped",
+    "sending",
+    "sent",
+    "delivered",
+    "read",
+    "replied",
+    "failed"
+  ];
+  var SKIP_REASONS = ["opted_out", "not_opted_in", "no_wa_id"];
+  var DELIVERY_ORDER = [
+    "sending",
+    "sent",
+    "delivered",
+    "read",
+    "replied"
+  ];
+  function advances(from, to) {
+    const a = DELIVERY_ORDER.indexOf(from);
+    const b = DELIVERY_ORDER.indexOf(to);
+    if (a < 0 || b < 0) return false;
+    return b > a;
+  }
+  var REPLY_ATTRIBUTION_HOURS = 72;
+
+  // src/broadcasts/audience.ts
+  var MAX_AUDIENCE = 1e4;
+  var KNOWN_ACCOUNT_TYPES = [
+    "individual",
+    "business",
+    "agent",
+    "corporate"
+  ];
+  function validateAudience(rule) {
+    const problems = [];
+    const positiveDays = (value, field) => {
+      if (value === void 0) return;
+      if (!Number.isInteger(value) || value < 1 || value > 3650) {
+        problems.push({
+          field,
+          message: "must be a whole number of days between 1 and 3650"
+        });
+      }
+    };
+    positiveDays(rule.bookedWithinDays, "bookedWithinDays");
+    positiveDays(rule.notBookedWithinDays, "notBookedWithinDays");
+    if (rule.bookedWithinDays !== void 0 && rule.notBookedWithinDays !== void 0) {
+      problems.push({
+        field: "bookedWithinDays",
+        message: "shipped-within and not-shipped-within cannot both be set; they describe different audiences"
+      });
+    }
+    for (const type of rule.accountTypes ?? []) {
+      if (!KNOWN_ACCOUNT_TYPES.includes(type)) {
+        problems.push({
+          field: "accountTypes",
+          message: `"${type}" is not an account type this platform records`
+        });
+      }
+    }
+    if (rule.customerIds !== void 0) {
+      if (rule.customerIds.length === 0) {
+        problems.push({
+          field: "customerIds",
+          message: "an explicit list cannot be empty; leave it out instead"
+        });
+      }
+      if (rule.customerIds.length > 500) {
+        problems.push({
+          field: "customerIds",
+          message: "an explicit list is limited to 500; use filters above that"
+        });
+      }
+    }
+    if (rule.limit !== void 0) {
+      if (!Number.isInteger(rule.limit) || rule.limit < 1) {
+        problems.push({
+          field: "limit",
+          message: "must be a positive whole number"
+        });
+      } else if (rule.limit > MAX_AUDIENCE) {
+        problems.push({
+          field: "limit",
+          message: `the most this platform will send in one broadcast is ${MAX_AUDIENCE}`
+        });
+      }
+    }
+    return problems;
+  }
+  function compileAudience(input) {
+    const bindings = [];
+    const bind = (value) => {
+      bindings.push(value);
+      return `?${bindings.length}`;
+    };
+    const conditions = [`c.region_id = ${bind(input.regionId)}`];
+    conditions.push(`c.wa_id IS NOT NULL AND TRIM(c.wa_id) != ''`);
+    conditions.push(
+      `NOT EXISTS (SELECT 1 FROM contacts oc
+		   WHERE oc.wa_id = c.wa_id AND oc.opted_out = 1)`
+    );
+    if (input.optedInOnly) {
+      conditions.push(`c.opt_in_marketing = 1`);
+    }
+    const types = input.rule.accountTypes ?? [];
+    if (types.length > 0) {
+      conditions.push(
+        `c.account_type IN (${types.map((t) => bind(t)).join(", ")})`
+      );
+    }
+    const ids = input.rule.customerIds ?? [];
+    if (ids.length > 0) {
+      conditions.push(`c.id IN (${ids.map((id) => bind(id)).join(", ")})`);
+    }
+    if (input.rule.bookedWithinDays !== void 0) {
+      conditions.push(
+        `EXISTS (SELECT 1 FROM bookings b
+			   WHERE b.customer_id = c.id
+			     AND b.created_at >= ${bind(daysAgo(input.now, input.rule.bookedWithinDays))})`
+      );
+    }
+    if (input.rule.notBookedWithinDays !== void 0) {
+      conditions.push(
+        `NOT EXISTS (SELECT 1 FROM bookings b
+			   WHERE b.customer_id = c.id
+			     AND b.created_at >= ${bind(daysAgo(input.now, input.rule.notBookedWithinDays))})`
+      );
+    }
+    if (input.rule.hasOpenTicket !== void 0) {
+      const exists = input.rule.hasOpenTicket ? "EXISTS" : "NOT EXISTS";
+      conditions.push(
+        `${exists} (SELECT 1 FROM tickets t
+			   WHERE t.customer_id = c.id AND t.status IN ('open','pending'))`
+      );
+    }
+    const limit = Math.min(input.rule.limit ?? MAX_AUDIENCE, MAX_AUDIENCE);
+    const sql = `SELECT c.wa_id AS wa_id, MIN(c.id) AS customer_id
+		 FROM customers c
+		 WHERE ${conditions.join("\n		   AND ")}
+		 GROUP BY c.wa_id
+		 ORDER BY c.wa_id
+		 LIMIT ${bind(limit)}`;
+    return { sql, bindings };
+  }
+  function daysAgo(now, days) {
+    return new Date(now.getTime() - days * 864e5).toISOString();
+  }
+  function describeAudience(rule, optedInOnly) {
+    const parts = [];
+    parts.push(optedInOnly ? "customers who opted in to marketing" : "customers");
+    if ((rule.accountTypes ?? []).length > 0) {
+      parts.push(`of type ${(rule.accountTypes ?? []).join(" or ")}`);
+    }
+    if (rule.bookedWithinDays !== void 0) {
+      parts.push(`who shipped in the last ${rule.bookedWithinDays} days`);
+    }
+    if (rule.notBookedWithinDays !== void 0) {
+      parts.push(
+        `who have not shipped in the last ${rule.notBookedWithinDays} days`
+      );
+    }
+    if (rule.hasOpenTicket === true) parts.push("with an open ticket");
+    if (rule.hasOpenTicket === false) parts.push("with no open ticket");
+    if ((rule.customerIds ?? []).length > 0) {
+      parts.push(`from a named list of ${(rule.customerIds ?? []).length}`);
+    }
+    if (rule.limit !== void 0) parts.push(`capped at ${rule.limit}`);
+    parts.push("excluding anyone who has opted out");
+    return parts.join(", ");
+  }
+
+  // src/broadcasts/template.ts
+  var COMPONENT_TYPES = ["header", "body", "button"];
+  var SUB_TYPES = ["quick_reply", "url"];
+  var PARAMETER_TYPES = [
+    "text",
+    "currency",
+    "date_time",
+    "image",
+    "document",
+    "video"
+  ];
+  function parseTemplateComponents(input) {
+    if (input === void 0 || input === null) {
+      return { ok: true, components: void 0 };
+    }
+    let raw = input;
+    if (typeof input === "string") {
+      try {
+        raw = JSON.parse(input);
+      } catch {
+        return {
+          ok: false,
+          problems: [{ where: "components", message: "is not valid JSON" }]
+        };
+      }
+    }
+    if (!Array.isArray(raw)) {
+      return {
+        ok: false,
+        problems: [
+          {
+            where: "components",
+            message: "must be an array, as the Cloud API takes"
+          }
+        ]
+      };
+    }
+    if (raw.length === 0) return { ok: true, components: void 0 };
+    const problems = [];
+    const components = [];
+    for (const [index, item] of raw.entries()) {
+      const where = `components[${index}]`;
+      if (typeof item !== "object" || item === null) {
+        problems.push({ where, message: "is not an object" });
+        continue;
+      }
+      const obj = item;
+      const type = obj["type"];
+      if (typeof type !== "string" || !COMPONENT_TYPES.includes(type)) {
+        problems.push({
+          where,
+          message: `type must be ${COMPONENT_TYPES.join(", ")}`
+        });
+        continue;
+      }
+      const subType = obj["sub_type"];
+      if (subType !== void 0 && (typeof subType !== "string" || !SUB_TYPES.includes(subType))) {
+        problems.push({
+          where,
+          message: `sub_type must be ${SUB_TYPES.join(" or ")} when present`
+        });
+        continue;
+      }
+      const rawIndex = obj["index"];
+      if (type === "button" && typeof rawIndex !== "string") {
+        problems.push({
+          where,
+          message: "a button component needs an index, as a string"
+        });
+        continue;
+      }
+      const rawParameters = obj["parameters"];
+      if (!Array.isArray(rawParameters)) {
+        problems.push({ where, message: "needs a parameters array" });
+        continue;
+      }
+      const parameters = [];
+      let parametersOk = true;
+      for (const [p, rawParameter] of rawParameters.entries()) {
+        const pWhere = `${where}.parameters[${p}]`;
+        if (typeof rawParameter !== "object" || rawParameter === null) {
+          problems.push({ where: pWhere, message: "is not an object" });
+          parametersOk = false;
+          continue;
+        }
+        const parameter = rawParameter;
+        const pType = parameter["type"];
+        if (typeof pType !== "string" || !PARAMETER_TYPES.includes(pType)) {
+          problems.push({
+            where: pWhere,
+            message: `type must be one of ${PARAMETER_TYPES.join(", ")}`
+          });
+          parametersOk = false;
+          continue;
+        }
+        if (pType === "text" && typeof parameter["text"] !== "string") {
+          problems.push({
+            where: pWhere,
+            message: "a text parameter needs text"
+          });
+          parametersOk = false;
+          continue;
+        }
+        parameters.push(parameter);
+      }
+      if (!parametersOk) continue;
+      components.push({
+        type,
+        ...subType ? { sub_type: subType } : {},
+        ...typeof rawIndex === "string" ? { index: rawIndex } : {},
+        parameters
+      });
+    }
+    if (problems.length > 0) return { ok: false, problems };
+    return { ok: true, components };
+  }
+  function looksLikeTemplateName(value) {
+    return /^[a-z0-9_]{1,512}$/.test(value.trim());
+  }
+  function looksLikeLanguageCode(value) {
+    return /^[a-z]{2,3}(_[A-Z]{2})?$/.test(value.trim());
+  }
+
+  // src/broadcasts/policy.ts
+  var ALLOW3 = { allowed: true, reason: "ok" };
+  var deny3 = (reason, message) => ({ allowed: false, reason, message });
+  function canComposeBroadcast(caller, regionId) {
+    if (caller.kind === "service") {
+      return deny3(
+        "service_caller",
+        "a machine credential cannot compose a broadcast"
+      );
+    }
+    if (caller.status !== "active") {
+      return deny3("suspended", "this account is suspended");
+    }
+    if (caller.role === "agent") {
+      return deny3(
+        "insufficient_role",
+        "composing a broadcast is a supervisor's decision"
+      );
+    }
+    if (caller.role !== "master_admin" && !caller.regionIds.includes(regionId)) {
+      return deny3("wrong_region", "this broadcast belongs to another region");
+    }
+    return ALLOW3;
+  }
+  function canApproveBroadcast(caller, broadcast) {
+    const may = canComposeBroadcast(caller, broadcast.regionId);
+    if (!may.allowed) return may;
+    const actorId = caller.kind === "user" ? caller.id : "";
+    if (broadcast.status !== "review") {
+      return deny3(
+        "not_in_review",
+        `a broadcast is approved from review, and this one is ${broadcast.status}`
+      );
+    }
+    if (broadcast.resolvedAt === null) {
+      return deny3(
+        "not_resolved",
+        "the audience has not been resolved, so there is no list to approve"
+      );
+    }
+    if ((broadcast.resolvedCount ?? 0) === 0) {
+      return deny3(
+        "nothing_to_send",
+        "the audience resolved to nobody; check the filters and the opt-in rule"
+      );
+    }
+    if (broadcast.createdBy === actorId) {
+      return deny3(
+        "own_broadcast",
+        "a broadcast is approved by somebody other than its author; ask a colleague to read it"
+      );
+    }
+    return ALLOW3;
+  }
+  function canSendBroadcast(input) {
+    const may = canComposeBroadcast(input.caller, input.broadcast.regionId);
+    if (!may.allowed) return may;
+    if (!input.sendingEnabled) {
+      return deny3(
+        "sending_disabled",
+        "broadcast sending is switched off for this deployment"
+      );
+    }
+    const { status } = input.broadcast;
+    if (status === "sent" || status === "cancelled") {
+      return deny3("already_finished", `this broadcast is already ${status}`);
+    }
+    if (status !== "approved" && status !== "paused") {
+      return deny3(
+        "not_approved",
+        `a broadcast is sent once approved, and this one is ${status}`
+      );
+    }
+    if (input.broadcast.approvedBy === null) {
+      return deny3("not_approved", "this broadcast has not been approved");
+    }
+    return ALLOW3;
+  }
+  function canStopBroadcast(caller, broadcast) {
+    const may = canComposeBroadcast(caller, broadcast.regionId);
+    if (!may.allowed) return may;
+    if (broadcast.status === "sent" || broadcast.status === "cancelled") {
+      return deny3(
+        "already_finished",
+        `this broadcast is already ${broadcast.status}`
+      );
+    }
+    return ALLOW3;
+  }
+  var TRANSITIONS = {
+    draft: ["review", "cancelled"],
+    review: ["draft", "approved", "cancelled"],
+    approved: ["sending", "draft", "cancelled"],
+    sending: ["paused", "sent", "cancelled"],
+    paused: ["sending", "cancelled"],
+    sent: [],
+    cancelled: []
+  };
+  function canTransition(from, to) {
+    if ((TRANSITIONS[from] ?? []).includes(to)) return ALLOW3;
+    return deny3("bad_transition", `a broadcast cannot go from ${from} to ${to}`);
+  }
+  var APPROVAL_VOIDING_FIELDS = [
+    "audience",
+    "templateName",
+    "languageCode",
+    "components",
+    "kind"
+  ];
+  function voidsApproval(changedFields) {
+    return changedFields.some(
+      (field) => APPROVAL_VOIDING_FIELDS.includes(field)
+    );
+  }
+  var RESOLUTION_FRESHNESS_HOURS = 48;
+  function resolutionIsFresh(resolvedAt, now, hours = RESOLUTION_FRESHNESS_HOURS) {
+    if (!resolvedAt) return false;
+    const at = Date.parse(resolvedAt);
+    if (!Number.isFinite(at)) return false;
+    const age = (now.getTime() - at) / 36e5;
+    return age >= 0 && age < hours;
+  }
+  function checkReadyToSend(input) {
+    const may = canSendBroadcast(input);
+    if (!may.allowed) return may;
+    const resuming = input.broadcast.startedAt !== null;
+    if (!resuming && !resolutionIsFresh(input.broadcast.resolvedAt, input.now)) {
+      return deny3(
+        "stale_resolution",
+        `the audience was resolved more than ${RESOLUTION_FRESHNESS_HOURS} hours ago; resolve it again before starting`
+      );
+    }
+    return ALLOW3;
+  }
+  function canResolveAudience(caller, broadcast) {
+    const may = canComposeBroadcast(caller, broadcast.regionId);
+    if (!may.allowed) return may;
+    if (broadcast.startedAt !== null) {
+      return deny3(
+        "already_finished",
+        "this broadcast has started sending; its audience can no longer be changed"
+      );
+    }
+    if (broadcast.status === "sent" || broadcast.status === "cancelled") {
+      return deny3(
+        "already_finished",
+        `this broadcast is already ${broadcast.status}`
+      );
+    }
+    return ALLOW3;
+  }
+  return __toCommonJS(entry_exports);
+})();
+
+			/* ------------------------------------------- the engine, unpacked */
+
+			/*
+			 * The platform's code is bundled above under one global, ENGINE, so
+			 * that each module keeps its own scope. Several of them declare a
+			 * private `ALLOW` or `deny`, and running them all into one scope —
+			 * which is what this build used to do — is a SyntaxError that takes
+			 * the whole page down.
+			 *
+			 * The names this shell calls directly are unpacked here, so the rest
+			 * of the file reads as it did. Everything added later reaches through
+			 * `ENGINE.` on purpose: it makes it obvious, at the call site, which
+			 * decisions belong to the platform and which belong to the screen.
+			 *
+			 * `render` is deliberately NOT unpacked. The bot runtime exports one
+			 * (it fills {{slots}} in a bot message) and this shell has its own
+			 * for drawing the page. The bot's is reached as ENGINE.render.
+			 */
+			const {
+				CONVERSATION_FIRST_RESPONSE_MINUTES,
+				LEAD_STAGES,
+				MILESTONES,
+				QUOTATION_STATUSES,
+				addBusinessMinutes,
+				assertLeadTransition,
+				assertMilestoneAdvance,
+				assertQuotationTransition,
+				buildAutoReply,
+				buildRef,
+				canAdvanceLead,
+				canAdvanceMilestone,
+				canMoveQuotation,
+				checkStall,
+				classifyIntent,
+				findRegionById,
+				isBreached,
+				isDelivered,
+				isLeadOpen,
+				isWithinBusinessHours,
+				leadStageForQuotation,
+				normaliseRef,
+				outcomeFor,
+				parseRegionConfig,
+				remainingMs,
+				shouldNotifyCustomer,
+				templateForMilestone,
+				ticketDueDates,
+				ticketTypeFor,
+			} = ENGINE;
 
 			/* ==================================================================
 			 * Everything above this line is the platform's own code.
@@ -1908,8 +4294,18 @@ function templateForMilestone(milestone) {
 			 * exactly as it would on the Worker.
 			 */
 			const REGION_NUMBERS_JSON =
-				'[{"id":"uae","label":"UAE","phoneNumberId":"100000000000001","displayNumber":"+971800916","timezone":"Asia/Dubai","language":"en","businessHours":{"days":[0,1,2,3,4],"start":"08:00","end":"18:00"}},{"id":"ksa","label":"KSA","phoneNumberId":"100000000000002","displayNumber":"+966548454866","timezone":"Asia/Riyadh","language":"ar","businessHours":{"days":[0,1,2,3,4],"start":"09:00","end":"18:00"}},{"id":"uk","label":"UK","phoneNumberId":"100000000000003","displayNumber":"+447388800000","timezone":"Europe/London","language":"en","businessHours":{"days":[1,2,3,4,5],"start":"09:00","end":"17:00"}}]';
+				'[{"id":"uae","label":"UAE","phoneNumberId":"100000000000001","displayNumber":"+971800916","timezone":"Asia/Dubai","language":"en","businessHours":{"days":[0,1,2,3,4,5,6],"start":"08:00","end":"23:00"}},{"id":"ksa","label":"KSA","phoneNumberId":"100000000000002","displayNumber":"+966548454866","timezone":"Asia/Riyadh","language":"ar","businessHours":{"days":[0,1,2,3,4,5,6],"start":"08:00","end":"23:00"}},{"id":"uk","label":"UK","phoneNumberId":"100000000000003","displayNumber":"+447388800000","timezone":"Europe/London","language":"en","businessHours":{"days":[0,1,2,3,4,5,6],"start":"08:00","end":"23:00"}}]';
 
+			/*
+			 * The hours above are the confirmed ones: the WhatsApp desk is covered
+			 * all seven days, 08:00 to 23:00 local, in all three regions. They are
+			 * NOT the office week — the offices work UAE and KSA Sunday to
+			 * Thursday and UK Monday to Friday — and putting the office week here
+			 * would make this page tell a different story from the platform.
+			 *
+			 * The phone number ids are invented. The real ones are supplied at
+			 * go-live; they only have to be distinct here so the config parses.
+			 */
 			const REGIONS = parseRegionConfig(REGION_NUMBERS_JSON);
 
 			const SERVICE_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -1917,11 +4313,17 @@ function templateForMilestone(milestone) {
 			const AGENT_NAME = "Mariam (agent)";
 
 			const VIEWS = [
+				["dashboard", "Dashboard"],
 				["inbox", "Inbox"],
+				["contacts", "Contacts"],
 				["leads", "Leads & quotations"],
 				["tickets", "Tickets"],
 				["bookings", "Bookings"],
 				["calls", "Calls"],
+				["bot", "Bot"],
+				["broadcasts", "Broadcasts"],
+				["chat", "Team chat"],
+				["setup", "Setup"],
 				["overview", "Overview"],
 			];
 
@@ -1985,7 +4387,7 @@ function templateForMilestone(milestone) {
 					const raw = window.localStorage.getItem(STORAGE_KEY);
 					if (!raw) return null;
 					const parsed = JSON.parse(raw);
-					return parsed && parsed.version === 1 ? parsed : null;
+					return parsed && parsed.version === 2 ? parsed : null;
 				} catch {
 					return null;
 				}
@@ -2006,11 +4408,50 @@ function templateForMilestone(milestone) {
 			function seed() {
 				const t = (iso) => iso;
 				const s = {
-					version: 1,
+					version: 2,
 					regionId: "uae",
 					view: "inbox",
 					selectedConversationId: null,
 					presence: { uae: true, ksa: true, uk: false },
+					// The people the Setup screen administers. Two active
+					// administrators, so the lockout guard can be demonstrated by
+					// removing one and then trying to remove the other.
+					staff: [
+						{
+							id: "usr_hakkeem",
+							displayName: "Hakkeem M",
+							email: "hakkeem@abccargo.ae",
+							role: "master_admin",
+							status: "active",
+						},
+						{
+							id: "usr_mariam",
+							displayName: "Mariam",
+							email: "mariam@abccargo.ae",
+							role: "master_admin",
+							status: "active",
+						},
+						{
+							id: "usr_aziz",
+							displayName: "Abdulaziz",
+							email: "aziz@abccargo.ae",
+							role: "team_lead",
+							status: "active",
+						},
+						{
+							id: "usr_omar",
+							displayName: "Omar",
+							email: "omar@abccargo.ae",
+							role: "agent",
+							status: "active",
+						},
+					],
+					botScript: null,
+					broadcastKind: "marketing",
+					broadcastRule: { notBookedWithinDays: 90 },
+					broadcastStatus: "draft",
+					broadcastResolvedAt: null,
+					broadcastApprovedBy: null,
 					seq: { lead: 1204, quotation: 860, ticket: 482, booking: 88210 },
 					customers: [
 						{
@@ -2022,6 +4463,7 @@ function templateForMilestone(milestone) {
 							email: "rashid@example.invalid",
 							regionId: "uae",
 							accountType: "trade",
+							optInMarketing: true,
 							createdAt: t("2019-04-01T00:00:00Z"),
 						},
 						{
@@ -2033,6 +4475,10 @@ function templateForMilestone(milestone) {
 							email: "aziz@example.invalid",
 							regionId: "ksa",
 							accountType: "trade",
+							// Has not agreed to marketing. A marketing broadcast
+							// records this as a skip with a reason rather than
+							// quietly leaving them out of the count.
+							optInMarketing: false,
 							createdAt: t("2022-02-01T00:00:00Z"),
 						},
 						{
@@ -2664,7 +5110,7 @@ function templateForMilestone(milestone) {
 					),
 				);
 				save();
-				render();
+				renderApp();
 			}
 
 			function sendTemplate(convId, templateName) {
@@ -2692,7 +5138,7 @@ function templateForMilestone(milestone) {
 					),
 				);
 				save();
-				render();
+				renderApp();
 				toast(`Template ${templateName} sent.`);
 			}
 
@@ -2732,7 +5178,7 @@ function templateForMilestone(milestone) {
 					),
 				);
 				save();
-				render();
+				renderApp();
 			}
 
 			function quoteLead(leadId) {
@@ -2781,7 +5227,7 @@ function templateForMilestone(milestone) {
 					),
 				);
 				save();
-				render();
+				renderApp();
 				toast(`${q.ref} drafted against ${lead.ref}.`);
 			}
 
@@ -2867,7 +5313,7 @@ function templateForMilestone(milestone) {
 					toast(`${booking.ref} created from ${q.ref}.`);
 				}
 				save();
-				render();
+				renderApp();
 			}
 
 			function advanceMilestone(bookingId, to) {
@@ -2923,7 +5369,7 @@ function templateForMilestone(milestone) {
 					}
 				}
 				save();
-				render();
+				renderApp();
 			}
 
 			function ticketAction(ticketId, action) {
@@ -2965,7 +5411,7 @@ function templateForMilestone(milestone) {
 					),
 				);
 				save();
-				render();
+				renderApp();
 			}
 
 			function logCall(customerId, direction, seconds, outcome) {
@@ -2996,7 +5442,7 @@ function templateForMilestone(milestone) {
 					),
 				);
 				save();
-				render();
+				renderApp();
 				toast("Call logged on the customer timeline.");
 			}
 
@@ -3085,16 +5531,22 @@ function templateForMilestone(milestone) {
 
 			/* ------------------------------------------------------------- render */
 
-			function render() {
+			function renderApp() {
 				renderTopbar();
 				renderTabs();
 				const main = document.getElementById("main");
 				const view = state.view;
-				if (view === "inbox") main.innerHTML = viewInbox();
+				if (view === "dashboard") main.innerHTML = viewDashboard();
+				else if (view === "inbox") main.innerHTML = viewInbox();
+				else if (view === "contacts") main.innerHTML = viewContacts();
 				else if (view === "leads") main.innerHTML = viewLeads();
 				else if (view === "tickets") main.innerHTML = viewTickets();
 				else if (view === "bookings") main.innerHTML = viewBookings();
 				else if (view === "calls") main.innerHTML = viewCalls();
+				else if (view === "bot") main.innerHTML = viewBot();
+				else if (view === "broadcasts") main.innerHTML = viewBroadcasts();
+				else if (view === "chat") main.innerHTML = viewChat();
+				else if (view === "setup") main.innerHTML = viewSetup();
 				else main.innerHTML = viewOverview();
 
 				const thread = document.getElementById("thread");
@@ -3666,6 +6118,603 @@ function templateForMilestone(milestone) {
 				</div>`;
 			}
 
+			/* --------------------------------- helpers for the newer screens */
+
+			/** The last thing the customer said, whichever way it was recorded. */
+			function lastInboundAt(c) {
+				if (c.lastInboundAt) return c.lastInboundAt;
+				const last = [...c.messages].reverse().find((m) => m.direction === "in");
+				return last ? last.at : null;
+			}
+
+			/** The customer has spoken since we last did. */
+			function isUnanswered(c) {
+				if (c.status === "resolved") return false;
+				const msgs = [...c.messages].reverse();
+				const lastIn = msgs.find((m) => m.direction === "in");
+				if (!lastIn) return false;
+				const lastOut = msgs.find((m) => m.direction === "out");
+				return !lastOut || Date.parse(lastOut.at) < Date.parse(lastIn.at);
+			}
+
+			function customerFor(conversation) {
+				return customerById(conversation.customerId);
+			}
+
+			/*
+			 * The lifecycle stage is derived by the platform from what the customer
+			 * has actually done, not stored on a record somebody has to remember to
+			 * update. This gathers the facts and hands them to ENGINE.lifecycleFor.
+			 */
+			function lifecycleOf(customer) {
+				const theirConversation = state.conversations.find(
+					(c) => c.customerId === customer.id,
+				);
+				return ENGINE.lifecycleFor(
+					{
+						leads: state.leads
+							.filter((l) => l.customerId === customer.id)
+							.map((l) => ({ stage: l.stage, updatedAt: l.updatedAt })),
+						quotations: state.quotations
+							.filter((q) => q.customerId === customer.id)
+							.map((q) => ({ status: q.status, updatedAt: q.updatedAt })),
+						bookings: state.bookings
+							.filter((b) => b.customerId === customer.id)
+							.map((b) => ({ milestone: b.milestone, createdAt: b.createdAt })),
+						lastInboundAt: theirConversation
+							? lastInboundAt(theirConversation)
+							: null,
+					},
+					now(),
+				);
+			}
+
+			/* ----------------------------------------------------- view: dashboard */
+
+			/*
+			 * Everything on this screen that says "open", "closes in" or "today"
+			 * comes from ENGINE.officeState and ENGINE.regionalDay, which is the
+			 * same code the real dashboard route runs. The three regions are read
+			 * in their own hours, which is why they do not agree.
+			 */
+			function viewDashboard() {
+				const me = "Hakkeem M";
+				const greet = ENGINE.greeting({
+					displayName: me,
+					now: now(),
+					timezone: currentRegion().timezone,
+				});
+
+				const strip = REGIONS.map((r) => {
+					const o = ENGINE.officeState(r, now());
+					const day = ENGINE.regionalDay(now(), r.timezone);
+					const convs = state.conversations.filter((c) => c.regionId === r.id);
+					const unanswered = convs.filter((c) => isUnanswered(c));
+					const todayIn = convs.reduce(
+						(n, c) =>
+							n +
+							c.messages.filter(
+								(m) =>
+									m.direction === "in" &&
+									m.at >= day.from &&
+									m.at < day.to,
+							).length,
+						0,
+					);
+					const openTickets = state.tickets.filter(
+						(t) =>
+							t.regionId === r.id &&
+							(t.status === "open" || t.status === "pending"),
+					);
+					const breaching = openTickets.filter(
+						(t) =>
+							(!t.firstResponseAt && isBreached(t.firstResponseDueAt, now())) ||
+							isBreached(t.resolutionDueAt, now()),
+					);
+					return `<section class="card">
+						<h2>${esc(r.label)} <span class="mono muted" style="font-size:11.5px">${esc(r.displayNumber)}</span></h2>
+						<div style="display:flex;align-items:center;gap:8px;margin:2px 0 10px">
+							<span class="pill ${o.open ? "pill-open" : "pill-closed"}">${o.open ? "Open" : "Closed"}</span>
+							<span class="mono" style="font-size:13px">${esc(o.localTime)}</span>
+							<span class="muted" style="font-size:12px">${esc(o.nextChange ?? "")} in ${esc(ENGINE.describeMinutes(o.changesInMinutes))}</span>
+						</div>
+						<div class="stats" style="grid-template-columns:repeat(2,1fr)">
+							<div class="stat"><div class="n">${unanswered.length}</div><div class="l">Waiting on us</div><div class="h">${convs.length} open in total</div></div>
+							<div class="stat"><div class="n">${todayIn}</div><div class="l">Inbound today</div><div class="h">${esc(r.timezone)} day</div></div>
+							<div class="stat"><div class="n">${openTickets.length}</div><div class="l">Open tickets</div><div class="h">${breaching.length} past target</div></div>
+							<div class="stat"><div class="n">${state.presence[r.id] ? 1 : 0}</div><div class="l">Agents online</div><div class="h">${state.presence[r.id] ? "cover" : "nobody on"}</div></div>
+						</div>
+					</section>`;
+				}).join("");
+
+				const attention = state.conversations
+					.filter((c) => isUnanswered(c))
+					.map((c) => ({
+						c,
+						mins: Math.floor((now().getTime() - Date.parse(lastInboundAt(c))) / 60000),
+					}))
+					.sort((a, b) => b.mins - a.mins)
+					.slice(0, 8);
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>${esc(greet)}</h2>
+						<p class="muted" style="margin:2px 0 0">
+							Greeted in ${esc(currentRegion().label)} hours. A dashboard answers
+							what needs doing now; the reports answer how we did. An agent sees
+							this screen and not those.
+						</p>
+					</section>
+					<div class="grid2" style="grid-template-columns:repeat(3,1fr)">${strip}</div>
+					<section class="card">
+						<h2>Needs somebody now</h2>
+						${
+							attention.length === 0
+								? `<p class="muted">Nobody is waiting.</p>`
+								: `<div class="tablewrap"><table>
+							<thead><tr><th>Customer</th><th>Number</th><th>Waiting</th><th></th></tr></thead>
+							<tbody>${attention
+								.map(
+									({ c, mins }) => `<tr>
+								<td>${esc(customerFor(c)?.displayName ?? c.waId)}</td>
+								<td><span class="dot dot-${esc(c.regionId)}" style="display:inline-block;margin-right:6px"></span>${esc(findRegionById(REGIONS, c.regionId)?.label ?? c.regionId)}</td>
+								<td class="mono">${esc(ENGINE.describeMinutes(mins))}</td>
+								<td><button type="button" class="ghost" data-open-conv="${esc(c.id)}">Open</button></td>
+							</tr>`,
+								)
+								.join("")}</tbody></table></div>`
+						}
+					</section>
+				</div>`;
+			}
+
+			/* ----------------------------------------------------------- view: bot */
+
+			/*
+			 * The preview runs ENGINE.previewFlow, which calls the same runTurn a
+			 * live message goes through. It is not a second walk of the step graph:
+			 * if it were, it would drift, and a flow would behave one way here and
+			 * another in front of a customer.
+			 */
+			function viewBot() {
+				const region = currentRegion();
+				const starter = ENGINE.buildStarterFlow({ id: region.id, label: region.label });
+				const flow = {
+					id: "demo",
+					regionId: region.id,
+					name: starter.name,
+					version: 1,
+					status: "published",
+					entryStepId: starter.entryStepId,
+					steps: starter.steps,
+				};
+				const check = ENGINE.validateFlow(flow);
+				const errors = check.problems.filter((p) => p.severity === "error");
+				const warnings = check.problems.filter((p) => p.severity === "warning");
+
+				const script = state.botScript ?? DEFAULT_BOT_SCRIPT;
+				const messages = script
+					.split("\n")
+					.map((line) => line.trim())
+					.filter(Boolean)
+					.map((text) => ({
+						text,
+						facts: {
+							contactName: "Rashid",
+							references: ENGINE.extractTrackingNumbers(text),
+							booking: /088210/.test(text.replace(/[^0-9]/g, ""))
+								? { ref: "ABC-UAE-088210", milestone: "In transit" }
+								: null,
+						},
+					}));
+
+				let result = null;
+				try {
+					result = ENGINE.previewFlow({ flow, messages });
+				} catch (error) {
+					result = null;
+				}
+
+				const turns = (result?.turns ?? [])
+					.map(
+						(t) => `<div style="border-top:1px solid var(--rule-soft);padding:10px 0">
+						<div class="mono" style="font-size:12px;color:var(--ink-3)">customer</div>
+						<div style="margin:2px 0 8px">${esc(t.customer)}</div>
+						${t.replies
+							.map(
+								(r) =>
+									`<div class="bubble out" style="margin:4px 0"><div class="text">${esc(r)}</div></div>`,
+							)
+							.join("")}
+						${
+							t.effects.length
+								? `<div class="muted" style="font-size:12px;margin-top:6px">also: ${esc(
+										t.effects
+											.map((e) =>
+												e.kind === "handover"
+													? `hand to an agent (${e.reason})`
+													: e.kind === "open_ticket"
+														? `open a ${e.type} ticket`
+														: "open a lead",
+											)
+											.join(", "),
+									)}</div>`
+								: ""
+						}
+						<details style="margin-top:6px">
+							<summary class="muted" style="font-size:12px;cursor:pointer">why</summary>
+							<div class="mono" style="font-size:11.5px;color:var(--ink-3);padding-top:4px">
+								${t.trace.map((x) => esc(`${x.stepId} · ${x.kind} · ${x.note}`)).join("<br>")}
+							</div>
+						</details>
+					</div>`,
+					)
+					.join("");
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>${esc(region.label)} bot flow</h2>
+						<p class="muted" style="margin:2px 0 10px">
+							A starting point, <strong>not</strong> ABC Cargo's live Freshchat flow
+							for this number — those three have not been exported yet. The
+							machinery below is what will run them.
+						</p>
+						<div style="display:flex;gap:8px;flex-wrap:wrap">
+							<span class="pill ${errors.length ? "pill-closed" : "pill-open"}">
+								${errors.length ? `${errors.length} error${errors.length === 1 ? "" : "s"} — would be refused` : "Publishable"}
+							</span>
+							<span class="pill">${flow.steps.length} steps</span>
+							${warnings.length ? `<span class="pill">${warnings.length} warning${warnings.length === 1 ? "" : "s"}</span>` : ""}
+						</div>
+					</section>
+
+					<div class="grid2">
+						<section class="card">
+							<h2>Try a conversation</h2>
+							<p class="muted" style="margin:2px 0 8px">One customer message per line.</p>
+							<textarea id="botScript" rows="6" style="width:100%;font-family:inherit">${esc(script)}</textarea>
+							<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+								<button type="button" id="botRun">Run it</button>
+								<button type="button" class="ghost" id="botReset">Reset</button>
+							</div>
+							<p class="muted" style="font-size:12px;margin-top:8px">
+								Nothing is sent. The preview returns what the bot would say and
+								what it would ask the platform to do.
+							</p>
+						</section>
+						<section class="card">
+							<h2>What the customer would get</h2>
+							${turns || `<p class="muted">Add a message and run it.</p>`}
+							${
+								result?.handedOver
+									? `<p class="muted" style="font-size:12px;margin-top:8px">The conversation reached a person.</p>`
+									: ""
+							}
+						</section>
+					</div>
+				</div>`;
+			}
+
+			const DEFAULT_BOT_SCRIPT = [
+				"Hello",
+				"Where is my shipment ABC-UAE-088210",
+				"No, thank you",
+			].join("\n");
+
+			/* --------------------------------------------------- view: broadcasts */
+
+			/*
+			 * The audience rule is compiled by ENGINE.compileAudience, and the SQL
+			 * it produces is shown as-is. The point of showing it is the two
+			 * conditions nobody can switch off: the opt-out exclusion and the
+			 * missing-number exclusion are added by the compiler, not by the rule.
+			 */
+			function viewBroadcasts() {
+				const region = currentRegion();
+				const rule = state.broadcastRule ?? { notBookedWithinDays: 90 };
+				const kind = state.broadcastKind ?? "marketing";
+				const problems = ENGINE.validateAudience(rule);
+				const compiled = ENGINE.compileAudience({
+					regionId: region.id,
+					rule,
+					optedInOnly: kind === "marketing",
+					now: now(),
+				});
+
+				// Resolved against the demonstration's own customers, the same way
+				// the service does it: everyone the filters reach, with the
+				// marketing opt-in recorded as a skip rather than a silent drop.
+				const candidates = state.customers.filter((c) => c.regionId === region.id);
+				const audience = [];
+				const skipped = [];
+				for (const c of candidates) {
+					const booked = state.bookings.filter((b) => b.customerId === c.id);
+					const recent = booked.some(
+						(b) =>
+							now().getTime() - Date.parse(b.createdAt) <
+							(rule.notBookedWithinDays ?? 0) * 86400000,
+					);
+					if (rule.notBookedWithinDays !== undefined && recent) continue;
+					if (!c.waId) {
+						skipped.push([c, "no_wa_id"]);
+						continue;
+					}
+					if (kind === "marketing" && c.optInMarketing === false) {
+						skipped.push([c, "not_opted_in"]);
+						continue;
+					}
+					audience.push(c);
+				}
+
+				const bc = {
+					id: "bc_demo",
+					regionId: region.id,
+					status: state.broadcastStatus ?? "draft",
+					createdBy: "usr_hakkeem",
+					resolvedAt: state.broadcastResolvedAt ?? null,
+					resolvedCount: state.broadcastResolvedAt ? audience.length : null,
+					approvedBy: state.broadcastApprovedBy ?? null,
+					approvedAt: state.broadcastApprovedBy ? nowIso() : null,
+					startedAt: null,
+				};
+				const author = {
+					kind: "user",
+					id: "usr_hakkeem",
+					email: "h@abccargo.ae",
+					displayName: "Hakkeem M",
+					role: "master_admin",
+					status: "active",
+					regionIds: [region.id],
+					teamIds: [],
+				};
+				const colleague = { ...author, id: "usr_mariam", displayName: "Mariam" };
+
+				const selfApprove = ENGINE.canApproveBroadcast(author, bc);
+				const colleagueApprove = ENGINE.canApproveBroadcast(colleague, bc);
+				const send = ENGINE.checkReadyToSend({
+					caller: author,
+					broadcast: bc,
+					sendingEnabled: false,
+					now: now(),
+				});
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>Audience</h2>
+						<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px">
+							<label>Kind
+								<select id="bcKind">
+									<option value="marketing" ${kind === "marketing" ? "selected" : ""}>Marketing — needs opt-in</option>
+									<option value="service" ${kind === "service" ? "selected" : ""}>Service notice — does not</option>
+								</select>
+							</label>
+							<label>Not shipped within
+								<select id="bcDays">
+									${[30, 90, 180]
+										.map(
+											(d) =>
+												`<option value="${d}" ${rule.notBookedWithinDays === d ? "selected" : ""}>${d} days</option>`,
+										)
+										.join("")}
+								</select>
+							</label>
+						</div>
+						<p style="margin:0 0 8px">${esc(ENGINE.describeAudience(rule, kind === "marketing"))}</p>
+						${
+							problems.length
+								? `<p class="muted" style="color:var(--critical)">${esc(problems.map((p) => p.message).join("; "))}</p>`
+								: ""
+						}
+						<details>
+							<summary class="muted" style="font-size:12px;cursor:pointer">the query this produces</summary>
+							<pre class="mono" style="font-size:11px;white-space:pre-wrap;color:var(--ink-3);margin-top:6px">${esc(compiled.sql)}</pre>
+							<p class="muted" style="font-size:11.5px">
+								The opt-out exclusion and the missing-number exclusion are added
+								by the compiler, not by the rule. No audience can be written
+								without them.
+							</p>
+						</details>
+					</section>
+
+					<div class="grid2">
+						<section class="card">
+							<h2>Who would get it</h2>
+							<div class="stats" style="grid-template-columns:repeat(2,1fr)">
+								<div class="stat"><div class="n">${audience.length}</div><div class="l">Would be messaged</div></div>
+								<div class="stat"><div class="n">${skipped.length}</div><div class="l">Skipped, with a reason</div></div>
+							</div>
+							${
+								skipped.length
+									? `<div class="tablewrap" style="margin-top:8px"><table><tbody>${skipped
+											.map(
+												([c, why]) =>
+													`<tr><td>${esc(c.displayName)}</td><td class="mono muted">${esc(why)}</td></tr>`,
+											)
+											.join("")}</tbody></table></div>`
+									: ""
+							}
+						</section>
+
+						<section class="card">
+							<h2>Before it can go out</h2>
+							<p class="muted" style="margin:2px 0 10px">Status: <span class="pill">${esc(bc.status)}</span></p>
+							<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+								<button type="button" id="bcResolve">Resolve the audience</button>
+								<button type="button" class="ghost" id="bcReview">Send for review</button>
+								<button type="button" class="ghost" id="bcApproveSelf">Approve it myself</button>
+								<button type="button" class="ghost" id="bcApproveOther">Mariam approves</button>
+								<button type="button" class="ghost" id="bcSend">Send</button>
+								<button type="button" class="ghost" id="bcResetBroadcast">Reset</button>
+							</div>
+							<ul style="margin:0;padding-left:18px;line-height:1.7">
+								<li>Approve it myself — <strong>${selfApprove.allowed ? "allowed" : "refused"}</strong>${selfApprove.allowed ? "" : `: ${esc(selfApprove.message)}`}</li>
+								<li>Mariam approves — <strong>${colleagueApprove.allowed ? "allowed" : "refused"}</strong>${colleagueApprove.allowed ? "" : `: ${esc(colleagueApprove.message)}`}</li>
+								<li>Send now — <strong>${send.allowed ? "allowed" : "refused"}</strong>${send.allowed ? "" : `: ${esc(send.message)}`}</li>
+							</ul>
+							<p class="muted" style="font-size:12px;margin-top:10px">
+								Sending is switched off for this deployment, and a broadcast is
+								approved by somebody other than its author. Both refusals above
+								come from the platform's own rules.
+							</p>
+						</section>
+					</div>
+				</div>`;
+			}
+
+			/* ----------------------------------------------------- view: contacts */
+
+			function viewContacts() {
+				const cards = ENGINE.CUSTOMER_STAGES.map((stage) => {
+					const inStage = state.customers
+						.map((c) => ({ c, life: lifecycleOf(c) }))
+						.filter((x) => x.life.stage === stage)
+						.sort((a, b) => b.life.temperature - a.life.temperature);
+					return `<section class="card">
+						<h2>${esc(ENGINE.CUSTOMER_STAGE_LABELS[stage])} <span class="muted" style="font-weight:400">${inStage.length}</span></h2>
+						${
+							inStage.length === 0
+								? `<p class="muted" style="font-size:12px">—</p>`
+								: inStage
+										.map(
+											({ c, life }) => `<div style="padding:6px 0;border-top:1px solid var(--rule-soft)">
+								<div>${esc(c.displayName)}</div>
+								<div class="muted" style="font-size:11.5px">${esc(c.company ?? "")}</div>
+								<div class="mono" style="font-size:11.5px;color:var(--ink-3)">${esc(life.band)} · ${life.temperature}</div>
+							</div>`,
+										)
+										.join("")
+						}
+					</section>`;
+				}).join("");
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>Contacts</h2>
+						<p class="muted" style="margin:2px 0 0">
+							The stage is <strong>derived</strong>, not stored — from each
+							customer's leads, quotations and shipments. It cannot go stale,
+							and nobody has to remember to move a card.
+						</p>
+					</section>
+					<div class="grid2" style="grid-template-columns:repeat(4,1fr);align-items:start">${cards}</div>
+				</div>`;
+			}
+
+			/* --------------------------------------------------------- view: chat */
+
+			function viewChat() {
+				const thread = {
+					id: "thr_demo",
+					kind: "direct",
+					participantIds: ["usr_hakkeem", "usr_mariam"],
+				};
+				const person = (id, name, role) => ({
+					kind: "user",
+					id,
+					email: `${id}@abccargo.ae`,
+					displayName: name,
+					role,
+					status: "active",
+					regionIds: ["uae"],
+					teamIds: ["team_uae"],
+				});
+				const rows = [
+					["Hakkeem — in the thread", person("usr_hakkeem", "Hakkeem", "agent")],
+					["Mariam — in the thread", person("usr_mariam", "Mariam", "agent")],
+					["Omar — not in it", person("usr_omar", "Omar", "agent")],
+					["A master admin, not in it", person("usr_admin", "Admin", "master_admin")],
+					["The shipment system", { kind: "service", name: "shipment-system" }],
+				];
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>Team chat</h2>
+						<p class="muted" style="margin:2px 0 0">
+							The one part of the platform that crosses regions on purpose. What
+							governs a thread is membership: you are in it, or you are not.
+						</p>
+					</section>
+					<section class="card">
+						<h2>Who can read this thread</h2>
+						<div class="tablewrap"><table>
+							<thead><tr><th>Who</th><th>Read</th><th>Post</th></tr></thead>
+							<tbody>${rows
+								.map(([label, caller]) => {
+									const read = ENGINE.canReadThread(caller, thread);
+									const post = ENGINE.canPostToThread(caller, thread, "hello");
+									return `<tr>
+										<td>${esc(label)}</td>
+										<td>${read.allowed ? "yes" : `<span class="mono muted">${esc(read.reason)}</span>`}</td>
+										<td>${post.allowed ? "yes" : `<span class="mono muted">${esc(post.reason)}</span>`}</td>
+									</tr>`;
+								})
+								.join("")}</tbody>
+						</table></div>
+						<p class="muted" style="font-size:12px;margin-top:10px">
+							A master admin has no back door. They can add themselves, which
+							leaves a record; reading silently would not.
+						</p>
+					</section>
+				</div>`;
+			}
+
+			/* -------------------------------------------------------- view: setup */
+
+			function viewSetup() {
+				const admins = state.staff.filter(
+					(u) => u.role === "master_admin" && u.status === "active",
+				);
+				const adminIds = admins.map((u) => u.id);
+
+				const rows = state.staff
+					.map((u) => {
+						const demote = ENGINE.checkUserChange({
+							actingUserId: "usr_hakkeem",
+							targetUserId: u.id,
+							activeAdminIds: adminIds,
+							next: { role: "agent" },
+						});
+						const suspend = ENGINE.checkUserChange({
+							actingUserId: "usr_hakkeem",
+							targetUserId: u.id,
+							activeAdminIds: adminIds,
+							next: { status: "suspended" },
+						});
+						return `<tr>
+							<td>${esc(u.displayName)}<div class="mono muted" style="font-size:11.5px">${esc(u.email)}</div></td>
+							<td><span class="pill">${esc(u.role.replace(/_/g, " "))}</span></td>
+							<td>${demote.ok ? `<button type="button" class="ghost" data-demote="${esc(u.id)}">Make agent</button>` : `<span class="mono muted" title="${esc(demote.message)}">${esc(demote.reason)}</span>`}</td>
+							<td>${suspend.ok ? `<button type="button" class="ghost" data-suspend="${esc(u.id)}">Suspend</button>` : `<span class="mono muted" title="${esc(suspend.message)}">${esc(suspend.reason)}</span>`}</td>
+						</tr>`;
+					})
+					.join("");
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>People</h2>
+						<p class="muted" style="margin:2px 0 10px">
+							Signed in as Hakkeem M. The refusals below are the platform's, not
+							the screen's — a platform nobody can administer is recovered by
+							writing SQL against production.
+						</p>
+						<div class="tablewrap"><table>
+							<thead><tr><th>Person</th><th>Role</th><th>Demote</th><th>Suspend</th></tr></thead>
+							<tbody>${rows}</tbody>
+						</table></div>
+					</section>
+					<section class="card">
+						<h2>Try it</h2>
+						<p class="muted" style="margin:2px 0 0">
+							Make the other administrator an agent, then try to change yourself.
+							The last active administrator cannot be demoted or suspended, and
+							nobody can remove their own administrator role even when others
+							remain — a clearer message than one about counts.
+						</p>
+					</section>
+				</div>`;
+			}
+
+
 			/* ------------------------------------------------------ view: overview */
 
 			function viewOverview() {
@@ -3805,27 +6854,69 @@ function templateForMilestone(milestone) {
 			}
 
 			document.addEventListener("click", (event) => {
-				const t = event.target.closest("[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall]");
+				const t = event.target.closest("[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend]");
 				if (t) {
 					if (t.dataset.region) {
 						state.regionId = t.dataset.region;
 						state.selectedConversationId = null;
 						lastTrace = null;
 						save();
-						render();
+						renderApp();
 						return;
 					}
 					if (t.dataset.view) {
 						state.view = t.dataset.view;
 						save();
-						render();
+						renderApp();
 						return;
 					}
 					if (t.dataset.conv) {
 						state.selectedConversationId = t.dataset.conv;
 						lastTrace = null;
 						save();
-						render();
+						renderApp();
+						return;
+					}
+					// The dashboard's attention list jumps straight into the thread.
+					if (t.dataset.openConv) {
+						const conv = conversationById(t.dataset.openConv);
+						if (conv) state.regionId = conv.regionId;
+						state.selectedConversationId = t.dataset.openConv;
+						state.view = "inbox";
+						lastTrace = null;
+						save();
+						renderApp();
+						return;
+					}
+					// Setup: the guards have already decided whether the button is
+					// there at all, but they are asked again here. A screen that
+					// only hides a button is not an access rule.
+					if (t.dataset.demote || t.dataset.suspend) {
+						const targetId = t.dataset.demote || t.dataset.suspend;
+						const next = t.dataset.demote
+							? { role: "agent" }
+							: { status: "suspended" };
+						const check = ENGINE.checkUserChange({
+							actingUserId: "usr_hakkeem",
+							targetUserId: targetId,
+							activeAdminIds: state.staff
+								.filter((u) => u.role === "master_admin" && u.status === "active")
+								.map((u) => u.id),
+							next,
+						});
+						if (!check.ok) {
+							toast(check.message);
+							return;
+						}
+						const person = state.staff.find((u) => u.id === targetId);
+						if (person) Object.assign(person, next);
+						save();
+						renderApp();
+						toast(
+							`${person ? person.displayName : "That person"} is now ${
+								t.dataset.demote ? "an agent" : "suspended"
+							}.`,
+						);
 						return;
 					}
 					if (t.dataset.sample) {
@@ -3859,7 +6950,7 @@ function templateForMilestone(milestone) {
 					if (t.dataset.logcall) {
 						state.view = "calls";
 						save();
-						render();
+						renderApp();
 						return;
 					}
 				}
@@ -3886,7 +6977,7 @@ function templateForMilestone(milestone) {
 					}
 					lastTrace = receiveInbound(customerId, text);
 					state.selectedConversationId = lastTrace.conversationId;
-					render();
+					renderApp();
 					return;
 				}
 
@@ -3923,7 +7014,7 @@ function templateForMilestone(milestone) {
 				if (id === "presenceBtn") {
 					state.presence[state.regionId] = !state.presence[state.regionId];
 					save();
-					render();
+					renderApp();
 					toast(
 						state.presence[state.regionId]
 							? `${currentRegion().label} agents are now online.`
@@ -3942,7 +7033,119 @@ function templateForMilestone(milestone) {
 							`Clock moved to a time when ${currentRegion().label} is closed. Send a message now.`,
 						);
 					}
-					render();
+					renderApp();
+					return;
+				}
+
+				if (id === "botRun") {
+					const box = document.getElementById("botScript");
+					state.botScript = box ? box.value : null;
+					save();
+					renderApp();
+					return;
+				}
+
+				if (id === "botReset") {
+					state.botScript = null;
+					save();
+					renderApp();
+					return;
+				}
+
+				if (id === "bcResolve") {
+					// Resolving writes down exactly who will be messaged, and any
+					// approval given before it is void: the approval was of a
+					// particular list of people.
+					state.broadcastResolvedAt = nowIso();
+					state.broadcastApprovedBy = null;
+					if (state.broadcastStatus === "approved") {
+						state.broadcastStatus = "draft";
+					}
+					save();
+					renderApp();
+					toast("Audience resolved. Any approval given before now is void.");
+					return;
+				}
+
+				if (id === "bcReview" || id === "bcApproveSelf" || id === "bcApproveOther") {
+					const wanted = id === "bcReview" ? "review" : "approved";
+					const step = ENGINE.canTransition(state.broadcastStatus ?? "draft", wanted);
+					if (!step.allowed) {
+						toast(step.message);
+						return;
+					}
+					if (wanted === "approved") {
+						const who = id === "bcApproveSelf" ? "usr_hakkeem" : "usr_mariam";
+						const caller = {
+							kind: "user",
+							id: who,
+							email: "x@abccargo.ae",
+							displayName: who,
+							role: "master_admin",
+							status: "active",
+							regionIds: [state.regionId],
+							teamIds: [],
+						};
+						const may = ENGINE.canApproveBroadcast(caller, {
+							id: "bc_demo",
+							regionId: state.regionId,
+							status: state.broadcastStatus ?? "draft",
+							createdBy: "usr_hakkeem",
+							resolvedAt: state.broadcastResolvedAt,
+							resolvedCount: state.broadcastResolvedAt ? 1 : null,
+							approvedBy: null,
+							approvedAt: null,
+							startedAt: null,
+						});
+						if (!may.allowed) {
+							toast(may.message);
+							return;
+						}
+						state.broadcastApprovedBy = who;
+					}
+					state.broadcastStatus = wanted;
+					save();
+					renderApp();
+					return;
+				}
+
+				if (id === "bcSend") {
+					const may = ENGINE.checkReadyToSend({
+						caller: {
+							kind: "user",
+							id: "usr_hakkeem",
+							email: "h@abccargo.ae",
+							displayName: "Hakkeem",
+							role: "master_admin",
+							status: "active",
+							regionIds: [state.regionId],
+							teamIds: [],
+						},
+						broadcast: {
+							id: "bc_demo",
+							regionId: state.regionId,
+							status: state.broadcastStatus ?? "draft",
+							createdBy: "usr_hakkeem",
+							resolvedAt: state.broadcastResolvedAt,
+							resolvedCount: state.broadcastResolvedAt ? 1 : null,
+							approvedBy: state.broadcastApprovedBy,
+							approvedAt: state.broadcastApprovedBy ? nowIso() : null,
+							startedAt: null,
+						},
+						// Off, exactly as it is in the real configuration.
+						sendingEnabled: false,
+						now: now(),
+					});
+					toast(may.allowed ? "Would start sending." : may.message);
+					return;
+				}
+
+				if (id === "bcResetBroadcast") {
+					state.broadcastStatus = "draft";
+					state.broadcastResolvedAt = null;
+					state.broadcastApprovedBy = null;
+					save();
+					renderApp();
 					return;
 				}
 
@@ -3952,9 +7155,30 @@ function templateForMilestone(milestone) {
 					clockOffsetMs = 0;
 					state = seed();
 					save();
-					render();
+					renderApp();
 					toast("Demonstration reset.");
 					return;
+				}
+			});
+
+			document.addEventListener("change", (event) => {
+				const id = event.target.id;
+				if (id === "bcKind" || id === "bcDays") {
+					if (id === "bcKind") state.broadcastKind = event.target.value;
+					else {
+						state.broadcastRule = {
+							...(state.broadcastRule ?? {}),
+							notBookedWithinDays: Number(event.target.value),
+						};
+					}
+					// Changing who is messaged voids an approval, for the same
+					// reason the platform does it: otherwise the thing a second
+					// person read is not the thing that goes out.
+					state.broadcastResolvedAt = null;
+					state.broadcastApprovedBy = null;
+					if (state.broadcastStatus !== "draft") state.broadcastStatus = "draft";
+					save();
+					renderApp();
 				}
 			});
 
@@ -3993,12 +7217,21 @@ function templateForMilestone(milestone) {
 				activityId =
 					Math.max(...state.activities.map((a) => Number(a.id) || 0)) + 1;
 			}
-			render();
+			renderApp();
 
 			// The service clocks are the point, so they have to actually tick.
 			window.setInterval(() => {
-				if (state.view === "inbox" || state.view === "tickets" || state.view === "overview" || state.view === "bookings") {
-					render();
+				// The dashboard is included: its office countdowns and waiting times
+				// are the whole point of it, and a frozen clock on a screen that
+				// says "closes in 54 minutes" is worse than no clock.
+				if (
+					state.view === "dashboard" ||
+					state.view === "inbox" ||
+					state.view === "tickets" ||
+					state.view === "overview" ||
+					state.view === "bookings"
+				) {
+					renderApp();
 				} else {
 					renderTopbar();
 				}

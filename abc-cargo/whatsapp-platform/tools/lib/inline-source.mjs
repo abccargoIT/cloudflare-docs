@@ -9,42 +9,10 @@
  * changes with it.
  */
 
-import { readFileSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
-import ts from "typescript";
-
-/** Compiles one TypeScript file to JavaScript, erasing all type syntax. */
-function compile(root, relativePath) {
-	const source = readFileSync(join(root, relativePath), "utf8");
-	const output = ts.transpileModule(source, {
-		compilerOptions: {
-			target: ts.ScriptTarget.ES2022,
-			module: ts.ModuleKind.ESNext,
-			removeComments: false,
-		},
-		fileName: relativePath,
-	});
-	return output.outputText;
-}
-
-/**
- * Flattens compiled modules into one scope. Imports between them are dropped
- * because every name ends up in the same module; `export` keywords are
- * dropped for the same reason.
- */
-function flatten(javascript) {
-	return (
-		javascript
-			// import { a, b } from "./x.ts";  /  import "./x.ts";
-			.replace(/^\s*import\s[\s\S]*?from\s*["'][^"']+["']\s*;?\s*$/gm, "")
-			.replace(/^\s*import\s*["'][^"']+["']\s*;?\s*$/gm, "")
-			// export const / function / class ...
-			.replace(/^\s*export\s+(?=(const|let|var|function|class|async))/gm, "")
-			// export { a, b };
-			.replace(/^\s*export\s*\{[^}]*\}\s*;?\s*$/gm, "")
-			.replace(/^\s*export\s+default\s+/gm, "")
-	);
-}
+import { tmpdir } from "node:os";
+import { buildSync } from "esbuild";
 
 /**
  * Interface guard, prepended to every built page.
@@ -106,27 +74,82 @@ const INTERFACE_GUARD = `/*
  * Dependency order matters: each file may use names declared above it once the
  * import statements are removed.
  */
+/**
+ * Compiles `modules` (paths relative to `root`) into a single block of
+ * JavaScript, prefixed with a banner naming its provenance.
+ *
+ * Bundled with esbuild rather than concatenated. The previous approach erased
+ * the import and export keywords and ran every file into one scope, which
+ * worked while there were eight modules and stopped working at twenty-six:
+ * `auth/policy.ts`, `chat/policy.ts` and `broadcasts/policy.ts` each declare a
+ * private `const ALLOW`, and three `const ALLOW` declarations in one scope is a
+ * SyntaxError that takes the whole page down. Several other private helpers
+ * collide the same way.
+ *
+ * A bundler gives each module its own scope and renames what it has to, so
+ * adding a module can no longer break an unrelated one. The output is still
+ * the platform's own compiled source with nothing re-implemented by hand.
+ *
+ * Everything the page uses is reached through one global, `ENGINE`, which the
+ * entry point below exports. Anything not named there is not available to the
+ * page — which is a feature: it makes the page's dependency on the platform
+ * explicit rather than ambient.
+ */
 export function inlineModules(root, modules, rebuildCommand) {
-	const pieces = [];
-	for (const relativePath of modules) {
-		pieces.push(
-			`/* ---------- ${relativePath} ---------- */`,
-			flatten(compile(root, relativePath)).trim(),
-			"",
+	const dir = mkdtempSync(join(tmpdir(), "abc-engage-build-"));
+	try {
+		// An entry point that re-exports every module, so the bundle carries
+		// everything the page might reach for and nothing is tree-shaken away.
+		const entry = join(dir, "entry.ts");
+		writeFileSync(
+			entry,
+			modules
+				.map((m) => `export * from ${JSON.stringify(join(root, m))};`)
+				.join("\n"),
+			"utf8",
 		);
+
+		const result = buildSync({
+			entryPoints: [entry],
+			bundle: true,
+			format: "iife",
+			globalName: "ENGINE",
+			platform: "browser",
+			target: "es2022",
+			write: false,
+			legalComments: "none",
+			// Given inline so esbuild does not walk up to the documentation
+			// site's own tsconfig, which extends an Astro preset that is not
+			// installed here and produces a warning on every build.
+			tsconfigRaw: {
+				compilerOptions: { target: "es2022", useDefineForClassFields: false },
+			},
+			// Readable rather than minified: the page is a demonstration and
+			// somebody may well open it to check a rule for themselves.
+			minify: false,
+		});
+
+		const engine = [
+			INTERFACE_GUARD,
+			"",
+			result.outputFiles[0].text.trim(),
+		].join("\n");
+
+		const banner = [
+			"/*",
+			" * DO NOT EDIT THIS BLOCK.",
+			" * Compiled and bundled from the platform source by the build script:",
+			...modules.map((m) => ` *   ${m}`),
+			` * Rebuild with: ${rebuildCommand}`,
+			" *",
+			" * Everything is reached through the ENGINE global.",
+			" */",
+		].join("\n");
+
+		return { engine, banner, block: `${banner}\n\n${engine}` };
+	} finally {
+		rmSync(dir, { recursive: true, force: true });
 	}
-	const engine = [INTERFACE_GUARD, "", ...pieces].join("\n");
-
-	const banner = [
-		"/*",
-		" * DO NOT EDIT THIS BLOCK.",
-		" * Compiled from the platform source by the build script:",
-		...modules.map((m) => ` *   ${m}`),
-		` * Rebuild with: ${rebuildCommand}`,
-		" */",
-	].join("\n");
-
-	return { engine, banner, block: `${banner}\n\n${engine}` };
 }
 
 /**
