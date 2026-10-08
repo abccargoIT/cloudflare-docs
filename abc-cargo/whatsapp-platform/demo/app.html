@@ -1049,7 +1049,7 @@ var ENGINE = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../../../../../tmp/abc-engage-build-jsNYT6/entry.ts
+  // ../../../../../tmp/abc-engage-build-9PQ6IU/entry.ts
   var entry_exports = {};
   __export(entry_exports, {
     ACTIVITY_KINDS: () => ACTIVITY_KINDS,
@@ -4312,18 +4312,25 @@ var ENGINE = (() => {
 			const STORAGE_KEY = "abc-engage-demo-v1";
 			const AGENT_NAME = "Mariam (agent)";
 
+			/*
+			 * The wireframe's own navigation first — Inbox, Tickets, Contacts,
+			 * Deals, Reports, Bots, Setup — then the screens the platform has
+			 * that the package does not.
+			 */
 			const VIEWS = [
-				["dashboard", "Dashboard"],
 				["inbox", "Inbox"],
-				["contacts", "Contacts"],
-				["leads", "Leads & quotations"],
 				["tickets", "Tickets"],
+				["contacts", "Contacts"],
+				["deals", "Deals"],
+				["reports", "Reports"],
+				["bot", "Bots"],
+				["setup", "Setup"],
+				["dashboard", "Dashboard"],
+				["leads", "Leads & quotations"],
 				["bookings", "Bookings"],
 				["calls", "Calls"],
-				["bot", "Bot"],
 				["broadcasts", "Broadcasts"],
 				["chat", "Team chat"],
-				["setup", "Setup"],
 				["overview", "Overview"],
 			];
 
@@ -4446,6 +4453,8 @@ var ENGINE = (() => {
 							status: "active",
 						},
 					],
+					inboxFilter: "all",
+					selectedCustomerId: null,
 					botScript: null,
 					broadcastKind: "marketing",
 					broadcastRule: { notBookedWithinDays: 90 },
@@ -4583,6 +4592,10 @@ var ENGINE = (() => {
 							id: "conv_1",
 							customerId: "cus_971506621184",
 							regionId: "uae",
+							// The wireframe's inbox is omnichannel: one list with
+							// WhatsApp, email and calls in it, each thread naming the
+							// number or address it arrived on.
+							channel: "whatsapp",
 							status: "open",
 							assignedAgentId: AGENT_NAME,
 							lastInboundAt: hoursAgo(3),
@@ -4608,6 +4621,7 @@ var ENGINE = (() => {
 							id: "conv_2",
 							customerId: "cus_966507742201",
 							regionId: "ksa",
+							channel: "whatsapp",
 							status: "open",
 							assignedAgentId: null,
 							lastInboundAt: hoursAgo(1.2),
@@ -4617,6 +4631,47 @@ var ENGINE = (() => {
 							lastAutoReplyAt: null,
 							messages: [
 								msg("in", "تم التوصيل، شكراً لكم", hoursAgo(1.2)),
+							],
+						},
+						{
+							id: "conv_3",
+							customerId: "cus_447700900214",
+							regionId: "uk",
+							channel: "email",
+							status: "open",
+							assignedAgentId: null,
+							lastInboundAt: hoursAgo(14),
+							windowExpiresAt: null,
+							firstResponseDueAt: null,
+							firstResponseAt: null,
+							lastAutoReplyAt: null,
+							messages: [
+								msg(
+									"in",
+									"Re: Rate sheet Q4 — could you revise the LCL line for Manchester? The sailing we were quoted has moved.",
+									hoursAgo(14),
+								),
+							],
+						},
+						{
+							id: "conv_4",
+							customerId: "cus_971506621184",
+							regionId: "uae",
+							channel: "call",
+							status: "open",
+							assignedAgentId: null,
+							lastInboundAt: hoursAgo(3.5),
+							windowExpiresAt: null,
+							firstResponseDueAt: null,
+							firstResponseAt: null,
+							lastAutoReplyAt: null,
+							messages: [
+								msg(
+									"in",
+									"Missed call — callback requested about the customs charge on ABC-UAE-088210.",
+									hoursAgo(3.5),
+									{ kind: "call" },
+								),
 							],
 						},
 					],
@@ -5546,6 +5601,8 @@ var ENGINE = (() => {
 				else if (view === "bot") main.innerHTML = viewBot();
 				else if (view === "broadcasts") main.innerHTML = viewBroadcasts();
 				else if (view === "chat") main.innerHTML = viewChat();
+				else if (view === "deals") main.innerHTML = viewDeals();
+				else if (view === "reports") main.innerHTML = viewReports();
 				else if (view === "setup") main.innerHTML = viewSetup();
 				else main.innerHTML = viewOverview();
 
@@ -5611,18 +5668,93 @@ var ENGINE = (() => {
 
 			/* --------------------------------------------------------- view: inbox */
 
+			/*
+			 * The wireframe's inbox is omnichannel: one list with WhatsApp, email
+			 * and calls in it, filtered across the top. The filters are counts
+			 * rather than decoration — an agent picks "SLA at risk" to find the
+			 * two that matter, not to tidy the view.
+			 */
+			const CHANNEL_LABELS = {
+				whatsapp: "WhatsApp",
+				email: "Email",
+				call: "Call",
+			};
+
+			function channelOf(conv) {
+				return conv.channel || "whatsapp";
+			}
+
+			/*
+			 * Where the conversation arrived. The wireframe calls this out
+			 * specifically — "every thread names the WABA number it arrived on" —
+			 * because an agent replying on the wrong number is answering as the
+			 * wrong office.
+			 */
+			function arrivedOn(conv) {
+				const region = regionOf(conv.regionId);
+				const channel = channelOf(conv);
+				if (channel === "email") return `${region.label} support inbox`;
+				if (channel === "call") return `${region.label} switchboard`;
+				return region.displayNumber;
+			}
+
+			function inboxFilters(convs) {
+				const atRisk = convs.filter(
+					(c) => !c.firstResponseAt && c.firstResponseDueAt,
+				).length;
+				const unassigned = convs.filter((c) => !c.assignedAgentId).length;
+				const counts = {
+					all: convs.length,
+					whatsapp: convs.filter((c) => channelOf(c) === "whatsapp").length,
+					email: convs.filter((c) => channelOf(c) === "email").length,
+					call: convs.filter((c) => channelOf(c) === "call").length,
+					unassigned,
+					risk: atRisk,
+				};
+				const current = state.inboxFilter || "all";
+				const chip = (id, label) =>
+					`<button type="button" class="chip" data-inbox-filter="${esc(id)}" aria-pressed="${current === id}">${esc(label)} <span class="mono">${counts[id]}</span></button>`;
+				return `<div class="chips">
+					${chip("all", "All")}
+					${chip("whatsapp", "WhatsApp")}
+					${chip("email", "Email")}
+					${chip("call", "Calls")}
+					${chip("unassigned", "Unassigned")}
+					${chip("risk", "SLA at risk")}
+				</div>`;
+			}
+
+			function applyInboxFilter(convs) {
+				switch (state.inboxFilter) {
+					case "whatsapp":
+					case "email":
+					case "call":
+						return convs.filter((c) => channelOf(c) === state.inboxFilter);
+					case "unassigned":
+						return convs.filter((c) => !c.assignedAgentId);
+					case "risk":
+						return convs.filter(
+							(c) => !c.firstResponseAt && c.firstResponseDueAt,
+						);
+					default:
+						return convs;
+				}
+			}
+
 			function viewInbox() {
-				const convs = conversationsForRegion(state.regionId);
+				const all = conversationsForRegion(state.regionId);
+				const convs = applyInboxFilter(all);
 				let selected = conversationById(state.selectedConversationId);
 				if (!selected || selected.regionId !== state.regionId) {
-					selected = convs[0] || null;
+					selected = convs[0] || all[0] || null;
 					state.selectedConversationId = selected ? selected.id : null;
 				}
 
 				return `<div class="inbox">
 					<section class="card">
-						<h2>Conversations <small>${convs.length}</small></h2>
-						<div class="convlist">${convs.length ? convs.map(convRow).join("") : `<div class="empty">No conversations on this number yet.<br />Use the simulator to send one.</div>`}</div>
+						<h2>Conversations <small>${all.length}</small></h2>
+						${inboxFilters(all)}
+						<div class="convlist">${convs.length ? convs.map(convRow).join("") : `<div class="empty">Nothing matches this filter.</div>`}</div>
 					</section>
 
 					${
@@ -5650,9 +5782,15 @@ var ENGINE = (() => {
 				}
 				if (ticket) tags.push(`<span class="pill pill-brand">${esc(ticket.ref)}</span>`);
 				if (lead) tags.push(`<span class="pill pill-brand">${esc(lead.ref)}</span>`);
-				if (!windowOpen(conv)) {
+				// The window rule is WhatsApp's. An email or a call does not have
+				// one, and showing "window closed" against them would be telling
+				// an agent something untrue about the channel they are on.
+				if (channelOf(conv) === "whatsapp" && !windowOpen(conv)) {
 					tags.push('<span class="pill pill-closed">Window closed</span>');
 				}
+				tags.unshift(
+					`<span class="pill">${esc(CHANNEL_LABELS[channelOf(conv)] || "WhatsApp")}</span>`,
+				);
 				return `<button class="conv" type="button" data-conv="${esc(conv.id)}" aria-current="${conv.id === state.selectedConversationId}">
 					<span class="row1">
 						<span class="name">${esc(customer ? customer.displayName : conv.customerId)}</span>
@@ -5668,10 +5806,16 @@ var ENGINE = (() => {
 				const open = windowOpen(conv);
 				const region = regionOf(conv.regionId);
 
+				const channel = channelOf(conv);
+				// "Every thread names the WABA number it arrived on" — wireframe 1a,
+				// note 2. For email and calls it names the inbox or switchboard
+				// instead, and the 24-hour window is not mentioned at all, because
+				// that rule belongs to WhatsApp.
+				const where = `${region.label} · ${CHANNEL_LABELS[channel] || "WhatsApp"} · ${arrivedOn(conv)}`;
 				return `<section class="card">
 					<h2>
 						${esc(customer ? customer.displayName : "")}
-						<small>${esc(region.label)} · ${esc(region.displayNumber)} · ${open ? `window open, ${esc(countdown(conv.windowExpiresAt).text)} left` : "window closed"}</small>
+						<small>${esc(where)}${channel === "whatsapp" ? ` · ${open ? `window open, ${esc(countdown(conv.windowExpiresAt).text)} left` : "window closed"}` : ""}</small>
 					</h2>
 
 					<div class="thread" id="thread">
@@ -6123,7 +6267,7 @@ var ENGINE = (() => {
 			/** The last thing the customer said, whichever way it was recorded. */
 			function lastInboundAt(c) {
 				if (c.lastInboundAt) return c.lastInboundAt;
-				const last = [...c.messages].reverse().find((m) => m.direction === "in");
+				const last = [...c.messages].reverse().find((m) => m.dir === "in");
 				return last ? last.at : null;
 			}
 
@@ -6131,9 +6275,9 @@ var ENGINE = (() => {
 			function isUnanswered(c) {
 				if (c.status === "resolved") return false;
 				const msgs = [...c.messages].reverse();
-				const lastIn = msgs.find((m) => m.direction === "in");
+				const lastIn = msgs.find((m) => m.dir === "in");
 				if (!lastIn) return false;
-				const lastOut = msgs.find((m) => m.direction === "out");
+				const lastOut = msgs.find((m) => m.dir === "out");
 				return !lastOut || Date.parse(lastOut.at) < Date.parse(lastIn.at);
 			}
 
@@ -6195,7 +6339,7 @@ var ENGINE = (() => {
 							n +
 							c.messages.filter(
 								(m) =>
-									m.direction === "in" &&
+									m.dir === "in" &&
 									m.at >= day.from &&
 									m.at < day.to,
 							).length,
@@ -6351,6 +6495,42 @@ var ENGINE = (() => {
 					)
 					.join("");
 
+				/*
+				 * Wireframe 1f draws a block palette and a canvas. The platform's
+				 * step kinds are shown in that vocabulary so the two can be read
+				 * against each other, and where they do not correspond it says so
+				 * rather than inventing a block.
+				 */
+				const BLOCK_NAMES = {
+					message: "Send message",
+					ask: "Ask question",
+					menu: "Menu / buttons",
+					classify: "Condition · intent",
+					lookup: "API call · CRM/ERP",
+					create: "Create record",
+					handover: "Handover to agent",
+					end: "End",
+				};
+				const blocks = flow.steps
+					.map((step) => {
+						const detail =
+							step.kind === "menu"
+								? `${step.options.length} options`
+								: step.kind === "ask"
+									? `→ ${step.slot}`
+									: step.kind === "lookup"
+										? "shipment status"
+										: step.kind === "create"
+											? step.create
+											: "";
+						return `<div style="display:flex;gap:8px;align-items:baseline;padding:5px 0;border-top:1px solid var(--rule-soft)">
+							<span class="pill" style="min-width:140px">${esc(BLOCK_NAMES[step.kind] || step.kind)}</span>
+							<span class="mono" style="font-size:11.5px;color:var(--ink-3)">${esc(step.id)}</span>
+							<span class="muted" style="font-size:11.5px">${esc(detail)}</span>
+						</div>`;
+					})
+					.join("");
+
 				return `<div style="display:grid;gap:14px">
 					<section class="card">
 						<h2>${esc(region.label)} bot flow</h2>
@@ -6366,6 +6546,19 @@ var ENGINE = (() => {
 							<span class="pill">${flow.steps.length} steps</span>
 							${warnings.length ? `<span class="pill">${warnings.length} warning${warnings.length === 1 ? "" : "s"}</span>` : ""}
 						</div>
+					</section>
+
+					<section class="card">
+						<h2>Blocks in this flow</h2>
+						${blocks}
+						<p class="muted" style="font-size:12px;margin-top:10px">
+							The wireframe's palette also has <strong>Assign to group</strong>
+							and a <strong>fallback after 10 minutes</strong> to a second
+							tier, and a <strong>clone flow to another region</strong>
+							action. None of the three is built: the runtime hands over to a
+							queue but does not choose a group, has no timed fallback, and
+							flows are per region with no copy between them.
+						</p>
 					</section>
 
 					<div class="grid2">
@@ -6561,9 +6754,262 @@ var ENGINE = (() => {
 				</div>`;
 			}
 
+			/* ------------------------------------------- view: reports (wireframe 1e) */
+
+			/*
+			 * The supervisor dashboard from wireframe 1e. Its note says the
+			 * supervisor is the only role that sees across all three regions, so
+			 * this screen deliberately ignores the region switcher.
+			 *
+			 * Two figures the wireframe shows are missing on purpose: CSAT and bot
+			 * deflection. Nothing in the platform measures either yet — CSAT needs
+			 * a survey after resolution, deflection needs a definition of "resolved
+			 * by the bot alone". A plausible number nobody can trace is worse on a
+			 * management screen than an honest gap.
+			 */
+			function viewReports() {
+				const convs = state.conversations;
+				const atRisk = convs.filter(
+					(c) => !c.firstResponseAt && c.firstResponseDueAt,
+				);
+				const breached = atRisk.filter((c) => isBreached(c.firstResponseDueAt, now()));
+
+				const byRegion = REGIONS.map((r) => {
+					const mine = convs.filter((c) => c.regionId === r.id);
+					return {
+						region: r,
+						total: mine.length,
+						whatsapp: mine.filter((c) => channelOf(c) === "whatsapp").length,
+						email: mine.filter((c) => channelOf(c) === "email").length,
+						call: mine.filter((c) => channelOf(c) === "call").length,
+						waiting: mine.filter((c) => isUnanswered(c)).length,
+					};
+				});
+				const max = Math.max(1, ...byRegion.map((b) => b.total));
+
+				// First response, measured rather than asserted: the gap between the
+				// customer's first message and ours, for the conversations that have
+				// had one.
+				const answered = convs.filter((c) => c.firstResponseAt);
+				const avgFirst =
+					answered.length === 0
+						? null
+						: Math.round(
+								answered.reduce(
+									(n, c) =>
+										n +
+										(Date.parse(c.firstResponseAt) - Date.parse(c.lastInboundAt)),
+									0,
+								) /
+									answered.length /
+									60000,
+							);
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>Team performance <small>all regions</small></h2>
+						<p class="muted" style="margin:2px 0 0">
+							The supervisor is the only role that sees across all three
+							regions, so this screen ignores the region switcher.
+						</p>
+					</section>
+
+					<div class="stats">
+						<div class="stat"><div class="n">${convs.length}</div><div class="l">Conversations</div><div class="h">all channels</div></div>
+						<div class="stat"><div class="n">${avgFirst === null ? "—" : esc(ENGINE.describeMinutes(Math.abs(avgFirst)))}</div><div class="l">Avg first response</div><div class="h">target ${CONVERSATION_FIRST_RESPONSE_MINUTES}m</div></div>
+						<div class="stat"><div class="n">${breached.length}</div><div class="l">SLA breaches</div><div class="h">${atRisk.length} still at risk</div></div>
+						<div class="stat"><div class="n">—</div><div class="l">Bot deflection</div><div class="h">not measured yet</div></div>
+						<div class="stat"><div class="n">—</div><div class="l">CSAT</div><div class="h">no survey yet</div></div>
+					</div>
+
+					<div class="grid2">
+						<section class="card">
+							<h2>Volume by region and channel</h2>
+							<div class="tablewrap"><table>
+								<thead><tr><th>Region</th><th>WhatsApp</th><th>Email</th><th>Calls</th><th>Total</th><th></th></tr></thead>
+								<tbody>${byRegion
+									.map(
+										(b) => `<tr>
+										<td><span class="dot dot-${esc(b.region.id)}" style="display:inline-block;margin-right:6px"></span>${esc(b.region.label)}</td>
+										<td>${b.whatsapp}</td><td>${b.email}</td><td>${b.call}</td><td><strong>${b.total}</strong></td>
+										<td style="width:34%"><span style="display:block;height:8px;border-radius:999px;background:var(--brand);width:${Math.round((b.total / max) * 100)}%"></span></td>
+									</tr>`,
+									)
+									.join("")}</tbody>
+							</table></div>
+						</section>
+
+						<section class="card">
+							<h2>Live queue</h2>
+							<div class="tablewrap"><table>
+								<thead><tr><th>Region</th><th>Waiting on us</th><th>Unassigned</th></tr></thead>
+								<tbody>${byRegion
+									.map(
+										(b) => `<tr>
+										<td>${esc(b.region.label)}</td>
+										<td>${b.waiting}</td>
+										<td>${convs.filter((c) => c.regionId === b.region.id && !c.assignedAgentId).length}</td>
+									</tr>`,
+									)
+									.join("")}</tbody>
+							</table></div>
+							<p class="muted" style="font-size:12px;margin-top:10px">
+								The wireframe has a "Rebalance agents" action here. It is not
+								built: moving work between agents needs a rule for who gets
+								what, and that is a decision rather than a button.
+							</p>
+						</section>
+					</div>
+				</div>`;
+			}
+
+			/* --------------------------------------------- view: deals (wireframe 1d) */
+
+			/*
+			 * The pipeline from wireframe 1d. Its note is that each card shows the
+			 * channel it came from, "so pipeline and inbox stay one system" — which
+			 * is the only reason the channel is on the card at all.
+			 */
+			/*
+			 * The wireframe draws five columns. The platform has six stages: it
+			 * keeps "qualified" separate from "quoted", because a lead somebody
+			 * has spoken to is not the same as one that has had a price put to
+			 * it, and folding them hides the step where most deals stall.
+			 *
+			 * So the vocabulary is the wireframe's and the column count is the
+			 * platform's, which is a difference worth seeing rather than hiding.
+			 */
+			const DEAL_COLUMNS = [
+				["new", "New enquiry"],
+				["qualified", "Qualified"],
+				["quoted", "Quoted"],
+				["negotiating", "Negotiation"],
+				["won", "Won"],
+				["lost", "Lost"],
+			];
+
+			function viewDeals() {
+				const mine = state.leads.filter((l) => l.regionId === state.regionId);
+				const columns = DEAL_COLUMNS.map(([stage, label]) => {
+					const cards = mine.filter((l) => l.stage === stage);
+					const value = cards.reduce((n, l) => n + (l.estValue || 0), 0);
+					return `<section class="card">
+						<h2>${esc(label)} <small>${cards.length}${value ? ` · ${esc(String(value))}` : ""}</small></h2>
+						${
+							cards.length === 0
+								? `<p class="muted" style="font-size:12px">—</p>`
+								: cards
+										.map((l) => {
+											const customer = customerById(l.customerId);
+											const conv = state.conversations.find(
+												(c) => c.customerId === l.customerId,
+											);
+											return `<div style="padding:8px 0;border-top:1px solid var(--rule-soft)">
+										<div>${esc(l.origin || "")} → ${esc(l.destination || "")}</div>
+										<div class="muted" style="font-size:11.5px">${esc(customer ? customer.displayName : "")}</div>
+										<div style="margin-top:4px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+											<span class="pill">${esc(CHANNEL_LABELS[conv ? channelOf(conv) : "whatsapp"])}</span>
+											<span class="mono muted" style="font-size:11.5px">${esc(l.ref)}</span>
+											${l.estValue ? `<span class="mono" style="font-size:11.5px">${esc(l.currency || "")} ${esc(String(l.estValue))}</span>` : ""}
+										</div>
+									</div>`;
+										})
+										.join("")
+						}
+					</section>`;
+				}).join("");
+
+				return `<div style="display:grid;gap:14px">
+					<section class="card">
+						<h2>Pipeline · Freight Sales <small>${esc(currentRegion().label)}</small></h2>
+						<p class="muted" style="margin:2px 0 0">
+							Each card carries the channel it came from, so the pipeline and
+							the inbox stay one system rather than two lists about the same
+							customer.
+						</p>
+					</section>
+					<div class="grid2" style="grid-template-columns:repeat(6,1fr);align-items:start">${columns}</div>
+				</div>`;
+			}
+
+
 			/* ----------------------------------------------------- view: contacts */
 
+			/*
+			 * Contact 360 from wireframe 1c. Its note — "record ownership is
+			 * region-stamped, which is what enforces the agents-cannot-see-other-
+			 * agents-customers rule" — is the reason the region is stated on the
+			 * record rather than implied by which list it was opened from.
+			 */
+			function contact360(customer) {
+				const life = lifecycleOf(customer);
+				const convs = state.conversations.filter(
+					(c) => c.customerId === customer.id,
+				);
+				const tickets = state.tickets.filter((t) => t.customerId === customer.id);
+				const deals = state.leads.filter((l) => l.customerId === customer.id);
+				const shipments = state.bookings.filter(
+					(b) => b.customerId === customer.id,
+				);
+				const calls = state.calls.filter((c) => c.customerId === customer.id);
+
+				const timeline = [
+					...convs.flatMap((c) =>
+						c.messages.map((m) => [m.at, CHANNEL_LABELS[channelOf(c)], m.text]),
+					),
+					...deals.map((d) => [d.createdAt, "Deal", `${d.ref} ${d.origin || ""}→${d.destination || ""}`]),
+					...shipments.map((b) => [b.createdAt, "Shipment", `${b.ref} ${b.milestone}`]),
+					...calls.map((c) => [c.startedAt, "Call", c.outcome || ""]),
+				]
+					.filter(([at]) => at)
+					.sort((a, b) => Date.parse(b[0]) - Date.parse(a[0]))
+					.slice(0, 8);
+
+				return `<section class="card">
+					<h2>${esc(customer.displayName)} <small>${esc(customer.company || "")}</small></h2>
+					<div style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 10px">
+						<span class="pill">${esc(regionOf(customer.regionId).label)} only</span>
+						<span class="pill">${esc(life.label)}</span>
+						<span class="pill">${esc(life.band)} · ${life.temperature}</span>
+					</div>
+					<div class="stats" style="grid-template-columns:repeat(4,1fr)">
+						<div class="stat"><div class="n">${convs.length}</div><div class="l">Conversations</div></div>
+						<div class="stat"><div class="n">${tickets.filter((t) => t.status === "open" || t.status === "pending").length}</div><div class="l">Open tickets</div></div>
+						<div class="stat"><div class="n">${deals.filter((d) => isLeadOpen(d.stage)).length}</div><div class="l">Open deals</div></div>
+						<div class="stat"><div class="n">${shipments.length}</div><div class="l">Shipments</div></div>
+					</div>
+					<h2 style="margin-top:14px">Timeline — all channels</h2>
+					${
+						timeline.length === 0
+							? `<p class="muted" style="font-size:12px">Nothing recorded yet.</p>`
+							: timeline
+									.map(
+										([at, kind, text]) => `<div style="padding:6px 0;border-top:1px solid var(--rule-soft);display:flex;gap:10px">
+							<span class="pill" style="min-width:86px">${esc(kind)}</span>
+							<span style="flex:1">${esc(String(text).slice(0, 110))}</span>
+							<span class="mono muted" style="font-size:11.5px">${esc(ago(at))}</span>
+						</div>`,
+									)
+									.join("")
+					}
+					<p class="muted" style="font-size:12px;margin-top:10px">
+						The wireframe also shows the last five consignments read from the
+						ERP by API. That integration is an open decision, so nothing is
+						shown rather than something invented.
+					</p>
+				</section>`;
+			}
+
 			function viewContacts() {
+				const selected = state.selectedCustomerId
+					? customerById(state.selectedCustomerId)
+					: null;
+				if (selected) {
+					return `<div style="display:grid;gap:14px">
+						<button type="button" class="ghost" data-contact-back="1" style="justify-self:start">← All contacts</button>
+						${contact360(selected)}
+					</div>`;
+				}
 				const cards = ENGINE.CUSTOMER_STAGES.map((stage) => {
 					const inStage = state.customers
 						.map((c) => ({ c, life: lifecycleOf(c) }))
@@ -6576,7 +7022,7 @@ var ENGINE = (() => {
 								? `<p class="muted" style="font-size:12px">—</p>`
 								: inStage
 										.map(
-											({ c, life }) => `<div style="padding:6px 0;border-top:1px solid var(--rule-soft)">
+											({ c, life }) => `<div data-contact="${esc(c.id)}" role="button" tabindex="0" style="padding:6px 0;border-top:1px solid var(--rule-soft);cursor:pointer">
 								<div>${esc(c.displayName)}</div>
 								<div class="muted" style="font-size:11.5px">${esc(c.company ?? "")}</div>
 								<div class="mono" style="font-size:11.5px;color:var(--ink-3)">${esc(life.band)} · ${life.temperature}</div>
@@ -6660,6 +7106,83 @@ var ENGINE = (() => {
 
 			/* -------------------------------------------------------- view: setup */
 
+			/*
+			 * Setup, as wireframe 1g draws it. Its second note is the one that
+			 * matters: "Number → region → bot → team is the whole routing chain in
+			 * one table." That table is the first thing on the screen, because it
+			 * is the thing somebody checks before a cutover.
+			 */
+			function setupChannels() {
+				return `<section class="card">
+					<h2>WhatsApp Business numbers</h2>
+					<div class="tablewrap"><table>
+						<thead><tr><th>Number</th><th>Region</th><th>Routes to</th><th>Hours</th><th>Status</th></tr></thead>
+						<tbody>${REGIONS.map((r) => {
+							const days = r.businessHours.days.length;
+							return `<tr>
+								<td class="mono">${esc(r.displayNumber)}</td>
+								<td><span class="dot dot-${esc(r.id)}" style="display:inline-block;margin-right:6px"></span>${esc(r.label)}</td>
+								<td>${esc(r.label)} bot → ${esc(r.label)} Support</td>
+								<td class="mono" style="font-size:11.5px">${esc(r.businessHours.start)}–${esc(r.businessHours.end)} · ${days} day${days === 1 ? "" : "s"}<div class="muted">${esc(r.timezone)}</div></td>
+								<td><span class="pill pill-closed">Awaiting go-live</span></td>
+							</tr>`;
+						}).join("")}</tbody>
+					</table></div>
+					<p class="muted" style="font-size:12px;margin-top:10px">
+						The phone number id for each is supplied at go-live, after the
+						pre-cutover checks. Until then every number here is a placeholder
+						and nothing can be sent.
+					</p>
+				</section>`;
+			}
+
+			function setupSla() {
+				return `<section class="card">
+					<h2>Service targets</h2>
+					<div class="tablewrap"><table>
+						<thead><tr><th>Applies to</th><th>First response</th><th>Resolution</th></tr></thead>
+						<tbody>
+							<tr><td>Conversation, any channel</td><td class="mono">${CONVERSATION_FIRST_RESPONSE_MINUTES}m</td><td class="muted">—</td></tr>
+							${Object.entries(ENGINE.DEFAULT_TICKET_TARGETS)
+								.map(
+									([type, target]) => `<tr>
+								<td>${esc(titleCase(type))} ticket</td>
+								<td class="mono">${esc(String(target.firstResponseMinutes))}m</td>
+								<td class="mono">${esc(String(target.resolutionMinutes))}m</td>
+							</tr>`,
+								)
+								.join("")}
+						</tbody>
+					</table></div>
+					<p class="muted" style="font-size:12px;margin-top:10px">
+						Counted in <strong>business minutes</strong> on each region's own
+						calendar, not wall-clock. The wireframe sets targets per team
+						(UAE Support 5m/4h, UAE Sales 15m/1d); the platform sets them per
+						region and per ticket type. Per-team targets are not built.
+					</p>
+				</section>`;
+			}
+
+			function setupRoles() {
+				const rows = [
+					["Agent", "Own conversations only, own region", "Can take unclaimed work; no cross-agent visibility"],
+					["Team lead", "All queues in their region", "Reassign, escalate"],
+					["Master admin", "All three regions", "Channels, bots, users, keys, audit log"],
+				];
+				return `<section class="card">
+					<h2>Roles and visibility</h2>
+					<div class="tablewrap"><table>
+						<thead><tr><th>Role</th><th>Sees</th><th>Can do</th></tr></thead>
+						<tbody>${rows
+							.map(
+								([a, b, c]) =>
+									`<tr><td><span class="pill">${esc(a)}</span></td><td>${esc(b)}</td><td>${esc(c)}</td></tr>`,
+							)
+							.join("")}</tbody>
+					</table></div>
+				</section>`;
+			}
+
 			function viewSetup() {
 				const admins = state.staff.filter(
 					(u) => u.role === "master_admin" && u.status === "active",
@@ -6690,6 +7213,9 @@ var ENGINE = (() => {
 					.join("");
 
 				return `<div style="display:grid;gap:14px">
+					${setupChannels()}
+					${setupRoles()}
+					${setupSla()}
 					<section class="card">
 						<h2>People</h2>
 						<p class="muted" style="margin:2px 0 10px">
@@ -6854,7 +7380,7 @@ var ENGINE = (() => {
 			}
 
 			document.addEventListener("click", (event) => {
-				const t = event.target.closest("[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend]");
+				const t = event.target.closest("[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend],[data-inbox-filter],[data-contact],[data-contact-back]");
 				if (t) {
 					if (t.dataset.region) {
 						state.regionId = t.dataset.region;
@@ -6878,6 +7404,24 @@ var ENGINE = (() => {
 						return;
 					}
 					// The dashboard's attention list jumps straight into the thread.
+					if (t.dataset.contact) {
+						state.selectedCustomerId = t.dataset.contact;
+						save();
+						renderApp();
+						return;
+					}
+					if (t.dataset.contactBack) {
+						state.selectedCustomerId = null;
+						save();
+						renderApp();
+						return;
+					}
+					if (t.dataset.inboxFilter) {
+						state.inboxFilter = t.dataset.inboxFilter;
+						save();
+						renderApp();
+						return;
+					}
 					if (t.dataset.openConv) {
 						const conv = conversationById(t.dataset.openConv);
 						if (conv) state.regionId = conv.regionId;
