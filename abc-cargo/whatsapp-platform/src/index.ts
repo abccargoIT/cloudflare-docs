@@ -38,6 +38,8 @@ import { findRegionById, parseRegionConfig } from "./regions.ts";
 import { conversationIdFor, WindowClosedError } from "./conversation.ts";
 import { CrmService } from "./crm/service.ts";
 import { Reports, parseWindow } from "./crm/reports.ts";
+import { Contacts, isCustomerStage } from "./crm/contacts.ts";
+import { CUSTOMER_STAGES } from "./crm/customer-lifecycle.ts";
 import { InvalidTransitionError } from "./crm/lifecycle.ts";
 import {
 	LEAD_STAGES,
@@ -640,7 +642,8 @@ async function handleOperationsApi(
 	// These records are regional rather than personal: a pipeline each agent
 	// can only see their own slice of stops being a pipeline. So the region is
 	// the whole of the test here, unlike a conversation.
-	const scope = resolveRegionFilter(caller, url.searchParams.get("region"));
+	const requested = url.searchParams.get("region");
+	const scope = resolveRegionFilter(caller, requested);
 	if (scope !== null && scope.length === 0) return refuse("wrong_region");
 
 	/**
@@ -1047,6 +1050,59 @@ async function handleOperationsApi(
 			linkedId: body.linkedId,
 		});
 		return json({ ok: true }, 201);
+	}
+
+	/* -------------------------------------------------------------- contacts */
+
+	// GET /api/contacts?region=&q=&stage=&limit=
+	//
+	// The directory. Every row carries its derived lifecycle stage and
+	// temperature, so a list and a contact record cannot disagree.
+	if (resource === "contacts" && !id && request.method === "GET") {
+		const regionIds =
+			scope === null
+				? requested
+					? [requested]
+					: parseRegionConfig(env.REGION_NUMBERS).map((r) => r.id)
+				: scope;
+
+		const stageParam = url.searchParams.get("stage");
+		if (stageParam !== null && !isCustomerStage(stageParam)) {
+			return json(
+				{ error: `stage must be one of ${CUSTOMER_STAGES.join(", ")}` },
+				400,
+			);
+		}
+		const stage = stageParam === null ? null : stageParam;
+
+		const contacts = new Contacts(env.DB);
+		return json(
+			await contacts.list({
+				regionIds,
+				search: url.searchParams.get("q"),
+				stage,
+				limit,
+			}),
+		);
+	}
+
+	// GET /api/contacts/board?region=&per=
+	//
+	// The lifecycle board: one column per stage, warmest first within each.
+	if (resource === "contacts" && id === "board" && request.method === "GET") {
+		const regionIds =
+			scope === null
+				? requested
+					? [requested]
+					: parseRegionConfig(env.REGION_NUMBERS).map((r) => r.id)
+				: scope;
+
+		const contacts = new Contacts(env.DB);
+		return json(
+			await contacts.board(regionIds, {
+				perColumn: Number(url.searchParams.get("per") ?? "5"),
+			}),
+		);
 	}
 
 	/* --------------------------------------------------------------- reports */
