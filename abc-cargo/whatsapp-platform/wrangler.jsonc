@@ -23,6 +23,12 @@
 	// the D1 database (and its id filled in), the R2 bucket, and both queues.
 	"routes": [
 		{
+			// CAREFUL: this hostname is currently served by the demonstration
+			// Worker (`wrangler.demo.jsonc`, `abc-cargo-engage-demo`). Deploying
+			// this configuration takes the hostname over and replaces the
+			// demonstration with the full platform — including the Meta webhook
+			// route — on a public URL. Do that deliberately, not by running
+			// `wrangler deploy` in this directory out of habit.
 			"pattern": "engage.abccargosupport.com",
 			"custom_domain": true,
 		},
