@@ -4,6 +4,10 @@
 -- ABC Cargo's shape so the screens read correctly, but every value here is
 -- invented. This file must never be run against a production database.
 
+DELETE FROM access_log;
+DELETE FROM user_teams;
+DELETE FROM teams;
+DELETE FROM users;
 DELETE FROM activities;
 DELETE FROM calls;
 DELETE FROM tickets;
@@ -41,3 +45,48 @@ INSERT INTO activities (customer_id, region_id, kind, ref, summary, detail, acto
 	('cus_971506621184', 'uae', 'booking',   'ABC-UAE-088210', 'Booking ABC-UAE-088210 created', 'Dubai to Kochi, air, 3 pcs, 41 kg', 'system', '2026-09-10T08:00:00Z', '2026-09-10T08:00:00Z'),
 	('cus_971506621184', 'uae', 'milestone', 'ABC-UAE-088210', 'ABC-UAE-088210 — departed', 'Dubai to Kochi', 'shipment_system', '2026-09-12T17:40:00Z', '2026-09-12T17:40:00Z'),
 	('cus_966507742201', 'ksa', 'milestone', 'ABC-KSA-030488', 'ABC-KSA-030488 — delivered', 'Jeddah to Karachi', 'shipment_system', '2026-09-13T11:20:00Z', '2026-09-13T11:20:00Z');
+
+-- ---------------------------------------------------------------- people --
+--
+-- Invented staff, so the access rules can actually be exercised locally. The
+-- point of this set is that it contains the awkward cases, not just the easy
+-- ones: someone in two regions, someone in none, and someone suspended.
+--
+-- Addresses are on example.invalid and belong to nobody. Replace them with
+-- real ones only in a real environment, never here.
+
+INSERT INTO users (id, email, display_name, role, status, created_at, updated_at) VALUES
+	-- Sees UAE only, which is the ordinary case.
+	('usr_mariam',  'mariam@example.invalid',  'Mariam Haddad',  'agent',        'active',    '2026-01-05T00:00:00Z', '2026-01-05T00:00:00Z'),
+	-- A second UAE agent, so "another agent's conversation" is testable.
+	('usr_omar',    'omar@example.invalid',    'Omar Siddiqui',  'agent',        'active',    '2026-01-05T00:00:00Z', '2026-01-05T00:00:00Z'),
+	-- KSA only: proves a UAE conversation is invisible to them.
+	('usr_aziz',    'aziz@example.invalid',    'Abdulaziz Noor', 'agent',        'active',    '2026-02-01T00:00:00Z', '2026-02-01T00:00:00Z'),
+	-- Supervises two regions at once. Multi-team membership is ordinary.
+	('usr_lead',    'supervisor@example.invalid','Reem Al Suwaidi','team_lead',  'active',    '2026-01-05T00:00:00Z', '2026-01-05T00:00:00Z'),
+	-- Covers all three without belonging to any team.
+	('usr_admin',   'itadmin@example.invalid', 'IT Administrator','master_admin','active',    '2026-01-05T00:00:00Z', '2026-01-05T00:00:00Z'),
+	-- A leaver. Keeps the row, and the history pointing at it, while every
+	-- request is refused.
+	('usr_former',  'former@example.invalid',  'Former Agent',   'agent',        'suspended', '2025-06-01T00:00:00Z', '2026-09-30T00:00:00Z'),
+	-- Set up but in no team, which must mean nothing visible rather than
+	-- everything. This is the row that catches an empty scope being read as
+	-- "no filter".
+	('usr_orphan',  'newstarter@example.invalid','New Starter',  'agent',        'active',    '2026-10-01T00:00:00Z', '2026-10-01T00:00:00Z');
+
+INSERT INTO teams (id, name, region_id, created_at, updated_at) VALUES
+	('team_uae_sales',   'UAE Sales',            'uae', '2026-01-05T00:00:00Z', '2026-01-05T00:00:00Z'),
+	('team_uae_support', 'UAE Customer Support', 'uae', '2026-01-05T00:00:00Z', '2026-01-05T00:00:00Z'),
+	('team_ksa_sales',   'KSA Sales',            'ksa', '2026-02-01T00:00:00Z', '2026-02-01T00:00:00Z'),
+	('team_uk_support',  'UK Customer Support',  'uk',  '2026-01-10T00:00:00Z', '2026-01-10T00:00:00Z');
+
+INSERT INTO user_teams (user_id, team_id, created_at) VALUES
+	('usr_mariam', 'team_uae_sales',   '2026-01-05T00:00:00Z'),
+	('usr_omar',   'team_uae_support', '2026-01-05T00:00:00Z'),
+	('usr_aziz',   'team_ksa_sales',   '2026-02-01T00:00:00Z'),
+	-- Two teams, two regions, one person.
+	('usr_lead',   'team_uae_sales',   '2026-01-05T00:00:00Z'),
+	('usr_lead',   'team_ksa_sales',   '2026-02-01T00:00:00Z'),
+	-- Suspended, but still in a team: status must be what refuses them, not
+	-- the absence of a team.
+	('usr_former', 'team_uae_sales',   '2025-06-01T00:00:00Z');

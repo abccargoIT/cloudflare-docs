@@ -29,6 +29,29 @@ rule in `src/`, rebuild, and the page changes with it. Only the storage is
 different: the records live in your browser instead of the database, and
 nothing leaves the machine.
 
+## Trying the access rules
+
+The local database is seeded with invented staff so the regional rules can
+actually be exercised. The set contains the awkward cases rather than just the
+easy ones:
+
+| Person                       | Role         | Regions   | What they prove                                        |
+| ---------------------------- | ------------ | --------- | ------------------------------------------------------ |
+| `mariam@example.invalid`     | agent        | UAE       | The ordinary case                                      |
+| `omar@example.invalid`       | agent        | UAE       | Another agent's conversation is hidden from Mariam     |
+| `aziz@example.invalid`       | agent        | KSA       | A UAE conversation is invisible to them                |
+| `supervisor@example.invalid` | team lead    | UAE + KSA | One person, two regions                                |
+| `itadmin@example.invalid`    | master admin | all       | Covers everything without being in a team              |
+| `former@example.invalid`     | agent        | UAE       | Suspended: the status refuses them, not a missing team |
+| `newstarter@example.invalid` | agent        | none      | In no team means **nothing** visible, not everything   |
+
+That last row is the one worth keeping. An empty list of regions read as "no
+filter" would mean a new starter saw all three regions on their first morning,
+and it is the kind of mistake that looks like working software.
+
+Nobody in this list is real and the addresses go nowhere. They exist on your
+machine only, and `npm run db:seed:local` replaces them every time it runs.
+
 ## The other files, and what each is for
 
 | File                            | What it is                                                           |
