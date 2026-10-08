@@ -36,46 +36,40 @@ Confirmed working across the three timezones: with the clock at 16:58 UTC the
 dashboard reported Dubai 20:58, Riyadh 19:58, London 17:58. The offsets are
 read from the zone, not hard-coded.
 
-## 3. Business hours — given, with one point to confirm
+## 3. Business hours — settled
 
-Supplied by the Head of IT on 8 October 2026 and now in the configuration:
+Given by the Head of IT on 8 October 2026 and confirmed the same day:
 
-| Region | Days               | Hours (local) |
-| ------ | ------------------ | ------------- |
-| UAE    | Sunday to Thursday | 08:00 – 23:00 |
-| KSA    | Sunday to Thursday | 08:00 – 23:00 |
-| UK     | Monday to Friday   | 08:00 – 23:00 |
+| Region | WhatsApp desk  | Hours (local) |
+| ------ | -------------- | ------------- |
+| UAE    | All seven days | 08:00 – 23:00 |
+| KSA    | All seven days | 08:00 – 23:00 |
+| UK     | All seven days | 08:00 – 23:00 |
 
-Verified against the running platform: open Sunday to Thursday in Dubai and
-Riyadh, shut Friday and Saturday; shut Sunday in London, open Monday to
-Friday, shut Saturday. The desk opens exactly at 08:00 local and closes at
-23:00 — open at 22:59, shut at 23:00 — in each region's own timezone.
+### The distinction that matters
 
-### The point to confirm
+**These are the WhatsApp desk hours, not the office week.** The offices work
+UAE and KSA Sunday to Thursday, UK Monday to Friday. The desk is covered all
+seven days, which is why the configuration says seven.
 
-The hours were given as **"08:00 to 23:00 Monday to Sunday"**, which does not
-sit with the five-day weeks in the same message. Both cannot be true: either
-the desk is shut at the weekend, or it is open seven days.
+That distinction is written into `wrangler.jsonc` beside the values, because
+the obvious "correction" is to put the office week back — and doing so would
+tell customers the desk is shut on days it is staffed, and stop the service
+clocks running while agents are answering.
 
-**The narrower reading is in place**, deliberately, because the two mistakes
-are not equally bad:
+### What this changes
 
-- If the desk _is_ staffed at the weekend and the platform thinks it is shut,
-  a customer is told we are closed while somebody is actually there. Mildly
-  wrong, and an agent still answers.
-- If the desk is _not_ staffed and the platform thinks it is open, no
-  automated reply is sent at all. The customer gets silence with no
-  explanation and no idea when anyone will respond.
+- **The out-of-hours automated reply now fires only overnight**, between 23:00
+  and 08:00 in each region. Verified: open at 22:59, shut at 23:00, shut at
+  07:59, open at 08:00 — a nine-hour gap and a fifteen-hour day.
+- **Service targets run every day**, weekends included, which is correct when
+  agents are there to meet them. A target set in business minutes no longer
+  stops on a Friday in Dubai.
+- **Each region keeps its own clock.** The hours are identical but the
+  timezones are not, so the three desks close three hours apart in real time.
 
-The second is the worse failure, so the configuration errs towards sending an
-acknowledgement.
-
-**One line settles it:** is the WhatsApp desk covered on Friday and Saturday
-(UAE, KSA) and on Saturday and Sunday (UK)? If yes, the days become all seven
-and the hours stay as they are.
-
-Note this is a 15-hour day, which is well beyond an office week — so a seven-day
-answer is a real staffing question rather than a formality.
+Verified against the running platform across a full week: open Sunday through
+Saturday in all three regions, with the correct local time in each.
 
 ## 4. What is needed on go-live day
 
@@ -102,10 +96,9 @@ Carried forward from the module documents, in the order they block things:
    `ABC Cargo UK`). The largest outstanding item. Without them a cutover either
    drops the bot the customers currently meet, or replaces it with something
    nobody has approved.
-2. **Confirmation of weekend cover** — §3. The hours themselves are settled.
-3. **The first `master_admin`** — name and work email.
-4. **Which templates Meta has approved**, for broadcasts and notifications.
-5. **Retention decisions** for bot turns, broadcast recipients, internal notes
+2. **The first `master_admin`** — name and work email.
+3. **Which templates Meta has approved**, for broadcasts and notifications.
+4. **Retention decisions** for bot turns, broadcast recipients, internal notes
    and outbound media.
 
 ## 6. What is deliberately NOT needed before go-live

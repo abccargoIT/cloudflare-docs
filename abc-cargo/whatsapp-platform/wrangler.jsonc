@@ -48,22 +48,20 @@
 		// DISTINCT placeholder until then: three identical ones are refused as
 		// duplicates, and that refusal makes every /api/* route answer 500.
 		//
-		// Business hours, given by the Head of IT on 8 October 2026:
-		//   UAE and KSA  Sunday to Thursday
-		//   UK           Monday to Friday
-		//   all regions  08:00 to 23:00 ("morning 8 to 11pm")
+		// businessHours: all seven days, 08:00 to 23:00 local, every region.
+		// Confirmed by the Head of IT on 8 October 2026.
+		//
+		// THESE ARE THE WHATSAPP DESK HOURS, NOT THE OFFICE WEEK. The offices
+		// work UAE and KSA Sunday to Thursday, UK Monday to Friday. The desk is
+		// covered all seven days, which is why this says seven. Anyone later
+		// "correcting" these to the office week would make the platform tell
+		// customers the desk is shut on days it is staffed, and stop the service
+		// clocks running while agents are answering.
 		//
 		// days: 0 = Sunday ... 6 = Saturday. `end` is exclusive, so 23:00 means
-		// the desk is open up to 22:59 and closed from 23:00.
-		//
-		// ONE POINT IS UNRESOLVED. The hours were given as "08:00 to 23:00 Monday
-		// to Sunday", which contradicts the five-day weeks above. The narrower
-		// reading is taken deliberately: if the desk is in fact staffed at the
-		// weekend, a customer messaging then is told we are closed when somebody
-		// is there — mildly wrong, and an agent still answers. The other way
-		// round the platform believes it is open, sends nothing, and the customer
-		// gets silence. Confirm before cutover; it is one line per region.
-		"REGION_NUMBERS": "[{\"id\":\"uae\",\"label\":\"UAE\",\"phoneNumberId\":\"REPLACE_AT_GO_LIVE_UAE\",\"displayNumber\":\"+971800916\",\"timezone\":\"Asia/Dubai\",\"language\":\"en\",\"businessHours\":{\"days\":[0,1,2,3,4],\"start\":\"08:00\",\"end\":\"23:00\"}},{\"id\":\"ksa\",\"label\":\"KSA\",\"phoneNumberId\":\"REPLACE_AT_GO_LIVE_KSA\",\"displayNumber\":\"+966548454866\",\"timezone\":\"Asia/Riyadh\",\"language\":\"ar\",\"businessHours\":{\"days\":[0,1,2,3,4],\"start\":\"08:00\",\"end\":\"23:00\"}},{\"id\":\"uk\",\"label\":\"UK\",\"phoneNumberId\":\"REPLACE_AT_GO_LIVE_UK\",\"displayNumber\":\"+447388800000\",\"timezone\":\"Europe/London\",\"language\":\"en\",\"businessHours\":{\"days\":[1,2,3,4,5],\"start\":\"08:00\",\"end\":\"23:00\"}}]",
+		// open up to 22:59 and closed from 23:00. The out-of-hours automated
+		// reply therefore fires only overnight, 23:00 to 08:00 in each region.
+		"REGION_NUMBERS": "[{\"id\":\"uae\",\"label\":\"UAE\",\"phoneNumberId\":\"REPLACE_AT_GO_LIVE_UAE\",\"displayNumber\":\"+971800916\",\"timezone\":\"Asia/Dubai\",\"language\":\"en\",\"businessHours\":{\"days\":[0,1,2,3,4,5,6],\"start\":\"08:00\",\"end\":\"23:00\"}},{\"id\":\"ksa\",\"label\":\"KSA\",\"phoneNumberId\":\"REPLACE_AT_GO_LIVE_KSA\",\"displayNumber\":\"+966548454866\",\"timezone\":\"Asia/Riyadh\",\"language\":\"ar\",\"businessHours\":{\"days\":[0,1,2,3,4,5,6],\"start\":\"08:00\",\"end\":\"23:00\"}},{\"id\":\"uk\",\"label\":\"UK\",\"phoneNumberId\":\"REPLACE_AT_GO_LIVE_UK\",\"displayNumber\":\"+447388800000\",\"timezone\":\"Europe/London\",\"language\":\"en\",\"businessHours\":{\"days\":[0,1,2,3,4,5,6],\"start\":\"08:00\",\"end\":\"23:00\"}}]",
 		// Hours after an automated reply before another one may be sent to
 		// the same customer while no agent is available.
 		"AUTO_REPLY_COOLDOWN_HOURS": "12",
