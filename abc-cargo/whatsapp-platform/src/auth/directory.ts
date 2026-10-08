@@ -32,7 +32,11 @@ export type CallerResult =
 	| { ok: false; reason: DenyReason; email?: string };
 
 export class Directory {
-	constructor(private readonly db: D1Database) {}
+	private readonly db: D1Database;
+
+	constructor(db: D1Database) {
+		this.db = db;
+	}
 
 	/**
 	 * Looks a signed-in person up and assembles their caller.

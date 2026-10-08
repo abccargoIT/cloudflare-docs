@@ -18,6 +18,8 @@ import {
 	canAdminister,
 	canReadRegionalRecord,
 	canReplyToConversation,
+	canViewReports,
+	reportableRegions,
 	resolveRegionFilter,
 	type Caller,
 } from "./auth/policy.ts";
@@ -35,6 +37,7 @@ import type { TemplateSendRequest } from "./whatsapp/types.ts";
 import { findRegionById, parseRegionConfig } from "./regions.ts";
 import { conversationIdFor, WindowClosedError } from "./conversation.ts";
 import { CrmService } from "./crm/service.ts";
+import { Reports, parseWindow } from "./crm/reports.ts";
 import { InvalidTransitionError } from "./crm/lifecycle.ts";
 import {
 	LEAD_STAGES,
@@ -1044,6 +1047,39 @@ async function handleOperationsApi(
 			linkedId: body.linkedId,
 		});
 		return json({ ok: true }, 201);
+	}
+
+	/* --------------------------------------------------------------- reports */
+
+	// GET /api/reports/summary?region=&from=&to=
+	//
+	// The dashboard and the report library both read this. Agents are refused:
+	// regional performance figures are a management view, and the design puts
+	// reports behind supervisors.
+	if (resource === "reports" && id === "summary" && request.method === "GET") {
+		const mayView = canViewReports(caller);
+		if (!mayView.allowed) return refuse(mayView.reason);
+
+		// Which regions this person may report on — not which they asked for.
+		const reportable = reportableRegions(caller);
+		const requested = url.searchParams.get("region");
+		const regionIds =
+			reportable === null
+				? requested
+					? [requested]
+					: parseRegionConfig(env.REGION_NUMBERS).map((r) => r.id)
+				: requested
+					? reportable.filter((r) => r === requested)
+					: reportable;
+
+		if (regionIds.length === 0) return refuse("wrong_region");
+
+		const window = parseWindow(
+			url.searchParams.get("from"),
+			url.searchParams.get("to"),
+		);
+		const reports = new Reports(env.DB);
+		return json(await reports.summary(regionIds, window));
 	}
 
 	/* ------------------------------------------------------- stalled sweep */
