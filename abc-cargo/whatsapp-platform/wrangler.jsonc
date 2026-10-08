@@ -41,10 +41,26 @@
 		// the Meta for Developers changelog before deploying.
 		"GRAPH_API_VERSION": "v21.0",
 		// One entry per WhatsApp phone number attached to the ABC Cargo WABA.
-		// phoneNumberId is the numeric "Phone number ID" shown in
-		// Meta Business Suite > WhatsApp Manager > Phone numbers.
-		// It is an identifier, not a secret. Replace every REPLACE_ME value.
-		"REGION_NUMBERS": "[{\"id\":\"uae\",\"label\":\"UAE\",\"phoneNumberId\":\"REPLACE_ME\",\"displayNumber\":\"+971XXXXXXXXX\",\"timezone\":\"Asia/Dubai\",\"language\":\"en\",\"businessHours\":{\"days\":[1,2,3,4,5,6],\"start\":\"09:00\",\"end\":\"18:00\"}},{\"id\":\"region-2\",\"label\":\"Region 2\",\"phoneNumberId\":\"REPLACE_ME\",\"displayNumber\":\"+XXXXXXXXXXX\",\"timezone\":\"Asia/Dubai\",\"language\":\"en\",\"businessHours\":{\"days\":[1,2,3,4,5,6],\"start\":\"09:00\",\"end\":\"18:00\"}},{\"id\":\"region-3\",\"label\":\"Region 3\",\"phoneNumberId\":\"REPLACE_ME\",\"displayNumber\":\"+XXXXXXXXXXX\",\"timezone\":\"Asia/Dubai\",\"language\":\"en\",\"businessHours\":{\"days\":[1,2,3,4,5,6],\"start\":\"09:00\",\"end\":\"18:00\"}}]",
+		//
+		// The three regions, their published numbers, timezones and languages are
+		// correct. Two things in here are NOT, and both are deliberate:
+		//
+		// 1. phoneNumberId is the numeric "Phone number ID" from Meta Business
+		//    Suite > WhatsApp Manager > Phone numbers. It is an identifier, not a
+		//    secret, and it is supplied at go-live after the pre-cutover checks
+		//    rather than now. Until then each is a DISTINCT placeholder — they
+		//    used to be three identical "REPLACE_ME" values, which parseRegionConfig
+		//    correctly refuses as duplicates, and that refusal made every /api/*
+		//    route answer 500. Distinct placeholders let the platform be tested
+		//    end to end with everything except a real Meta send.
+		//
+		// 2. businessHours are NOT CONFIRMED. All three currently read Monday to
+		//    Saturday, 09:00-18:00, which is what this file has always said and is
+		//    probably wrong for at least the UK. They drive the out-of-hours
+		//    automated reply and every service-target clock, so they must be
+		//    confirmed per region before cutover. Left as found rather than
+		//    changed to an assumption.
+		"REGION_NUMBERS": "[{\"id\":\"uae\",\"label\":\"UAE\",\"phoneNumberId\":\"REPLACE_AT_GO_LIVE_UAE\",\"displayNumber\":\"+971800916\",\"timezone\":\"Asia/Dubai\",\"language\":\"en\",\"businessHours\":{\"days\":[1,2,3,4,5,6],\"start\":\"09:00\",\"end\":\"18:00\"}},{\"id\":\"ksa\",\"label\":\"KSA\",\"phoneNumberId\":\"REPLACE_AT_GO_LIVE_KSA\",\"displayNumber\":\"+966548454866\",\"timezone\":\"Asia/Riyadh\",\"language\":\"ar\",\"businessHours\":{\"days\":[1,2,3,4,5,6],\"start\":\"09:00\",\"end\":\"18:00\"}},{\"id\":\"uk\",\"label\":\"UK\",\"phoneNumberId\":\"REPLACE_AT_GO_LIVE_UK\",\"displayNumber\":\"+447388800000\",\"timezone\":\"Europe/London\",\"language\":\"en\",\"businessHours\":{\"days\":[1,2,3,4,5,6],\"start\":\"09:00\",\"end\":\"18:00\"}}]",
 		// Hours after an automated reply before another one may be sent to
 		// the same customer while no agent is available.
 		"AUTO_REPLY_COOLDOWN_HOURS": "12",
