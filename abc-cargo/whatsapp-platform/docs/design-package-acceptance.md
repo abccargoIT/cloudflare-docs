@@ -117,7 +117,9 @@ wrong within a month. I would keep it out until there is a system that knows.
 
 ## 6. What the package specifies that is NOT built
 
-In the order I would do them:
+In the order I would do them. Items struck through were built on
+8 October 2026 and are left in place with what changed, so the list stays
+readable as a record rather than quietly shrinking.
 
 1. **Email and phone as conversation channels.** The inbox in the designs
    counts "WhatsApp 8 · Email 3 · Calls 1" in one list. The build is WhatsApp
@@ -128,18 +130,32 @@ In the order I would do them:
    it; what is missing is the shipment system's API, which is still an open
    decision.
 3. **Reports: charts and a report library.** A regional summary API exists; no
-   charts, no library, no export.
-4. **CSAT and bot deflection.** Both are on the designed dashboard (4.4/5 and
-   41%). **Neither is measured by anything today.** CSAT needs a survey after
-   resolution; deflection needs a definition of "resolved by the bot alone".
-   Numbers nobody can trace are worse than a gap, so they are absent rather
-   than estimated.
+   charts, no library, no export. Still unbuilt — the measurement work of
+   8 October 2026 covered item 4 only.
+4. **CSAT and bot deflection.** ~~Neither is measured by anything today.~~
+   **Measurement built on 8 October 2026** — `src/crm/csat.ts` and
+   `src/crm/deflection.ts`, shown on the Reports screen. Deflection is defined
+   from the bot's own recorded end reasons, with abandonment counted in the
+   denominator and the kinder figure published beside it; CSAT refuses to
+   publish a mean below ten responses per region. **No survey is sent yet** —
+   eligibility and scoring exist, nothing dispatches them. See
+   `docs/targets-transfer-and-measurement.md` §4, §5 and §8.
 5. **Voice note transcription.** "Voice note · view transcript" in the designs.
    Inbound voice notes are stored; nothing transcribes them.
-6. **Cross-region transfer.** "Forward to KSA team", "Transfer to another
-   region". Assignment today is within a region.
-7. **Per-team SLA policies.** The designs set them per team (UAE Support 5m/4h,
-   UAE Sales 15m/1d). The build sets them per region and per ticket type.
+6. **Cross-region transfer.** ~~Assignment today is within a region.~~
+   **Built on 8 October 2026** — `src/crm/transfer.ts`, on the Inbox. Turned
+   up a constraint the designs do not show: a conversation cannot change its
+   WhatsApp number, so a transfer moves ownership and the reply still leaves
+   from the number the customer wrote to. The service clock is carried over
+   rather than restarted. Not persisted and not exposed over HTTP. See
+   `docs/targets-transfer-and-measurement.md` §2, §3 and §8.
+7. **Per-team SLA policies.** ~~The build sets them per region and per ticket
+   type.~~ **Built on 8 October 2026** — `src/crm/sla-policy.ts`, on the Setup
+   screen, resolving team type → team default → region type → region default →
+   platform default and showing the provenance of every row. A malformed
+   policy is ignored and reported rather than obeyed. Display only; not
+   editable and not persisted. See
+   `docs/targets-transfer-and-measurement.md` §6 and §8.
 8. **Bot builder screen** with blocks, "fallback after 10m" and "clone flow to
    another region". The runtime takes all of this; there is no builder UI, and
    the fallback-to-Tier-2 escalation is not in the runtime yet.

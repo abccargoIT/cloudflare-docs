@@ -40,13 +40,17 @@
 				 * corporate laptop a blocked webfont request is a blank second
 				 * of unstyled text, and on an air-gapped one it never resolves.
 				 */
-				--ui: "Segoe UI", system-ui, -apple-system, "Helvetica Neue",
-					Arial, sans-serif;
-				--narrow: "Segoe UI Semibold", "Segoe UI", system-ui,
-					"Helvetica Neue", Arial, sans-serif;
-				--mono: "Cascadia Mono", Consolas, ui-monospace, Menlo,
-					"DejaVu Sans Mono", monospace;
-				--shadow: 0 1px 2px rgba(23, 18, 15, 0.06),
+				--ui:
+					"Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial,
+					sans-serif;
+				--narrow:
+					"Segoe UI Semibold", "Segoe UI", system-ui, "Helvetica Neue", Arial,
+					sans-serif;
+				--mono:
+					"Cascadia Mono", Consolas, ui-monospace, Menlo, "DejaVu Sans Mono",
+					monospace;
+				--shadow:
+					0 1px 2px rgba(23, 18, 15, 0.06),
 					0 10px 28px -20px rgba(23, 18, 15, 0.35);
 			}
 
@@ -77,8 +81,8 @@
 					--wa-in: #221f1d;
 					--wa-out: #104a31;
 					--wa-ink: #f3efec;
-					--shadow: 0 1px 2px rgba(0, 0, 0, 0.5),
-						0 12px 30px -22px rgba(0, 0, 0, 0.9);
+					--shadow:
+						0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 30px -22px rgba(0, 0, 0, 0.9);
 				}
 			}
 
@@ -929,7 +933,12 @@
 				<span>Demonstration</span>
 			</div>
 
-			<div class="regions" id="regions" role="group" aria-label="WhatsApp number"></div>
+			<div
+				class="regions"
+				id="regions"
+				role="group"
+				aria-label="WhatsApp number"
+			></div>
 
 			<div class="clockbox">
 				<span id="regionClock" class="mono"></span>
@@ -937,7 +946,9 @@
 			</div>
 
 			<button class="ghost" id="presenceBtn" type="button"></button>
-			<button class="ghost" id="clockBtn" type="button">Jump to after hours</button>
+			<button class="ghost" id="clockBtn" type="button">
+				Jump to after hours
+			</button>
 			<button class="ghost" id="resetBtn" type="button">Reset demo</button>
 		</header>
 
@@ -970,10 +981,13 @@
  *   src/crm/types.ts
  *   src/crm/intent.ts
  *   src/crm/sla.ts
+ *   src/crm/sla-policy.ts
  *   src/crm/refs.ts
  *   src/crm/lifecycle.ts
  *   src/crm/customer-lifecycle.ts
  *   src/auth/policy.ts
+ *   src/crm/transfer.ts
+ *   src/crm/csat.ts
  *   src/admin/guards.ts
  *   src/chat/policy.ts
  *   src/dashboard/clock.ts
@@ -981,6 +995,7 @@
  *   src/composer/media.ts
  *   src/composer/notes.ts
  *   src/bots/types.ts
+ *   src/crm/deflection.ts
  *   src/bots/validate.ts
  *   src/bots/parse.ts
  *   src/bots/runtime.ts
@@ -1049,7 +1064,7 @@ var ENGINE = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../../../../../tmp/abc-engage-build-Rk7YtZ/entry.ts
+  // ../../../../../tmp/abc-engage-build-3RXaN8/entry.ts
   var entry_exports = {};
   __export(entry_exports, {
     ACTIVITY_KINDS: () => ACTIVITY_KINDS,
@@ -1059,6 +1074,8 @@ var ENGINE = (() => {
     BROADCAST_STATUSES: () => BROADCAST_STATUSES,
     CALL_DIRECTIONS: () => CALL_DIRECTIONS,
     CONVERSATION_FIRST_RESPONSE_MINUTES: () => CONVERSATION_FIRST_RESPONSE_MINUTES,
+    CSAT_MAX: () => CSAT_MAX,
+    CSAT_MIN: () => CSAT_MIN,
     CUSTOMER_STAGES: () => CUSTOMER_STAGES,
     CUSTOMER_STAGE_LABELS: () => CUSTOMER_STAGE_LABELS,
     DEFAULT_THRESHOLDS: () => DEFAULT_THRESHOLDS,
@@ -1078,6 +1095,8 @@ var ENGINE = (() => {
     MEDIA_KINDS: () => MEDIA_KINDS,
     MILESTONES: () => MILESTONES,
     MILESTONE_LABELS: () => MILESTONE_LABELS,
+    MIN_REPORTABLE_RESPONSES: () => MIN_REPORTABLE_RESPONSES,
+    MIN_REPORTABLE_SESSIONS: () => MIN_REPORTABLE_SESSIONS,
     Notes: () => Notes,
     PRESENCE_TTL_MINUTES: () => PRESENCE_TTL_MINUTES,
     PROBLEM_CODES: () => PROBLEM_CODES,
@@ -1092,6 +1111,9 @@ var ENGINE = (() => {
     SKIP_REASONS: () => SKIP_REASONS,
     STALL_HOURS: () => STALL_HOURS,
     STEP_KINDS: () => STEP_KINDS,
+    SURVEY_COOLDOWN_DAYS: () => SURVEY_COOLDOWN_DAYS,
+    SURVEY_OPEN_HOURS: () => SURVEY_OPEN_HOURS,
+    TARGET_SOURCE_LABELS: () => TARGET_SOURCE_LABELS,
     THREAD_KINDS: () => THREAD_KINDS,
     TICKET_PRIORITIES: () => TICKET_PRIORITIES,
     TICKET_STATUSES: () => TICKET_STATUSES,
@@ -1100,9 +1122,11 @@ var ENGINE = (() => {
     TRACKING_MIN_DIGITS: () => TRACKING_MIN_DIGITS,
     TRANSPORT_MODES: () => TRANSPORT_MODES,
     USER_STATUSES: () => USER_STATUSES,
+    abandonmentHotspots: () => abandonmentHotspots,
     addBusinessMinutes: () => addBusinessMinutes,
     advances: () => advances,
     asksForAPerson: () => asksForAPerson,
+    assertChannelUnchanged: () => assertChannelUnchanged,
     assertLeadTransition: () => assertLeadTransition,
     assertMilestoneAdvance: () => assertMilestoneAdvance,
     assertQuotationTransition: () => assertQuotationTransition,
@@ -1131,6 +1155,7 @@ var ENGINE = (() => {
     canSendBroadcast: () => canSendBroadcast,
     canStartDirect: () => canStartDirect,
     canStopBroadcast: () => canStopBroadcast,
+    canTransfer: () => canTransfer,
     canTransition: () => canTransition,
     canViewDashboard: () => canViewDashboard,
     canViewReports: () => canViewReports,
@@ -1141,9 +1166,11 @@ var ENGINE = (() => {
     checkNoteBody: () => checkNoteBody,
     checkReadyToSend: () => checkReadyToSend,
     checkStall: () => checkStall,
+    checkTarget: () => checkTarget,
     checkUserChange: () => checkUserChange,
     classifyIntent: () => classifyIntent,
     classifyRef: () => classifyRef,
+    classifySession: () => classifySession,
     compileAudience: () => compileAudience,
     countOnlineIn: () => countOnlineIn,
     coversRegion: () => coversRegion,
@@ -1152,6 +1179,7 @@ var ENGINE = (() => {
     describeDays: () => describeDays,
     describeMinutes: () => describeMinutes,
     directKey: () => directKey,
+    effectivePolicyTable: () => effectivePolicyTable,
     extractReferences: () => extractReferences,
     extractTrackingMentions: () => extractTrackingMentions,
     extractTrackingNumbers: () => extractTrackingNumbers,
@@ -1186,6 +1214,7 @@ var ENGINE = (() => {
     outcomeFor: () => outcomeFor,
     parseRegionConfig: () => parseRegionConfig,
     parseSteps: () => parseSteps,
+    parseSurveyReply: () => parseSurveyReply,
     parseTemplateComponents: () => parseTemplateComponents,
     previewFlow: () => previewFlow,
     regionCode: () => regionCode,
@@ -1197,13 +1226,20 @@ var ENGINE = (() => {
     reportableRegions: () => reportableRegions,
     resolutionIsFresh: () => resolutionIsFresh,
     resolveRegionFilter: () => resolveRegionFilter,
+    resolveTarget: () => resolveTarget,
     resumableSession: () => resumableSession,
     runTurn: () => runTurn,
     safeFilename: () => safeFilename,
     seesEveryConversationInRegion: () => seesEveryConversationInRegion,
     shortCode: () => shortCode,
     shouldNotifyCustomer: () => shouldNotifyCustomer,
+    shouldSendSurvey: () => shouldSendSurvey,
     staleBefore: () => staleBefore,
+    summarise: () => summarise,
+    summariseByFlow: () => summariseByFlow,
+    summariseByRegion: () => summariseByRegion,
+    summariseDeflection: () => summariseDeflection,
+    surveyStillOpen: () => surveyStillOpen,
     targetFor: () => targetFor,
     targetsOf: () => targetsOf,
     temperatureBand: () => temperatureBand,
@@ -1211,10 +1247,12 @@ var ENGINE = (() => {
     ticketDueDates: () => ticketDueDates,
     ticketTypeFor: () => ticketTypeFor,
     toMinutes: () => toMinutes,
+    transferConversation: () => transferConversation,
     unreadCount: () => unreadCount,
     validateAudience: () => validateAudience,
     validateFlow: () => validateFlow,
     validateTeam: () => validateTeam,
+    validateTeamPolicy: () => validateTeamPolicy,
     validateUser: () => validateUser,
     voidsApproval: () => voidsApproval,
     zoneOffsetMs: () => zoneOffsetMs
@@ -1782,6 +1820,157 @@ var ENGINE = (() => {
     return remainingMs(dueAt, now) < 0;
   }
 
+  // src/crm/sla-policy.ts
+  var TARGET_SOURCE_LABELS = {
+    team_type: "Team policy for this ticket type",
+    team_fallback: "Team default",
+    region_type: "Regional policy for this ticket type",
+    region_fallback: "Regional default",
+    platform_default: "Platform default"
+  };
+  var MAX_POLICY_MINUTES = 200 * 24 * 60;
+  function checkTarget(value) {
+    if (value === null || typeof value !== "object") {
+      return "not an object";
+    }
+    const t = value;
+    for (const field of ["firstResponseMinutes", "resolutionMinutes"]) {
+      const n = t[field];
+      if (typeof n !== "number" || !Number.isFinite(n)) {
+        return `${field} must be a number`;
+      }
+      if (!Number.isInteger(n)) {
+        return `${field} must be a whole number of minutes`;
+      }
+      if (n <= 0) {
+        return `${field} must be greater than zero`;
+      }
+      if (n > MAX_POLICY_MINUTES) {
+        return `${field} is longer than ${MAX_POLICY_MINUTES} minutes`;
+      }
+    }
+    const first = t.firstResponseMinutes;
+    const resolution = t.resolutionMinutes;
+    if (resolution < first) {
+      return "resolutionMinutes must not be shorter than firstResponseMinutes";
+    }
+    return null;
+  }
+  function resolveTarget(type, priority, options = {}) {
+    const {
+      teamIds = [],
+      regionId = null,
+      teamPolicies = [],
+      regionPolicies = [],
+      platformDefaults = DEFAULT_TICKET_TARGETS
+    } = options;
+    const ignored = [];
+    const accept = (stated, source, teamId) => ({
+      target: targetFor(type, priority, {
+        ...platformDefaults,
+        [type]: stated
+      }),
+      stated,
+      source,
+      teamId,
+      ignored
+    });
+    const consider = (candidate, source, teamId, policyRegionId) => {
+      if (candidate === void 0 || candidate === null) return null;
+      const problem = checkTarget(candidate);
+      if (problem) {
+        ignored.push({ source, teamId, regionId: policyRegionId, problem });
+        return null;
+      }
+      return candidate;
+    };
+    for (const teamId of teamIds) {
+      const policy = teamPolicies.find((p) => p.teamId === teamId);
+      if (!policy) continue;
+      if (regionId !== null && policy.regionId !== regionId) {
+        ignored.push({
+          source: "team_type",
+          teamId,
+          regionId: policy.regionId,
+          problem: `team belongs to region ${policy.regionId}, not ${regionId}`
+        });
+        continue;
+      }
+      const byType = consider(
+        policy.byType?.[type],
+        "team_type",
+        teamId,
+        policy.regionId
+      );
+      if (byType) return accept(byType, "team_type", teamId);
+      const fallback = consider(
+        policy.fallback,
+        "team_fallback",
+        teamId,
+        policy.regionId
+      );
+      if (fallback) return accept(fallback, "team_fallback", teamId);
+    }
+    if (regionId !== null) {
+      const policy = regionPolicies.find((p) => p.regionId === regionId);
+      if (policy) {
+        const byType = consider(
+          policy.byType?.[type],
+          "region_type",
+          null,
+          regionId
+        );
+        if (byType) return accept(byType, "region_type", null);
+        const fallback = consider(
+          policy.fallback,
+          "region_fallback",
+          null,
+          regionId
+        );
+        if (fallback) return accept(fallback, "region_fallback", null);
+      }
+    }
+    return accept(platformDefaults[type], "platform_default", null);
+  }
+  function validateTeamPolicy(policy) {
+    const errors = [];
+    if (!policy.teamId?.trim()) errors.push("teamId is required");
+    if (!policy.regionId?.trim()) errors.push("regionId is required");
+    for (const [type, target2] of Object.entries(policy.byType ?? {})) {
+      if (!TICKET_TYPES.includes(type)) {
+        errors.push(`${type} is not a ticket type`);
+        continue;
+      }
+      const problem = checkTarget(target2);
+      if (problem) errors.push(`${type}: ${problem}`);
+    }
+    if (policy.fallback !== void 0) {
+      const problem = checkTarget(policy.fallback);
+      if (problem) errors.push(`fallback: ${problem}`);
+    }
+    if (!policy.fallback && Object.keys(policy.byType ?? {}).length === 0) {
+      errors.push("policy sets no targets");
+    }
+    return errors;
+  }
+  function effectivePolicyTable(options) {
+    return TICKET_TYPES.map((type) => {
+      const resolved = resolveTarget(type, "normal", {
+        teamIds: [options.teamId],
+        regionId: options.regionId,
+        teamPolicies: options.teamPolicies,
+        regionPolicies: options.regionPolicies,
+        platformDefaults: options.platformDefaults
+      });
+      return {
+        type,
+        stated: resolved.stated,
+        source: resolved.source,
+        inherited: resolved.source !== "team_type" && resolved.source !== "team_fallback"
+      };
+    });
+  }
+
   // src/crm/refs.ts
   var ALPHABET = "ACDEFGHJKLMNPQRTUVWXY34679";
   var PREFIX = {
@@ -2165,6 +2354,292 @@ var ENGINE = (() => {
     if (!requested) return scope;
     if (scope === null) return [requested];
     return scope.includes(requested) ? [requested] : [];
+  }
+
+  // src/crm/transfer.ts
+  var WINDOW_SOON_MINUTES = 60;
+  function canTransfer(caller, conversation, toRegionId) {
+    if (isService(caller)) {
+      return { allowed: false, refusal: "service_caller" };
+    }
+    if (caller.status !== "active") {
+      return { allowed: false, refusal: "suspended" };
+    }
+    if (caller.role === "master_admin") return { allowed: true };
+    if (!caller.regionIds.includes(conversation.regionId)) {
+      return { allowed: false, refusal: "wrong_region" };
+    }
+    const crossRegion = toRegionId !== conversation.regionId;
+    if (crossRegion && caller.role !== "team_lead") {
+      return { allowed: false, refusal: "insufficient_role" };
+    }
+    if (caller.role === "agent") {
+      const owner = conversation.assignedAgentId ?? null;
+      if (owner !== null && owner !== caller.id) {
+        return { allowed: false, refusal: "insufficient_role" };
+      }
+    }
+    return { allowed: true };
+  }
+  function transferConversation(caller, conversation, request, regions, now = /* @__PURE__ */ new Date()) {
+    const decision = canTransfer(caller, conversation, request.toRegionId);
+    if (!decision.allowed) {
+      return {
+        ok: false,
+        refusal: decision.refusal,
+        message: refusalMessage(decision.refusal)
+      };
+    }
+    if (!request.reason?.trim()) {
+      return {
+        ok: false,
+        refusal: "reason_required",
+        message: "Give a reason for the transfer."
+      };
+    }
+    const toRegion = findRegionById(regions, request.toRegionId);
+    if (!toRegion) {
+      return {
+        ok: false,
+        refusal: "unknown_region",
+        message: `Unknown region ${request.toRegionId}.`
+      };
+    }
+    if (request.toTeamId === conversation.assignedTeamId && (request.toAgentId ?? null) === (conversation.assignedAgentId ?? null)) {
+      return {
+        ok: false,
+        refusal: "same_team",
+        message: "That is already where this conversation sits."
+      };
+    }
+    const crossRegion = request.toRegionId !== conversation.regionId;
+    const warnings = transferWarnings(conversation, toRegion, crossRegion, now);
+    return {
+      ok: true,
+      patch: {
+        regionId: request.toRegionId,
+        assignedTeamId: request.toTeamId,
+        // The named agent if one was given, otherwise back into the
+        // receiving team's queue rather than staying with the old owner.
+        assignedAgentId: request.toAgentId ?? null,
+        phoneNumberId: conversation.phoneNumberId,
+        firstResponseDueAt: conversation.firstResponseDueAt ?? null
+      },
+      record: {
+        conversationId: conversation.id,
+        fromRegionId: conversation.regionId,
+        toRegionId: request.toRegionId,
+        fromTeamId: conversation.assignedTeamId ?? null,
+        toTeamId: request.toTeamId,
+        fromAgentId: conversation.assignedAgentId ?? null,
+        toAgentId: request.toAgentId ?? null,
+        actor: caller.kind === "user" ? caller.id : "service",
+        reason: request.reason.trim(),
+        at: now.toISOString(),
+        crossRegion
+      },
+      warnings
+    };
+  }
+  function transferWarnings(conversation, toRegion, crossRegion, now) {
+    const warnings = [];
+    if (crossRegion && !isWithinBusinessHours(toRegion, now)) {
+      warnings.push({
+        code: "receiving_region_closed",
+        message: `${toRegion.label} is closed right now. Nobody will pick this up until it opens.`
+      });
+    }
+    const due = conversation.firstResponseDueAt;
+    const answered = !!conversation.firstRespondedAt;
+    if (due && !answered) {
+      if (isBreached(due, now)) {
+        warnings.push({
+          code: "first_response_already_late",
+          message: "The first-response target has already passed. Transferring does not reset it."
+        });
+      } else if (crossRegion && !isWithinBusinessHours(toRegion, new Date(Date.parse(due)))) {
+        warnings.push({
+          code: "first_response_due_outside_receiving_hours",
+          message: `The first-response target falls outside ${toRegion.label} business hours. It will be missed unless someone answers before the handover.`
+        });
+      }
+    }
+    const expires = conversation.windowExpiresAt;
+    if (!expires || Date.parse(expires) <= now.getTime()) {
+      warnings.push({
+        code: "service_window_closed",
+        message: "The 24-hour service window is closed. The receiving team can only reply with an approved template."
+      });
+    } else {
+      const minutesLeft = Math.floor(remainingMs(expires, now) / 6e4);
+      if (minutesLeft <= WINDOW_SOON_MINUTES) {
+        warnings.push({
+          code: "service_window_closing_soon",
+          message: `The 24-hour service window closes in ${minutesLeft} minute${minutesLeft === 1 ? "" : "s"}.`
+        });
+      }
+    }
+    return warnings;
+  }
+  function refusalMessage(refusal) {
+    switch (refusal) {
+      case "suspended":
+        return "This account is suspended.";
+      case "insufficient_role":
+        return "Transferring to another region is a team lead's decision.";
+      case "wrong_region":
+        return "This conversation belongs to another region.";
+      case "unknown_region":
+        return "Unknown region.";
+      case "same_team":
+        return "That is already where this conversation sits.";
+      case "reason_required":
+        return "Give a reason for the transfer.";
+      case "service_caller":
+        return "A service caller cannot transfer a conversation.";
+    }
+  }
+  function assertChannelUnchanged(before, afterPhoneNumberId) {
+    if (before.phoneNumberId !== afterPhoneNumberId) {
+      throw new Error(
+        `a transfer must not change the WhatsApp number: conversation ${before.id} received on ${before.phoneNumberId}, write attempted with ${afterPhoneNumberId}`
+      );
+    }
+  }
+
+  // src/crm/csat.ts
+  var CSAT_MIN = 1;
+  var CSAT_MAX = 5;
+  var MIN_REPORTABLE_RESPONSES = 10;
+  var SURVEY_COOLDOWN_DAYS = 30;
+  var SURVEY_OPEN_HOURS = 72;
+  var DAY_MS = 864e5;
+  function shouldSendSurvey(input, now = /* @__PURE__ */ new Date()) {
+    if (!input.resolvedAt) {
+      return refuse("not_resolved", "The conversation is not resolved yet.");
+    }
+    if (input.alreadySurveyed) {
+      return refuse(
+        "already_surveyed",
+        "This conversation was already surveyed."
+      );
+    }
+    if (input.optedOut) {
+      return refuse("opted_out", "This customer has opted out of messages.");
+    }
+    if (!input.hasPhone) {
+      return refuse("no_phone", "No reachable number for this customer.");
+    }
+    const last = input.lastSurveyedCustomerAt ? Date.parse(input.lastSurveyedCustomerAt) : null;
+    if (last !== null && Number.isFinite(last)) {
+      const daysSince = (now.getTime() - last) / DAY_MS;
+      if (daysSince < SURVEY_COOLDOWN_DAYS) {
+        return refuse(
+          "cooldown",
+          `Surveyed ${Math.floor(daysSince)} days ago; the cooldown is ${SURVEY_COOLDOWN_DAYS} days.`
+        );
+      }
+    }
+    const windowOpen = !!input.windowExpiresAt && Date.parse(input.windowExpiresAt) > now.getTime();
+    if (windowOpen) return { send: true, channel: "free_text" };
+    if (input.templateAvailable) return { send: true, channel: "template" };
+    return refuse(
+      "no_template_outside_window",
+      "The service window has closed and no approved survey template is available."
+    );
+  }
+  function refuse(refusal, message) {
+    return { send: false, refusal, message };
+  }
+  var EASTERN_DIGITS = {
+    "\u0660": "0",
+    "\u0661": "1",
+    "\u0662": "2",
+    "\u0663": "3",
+    "\u0664": "4",
+    "\u0665": "5",
+    "\u0666": "6",
+    "\u0667": "7",
+    "\u0668": "8",
+    "\u0669": "9",
+    "\u06F0": "0",
+    "\u06F1": "1",
+    "\u06F2": "2",
+    "\u06F3": "3",
+    "\u06F4": "4",
+    "\u06F5": "5",
+    "\u06F6": "6",
+    "\u06F7": "7",
+    "\u06F8": "8",
+    "\u06F9": "9"
+  };
+  function westernise(text) {
+    return text.replace(/[٠-٩۰-۹]/g, (d) => EASTERN_DIGITS[d] ?? d);
+  }
+  function parseSurveyReply(raw, buttonPayload) {
+    if (buttonPayload) {
+      const match = /^csat:([1-5])$/.exec(buttonPayload.trim());
+      if (match) return { score: Number(match[1]), comment: null };
+    }
+    const text = westernise((raw ?? "").trim());
+    if (!text) return null;
+    const leading = /^([1-5])\s*(?:\/\s*5)?\b[\s.,:;!-]*(.*)$/s.exec(text);
+    if (leading) {
+      const comment = leading[2].trim();
+      return { score: Number(leading[1]), comment: comment || null };
+    }
+    if (text.length <= 24) {
+      const anywhere = /(?:^|\s)([1-5])(?:\s*\/\s*5)?(?:$|\s|[.!])/.exec(text);
+      if (anywhere) {
+        return { score: Number(anywhere[1]), comment: text };
+      }
+    }
+    return null;
+  }
+  function surveyStillOpen(sentAt, now = /* @__PURE__ */ new Date()) {
+    const sent = Date.parse(sentAt);
+    if (!Number.isFinite(sent)) return false;
+    return now.getTime() - sent < SURVEY_OPEN_HOURS * 36e5;
+  }
+  function summarise(records, sent, minResponses = MIN_REPORTABLE_RESPONSES) {
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    let total = 0;
+    let counted = 0;
+    for (const record of records) {
+      const score = record.score;
+      if (!Number.isInteger(score) || score < CSAT_MIN || score > CSAT_MAX) {
+        continue;
+      }
+      distribution[score] = (distribution[score] ?? 0) + 1;
+      total += score;
+      counted += 1;
+    }
+    const responseRate = sent > 0 ? counted / sent : null;
+    const reportable = counted >= minResponses;
+    return {
+      sent,
+      responses: counted,
+      responseRate,
+      mean: counted > 0 ? Math.round(total / counted * 100) / 100 : null,
+      distribution,
+      reportable,
+      note: reportable ? null : counted === 0 ? "No responses yet." : `${counted} response${counted === 1 ? "" : "s"} \u2014 too few to publish a score (minimum ${minResponses}).`
+    };
+  }
+  function summariseByRegion(records, sentByRegion, minResponses = MIN_REPORTABLE_RESPONSES) {
+    const out = {};
+    const regionIds = /* @__PURE__ */ new Set([
+      ...Object.keys(sentByRegion),
+      ...records.map((r) => r.regionId)
+    ]);
+    for (const regionId of regionIds) {
+      out[regionId] = summarise(
+        records.filter((r) => r.regionId === regionId),
+        sentByRegion[regionId] ?? 0,
+        minResponses
+      );
+    }
+    return out;
   }
 
   // src/admin/guards.ts
@@ -2744,6 +3219,86 @@ var ENGINE = (() => {
     "flow_stuck",
     "expired"
   ];
+
+  // src/crm/deflection.ts
+  function classifySession(input) {
+    if (!input.ended || input.endedReason === null) return "in_progress";
+    switch (input.endedReason) {
+      case "completed":
+        return input.humanReplied ? "escalated" : "deflected";
+      case "handover":
+      case "customer_asked_for_agent":
+      case "too_many_invalid_replies":
+      case "flow_stuck":
+        return "escalated";
+      case "expired":
+        return input.humanReplied ? "escalated" : "abandoned";
+    }
+  }
+  var MIN_REPORTABLE_SESSIONS = 20;
+  function summariseDeflection(sessions, minSessions = MIN_REPORTABLE_SESSIONS) {
+    let deflected = 0;
+    let escalated = 0;
+    let abandoned = 0;
+    let inProgress = 0;
+    for (const session of sessions) {
+      switch (classifySession(session)) {
+        case "deflected":
+          deflected += 1;
+          break;
+        case "escalated":
+          escalated += 1;
+          break;
+        case "abandoned":
+          abandoned += 1;
+          break;
+        case "in_progress":
+          inProgress += 1;
+          break;
+      }
+    }
+    const resolved = deflected + escalated + abandoned;
+    const decided = deflected + escalated;
+    const reportable = resolved >= minSessions;
+    return {
+      deflected,
+      escalated,
+      abandoned,
+      inProgress,
+      resolved,
+      deflectionRate: resolved > 0 ? round(deflected / resolved) : null,
+      rateExcludingAbandoned: decided > 0 ? round(deflected / decided) : null,
+      abandonmentRate: resolved > 0 ? round(abandoned / resolved) : null,
+      reportable,
+      note: reportable ? null : resolved === 0 ? "No completed bot sessions yet." : `${resolved} completed session${resolved === 1 ? "" : "s"} \u2014 too few to publish a rate (minimum ${minSessions}).`
+    };
+  }
+  function round(value) {
+    return Math.round(value * 1e3) / 1e3;
+  }
+  function summariseByFlow(sessions, minSessions = MIN_REPORTABLE_SESSIONS) {
+    const byFlow = /* @__PURE__ */ new Map();
+    for (const session of sessions) {
+      const list = byFlow.get(session.flowId);
+      if (list) list.push(session);
+      else byFlow.set(session.flowId, [session]);
+    }
+    const out = {};
+    for (const [flowId, list] of byFlow) {
+      out[flowId] = summariseDeflection(list, minSessions);
+    }
+    return out;
+  }
+  function abandonmentHotspots(sessions) {
+    const counts = /* @__PURE__ */ new Map();
+    for (const session of sessions) {
+      if (classifySession(session) !== "abandoned") continue;
+      const step = session.lastStepId;
+      if (!step) continue;
+      counts.set(step, (counts.get(step) ?? 0) + 1);
+    }
+    return [...counts.entries()].map(([stepId, count]) => ({ stepId, count })).sort((a, b) => b.count - a.count || a.stepId.localeCompare(b.stepId));
+  }
 
   // src/bots/validate.ts
   var PROBLEM_CODES = [
@@ -4284,7 +4839,7 @@ var ENGINE = (() => {
 			 * store that keeps records in the browser instead of the database.
 			 * ================================================================== */
 
-			"use strict";
+			("use strict");
 
 			/* ------------------------------------------------------------ config */
 
@@ -4310,7 +4865,18 @@ var ENGINE = (() => {
 
 			const SERVICE_WINDOW_MS = 24 * 60 * 60 * 1000;
 			const STORAGE_KEY = "abc-engage-demo-v1";
-			const AGENT_NAME = "Mariam (agent)";
+			const AGENT_NAME = "Omar (agent)";
+			/*
+			 * The identifier behind that name.
+			 *
+			 * `assignedAgentId` is compared against a Caller's `id` by the
+			 * platform's own authorisation functions — `canReplyToConversation`,
+			 * `canAssignConversation`, `canTransfer`. Storing a display name in it
+			 * makes every one of those comparisons fail quietly: an agent is
+			 * refused their own conversation, with a message that sounds right.
+			 * So the field holds an id and the name is used only for display.
+			 */
+			const AGENT_ID = "usr_omar";
 
 			/*
 			 * The wireframe's own navigation first — Inbox, Tickets, Contacts,
@@ -4394,7 +4960,7 @@ var ENGINE = (() => {
 					const raw = window.localStorage.getItem(STORAGE_KEY);
 					if (!raw) return null;
 					const parsed = JSON.parse(raw);
-					return parsed && parsed.version === 2 ? parsed : null;
+					return parsed && parsed.version === 3 ? parsed : null;
 				} catch {
 					return null;
 				}
@@ -4412,10 +4978,98 @@ var ENGINE = (() => {
 			 * match tools/seed-local.sql so the demonstration and the local
 			 * harness tell the same story.
 			 */
+			/**
+			 * Ended bot sessions for the demonstration, in the shape the runtime
+			 * records them: a flow, one of the runtime's own end reasons, whether a
+			 * human also sent a message, and the step the customer was sitting on
+			 * when the session ended.
+			 *
+			 * Written as counts rather than a hundred literal objects. The counts
+			 * are chosen so that the deflection figure works out at the 41% the
+			 * screen designs show — but it is now *derived* from the end reasons
+			 * rather than typed into a tile, and it only reaches 41% because
+			 * abandonment is counted in the denominator. Fold the abandoned twenty
+			 * out and the same data reads 51%, which is the figure the Reports
+			 * screen labels as excluding them.
+			 */
+			function seedBotSessions() {
+				const make = (n, session) =>
+					Array.from({ length: n }, () => ({ ...session }));
+				return [
+					/* 41 deflected: the flow finished and nobody was needed. */
+					...make(34, {
+						flowId: "tracking",
+						endedReason: "completed",
+						humanReplied: false,
+						ended: true,
+						lastStepId: null,
+					}),
+					...make(7, {
+						flowId: "office-hours",
+						endedReason: "completed",
+						humanReplied: false,
+						ended: true,
+						lastStepId: null,
+					}),
+					/* 39 escalated: a person finished it, or the bot failed. */
+					...make(22, {
+						flowId: "quote",
+						endedReason: "handover",
+						humanReplied: true,
+						ended: true,
+						lastStepId: "ask-weight",
+					}),
+					...make(8, {
+						flowId: "tracking",
+						endedReason: "customer_asked_for_agent",
+						humanReplied: true,
+						ended: true,
+						lastStepId: "ask-reference",
+					}),
+					...make(9, {
+						flowId: "claims",
+						endedReason: "flow_stuck",
+						humanReplied: true,
+						ended: true,
+						lastStepId: "ask-photos",
+					}),
+					/* 20 abandoned: the customer stopped replying and nobody knows why. */
+					...make(13, {
+						flowId: "quote",
+						endedReason: "expired",
+						humanReplied: false,
+						ended: true,
+						lastStepId: "ask-weight",
+					}),
+					...make(5, {
+						flowId: "quote",
+						endedReason: "expired",
+						humanReplied: false,
+						ended: true,
+						lastStepId: "ask-destination",
+					}),
+					...make(2, {
+						flowId: "claims",
+						endedReason: "expired",
+						humanReplied: false,
+						ended: true,
+						lastStepId: "ask-photos",
+					}),
+					/* Still running, and counted nowhere until they end. */
+					...make(6, {
+						flowId: "tracking",
+						endedReason: null,
+						humanReplied: false,
+						ended: false,
+						lastStepId: "ask-reference",
+					}),
+				];
+			}
+
 			function seed() {
 				const t = (iso) => iso;
 				const s = {
-					version: 2,
+					version: 3,
 					regionId: "uae",
 					view: "inbox",
 					selectedConversationId: null,
@@ -4453,6 +5107,87 @@ var ENGINE = (() => {
 							status: "active",
 						},
 					],
+					// Teams, and the per-team service targets the screen designs
+					// specify. "UAE Support 5m/4h" and "UAE Sales 15m/1d" are the
+					// designs' own figures, now actually in force rather than drawn.
+					teams: [
+						{ id: "uae-support", regionId: "uae", label: "UAE Support" },
+						{ id: "uae-sales", regionId: "uae", label: "UAE Sales" },
+						{ id: "ksa-support", regionId: "ksa", label: "KSA Support" },
+						{ id: "ksa-night", regionId: "ksa", label: "KSA Night Desk" },
+						{ id: "uk-support", regionId: "uk", label: "UK Support" },
+					],
+					teamSlaPolicies: [
+						{
+							teamId: "uae-support",
+							regionId: "uae",
+							byType: {
+								claim: { firstResponseMinutes: 5, resolutionMinutes: 240 },
+							},
+							fallback: { firstResponseMinutes: 5, resolutionMinutes: 240 },
+						},
+						{
+							teamId: "uae-sales",
+							regionId: "uae",
+							fallback: { firstResponseMinutes: 15, resolutionMinutes: 1440 },
+						},
+						{
+							teamId: "ksa-support",
+							regionId: "ksa",
+							byType: {
+								claim: { firstResponseMinutes: 10, resolutionMinutes: 300 },
+							},
+						},
+						// Deliberately malformed, so the Setup screen can show what the
+						// platform does with a bad policy: ignore it, say so, and fall
+						// through to the region rather than take the queue down.
+						{
+							teamId: "ksa-night",
+							regionId: "ksa",
+							fallback: { firstResponseMinutes: 0, resolutionMinutes: 600 },
+						},
+					],
+					regionSlaPolicies: [
+						{
+							regionId: "uae",
+							byType: {
+								billing: { firstResponseMinutes: 90, resolutionMinutes: 960 },
+							},
+							fallback: { firstResponseMinutes: 60, resolutionMinutes: 720 },
+						},
+						{
+							regionId: "ksa",
+							byType: {
+								billing: { firstResponseMinutes: 120, resolutionMinutes: 1440 },
+							},
+							fallback: { firstResponseMinutes: 45, resolutionMinutes: 600 },
+						},
+					],
+					// Cross-region transfers, appended by the Inbox.
+					transfers: [],
+					// Survey counts per region, and the answers received. UAE clears the
+					// publishing minimum; KSA deliberately does not, so the screen can
+					// show a gap where the designs showed a number.
+					csat: {
+						sent: { uae: 20, ksa: 15, uk: 0 },
+						responses: [
+							...[5, 5, 5, 4, 4, 4, 3, 5, 5, 4].map((score, i) => ({
+								score,
+								regionId: "uae",
+								agentId: i % 2 ? "usr_omar" : "usr_aziz",
+								respondedAt: t("2026-09-1" + ((i % 9) + 1) + "T09:00:00Z"),
+							})),
+							...[5, 3, 4].map((score, i) => ({
+								score,
+								regionId: "ksa",
+								agentId: "usr_aziz",
+								respondedAt: t("2026-09-1" + (i + 1) + "T09:00:00Z"),
+							})),
+						],
+					},
+					// Ended bot sessions, as the runtime records them. The mix gives a
+					// real 41% once abandonment is counted honestly in the denominator.
+					botSessions: seedBotSessions(),
 					inboxFilter: "all",
 					selectedCustomerId: null,
 					botScript: null,
@@ -4580,7 +5315,7 @@ var ENGINE = (() => {
 							customerId: "cus_971506621184",
 							regionId: "uae",
 							direction: "out",
-							agentId: AGENT_NAME,
+							agentId: AGENT_ID,
 							startedAt: hoursAgo(2),
 							durationSeconds: 184,
 							outcome: "Explained clearance delay, customer satisfied",
@@ -4597,7 +5332,7 @@ var ENGINE = (() => {
 							// number or address it arrived on.
 							channel: "whatsapp",
 							status: "open",
-							assignedAgentId: AGENT_NAME,
+							assignedAgentId: AGENT_ID,
 							lastInboundAt: hoursAgo(3),
 							windowExpiresAt: null,
 							firstResponseDueAt: null,
@@ -4629,9 +5364,7 @@ var ENGINE = (() => {
 							firstResponseDueAt: null,
 							firstResponseAt: null,
 							lastAutoReplyAt: null,
-							messages: [
-								msg("in", "تم التوصيل، شكراً لكم", hoursAgo(1.2)),
-							],
+							messages: [msg("in", "تم التوصيل، شكراً لكم", hoursAgo(1.2))],
 						},
 						{
 							id: "conv_3",
@@ -4859,9 +5592,7 @@ var ENGINE = (() => {
 			 */
 			function bookingByRef(ref) {
 				const want = normaliseRef(String(ref));
-				return (
-					state.bookings.find((b) => normaliseRef(b.ref) === want) || null
-				);
+				return state.bookings.find((b) => normaliseRef(b.ref) === want) || null;
 			}
 
 			function conversationById(id) {
@@ -4871,7 +5602,9 @@ var ENGINE = (() => {
 			function conversationsForRegion(regionId) {
 				return state.conversations
 					.filter((c) => c.regionId === regionId)
-					.sort((a, b) => Date.parse(b.lastInboundAt) - Date.parse(a.lastInboundAt));
+					.sort(
+						(a, b) => Date.parse(b.lastInboundAt) - Date.parse(a.lastInboundAt),
+					);
 			}
 
 			function conversationForCustomer(customerId) {
@@ -4924,7 +5657,8 @@ var ENGINE = (() => {
 
 			function windowOpen(conv) {
 				return (
-					!!conv.windowExpiresAt && Date.parse(conv.windowExpiresAt) > now().getTime()
+					!!conv.windowExpiresAt &&
+					Date.parse(conv.windowExpiresAt) > now().getTime()
 				);
 			}
 
@@ -5105,7 +5839,10 @@ var ENGINE = (() => {
 						inboundText: text,
 					});
 					conv.messages.push(
-						msg("out", autoReply, nowIso(), { kind: "auto", actor: "automated" }),
+						msg("out", autoReply, nowIso(), {
+							kind: "auto",
+							actor: "automated",
+						}),
 					);
 					conv.lastAutoReplyAt = nowIso();
 				}
@@ -5141,8 +5878,10 @@ var ENGINE = (() => {
 					return;
 				}
 				const at = nowIso();
-				conv.messages.push(msg("out", text, at, { kind: "text", actor: AGENT_NAME }));
-				conv.assignedAgentId = AGENT_NAME;
+				conv.messages.push(
+					msg("out", text, at, { kind: "text", actor: AGENT_NAME }),
+				);
+				conv.assignedAgentId = AGENT_ID;
 				if (!conv.firstResponseAt) {
 					conv.firstResponseAt = at;
 					conv.firstResponseDueAt = null;
@@ -5250,7 +5989,11 @@ var ENGINE = (() => {
 				const at = nowIso();
 				const amount = 400 + Math.round(Math.random() * 2600);
 				const currency =
-					lead.regionId === "uae" ? "AED" : lead.regionId === "ksa" ? "SAR" : "GBP";
+					lead.regionId === "uae"
+						? "AED"
+						: lead.regionId === "ksa"
+							? "SAR"
+							: "GBP";
 				const q = {
 					id: uid("quo"),
 					ref: buildRef("quotation", ++state.seq.quotation),
@@ -5478,7 +6221,7 @@ var ENGINE = (() => {
 					customerId,
 					regionId: customer.regionId,
 					direction,
-					agentId: AGENT_NAME,
+					agentId: AGENT_ID,
 					startedAt: at,
 					durationSeconds: seconds,
 					outcome,
@@ -5559,7 +6302,7 @@ var ENGINE = (() => {
 			function countdown(dueAt) {
 				const ms = remainingMs(dueAt, now());
 				const over = ms < 0;
-                const abs = Math.abs(ms);
+				const abs = Math.abs(ms);
 				const mins = Math.floor(abs / 60000);
 				const h = Math.floor(mins / 60);
 				const m = mins % 60;
@@ -5632,7 +6375,8 @@ var ENGINE = (() => {
 					minute: "2-digit",
 					hourCycle: "h23",
 				}).format(now());
-				document.getElementById("regionClock").textContent = `${clock} ${region.timezone}`;
+				document.getElementById("regionClock").textContent =
+					`${clock} ${region.timezone}`;
 				const stateEl = document.getElementById("regionState");
 				stateEl.className = `pill ${open ? "pill-open" : "pill-closed"}`;
 				stateEl.textContent = open ? "Open" : "Closed";
@@ -5649,21 +6393,19 @@ var ENGINE = (() => {
 			}
 
 			function renderTabs() {
-				document.getElementById("tabs").innerHTML = VIEWS.map(
-					([id, label]) => {
-						const badge =
-							id === "tickets"
-								? state.tickets.filter(
-										(t) => t.status === "open" || t.status === "pending",
-									).length
-								: id === "leads"
-									? state.leads.filter((l) => isLeadOpen(l.stage)).length
-									: 0;
-						return `<button type="button" role="tab" data-view="${esc(id)}" aria-selected="${state.view === id}">
+				document.getElementById("tabs").innerHTML = VIEWS.map(([id, label]) => {
+					const badge =
+						id === "tickets"
+							? state.tickets.filter(
+									(t) => t.status === "open" || t.status === "pending",
+								).length
+							: id === "leads"
+								? state.leads.filter((l) => isLeadOpen(l.stage)).length
+								: 0;
+					return `<button type="button" role="tab" data-view="${esc(id)}" aria-selected="${state.view === id}">
 							${esc(label)}${badge ? ` <span class="mono" style="color:var(--ink-3)">${badge}</span>` : ""}
 						</button>`;
-					},
-				).join("");
+				}).join("");
 			}
 
 			/* --------------------------------------------------------- view: inbox */
@@ -5780,8 +6522,10 @@ var ENGINE = (() => {
 				if (!conv.firstResponseAt && conv.firstResponseDueAt) {
 					tags.push(slaPill(conv.firstResponseDueAt, "First reply"));
 				}
-				if (ticket) tags.push(`<span class="pill pill-brand">${esc(ticket.ref)}</span>`);
-				if (lead) tags.push(`<span class="pill pill-brand">${esc(lead.ref)}</span>`);
+				if (ticket)
+					tags.push(`<span class="pill pill-brand">${esc(ticket.ref)}</span>`);
+				if (lead)
+					tags.push(`<span class="pill pill-brand">${esc(lead.ref)}</span>`);
 				// The window rule is WhatsApp's. An email or a call does not have
 				// one, and showing "window closed" against them would be telling
 				// an agent something untrue about the channel they are on.
@@ -5836,8 +6580,127 @@ var ENGINE = (() => {
 						</div>
 					</div>
 
+					${transferPanel(conv)}
 					${simPanel(conv)}
 				</section>`;
+			}
+
+			/**
+			 * Transfer, including across regions.
+			 *
+			 * The one thing worth watching on this panel is the line about the
+			 * number. The designs offer "Forward to KSA team" as though a
+			 * conversation could move house; it cannot. The customer messaged a
+			 * particular WhatsApp number, that is the thread on their handset, and
+			 * the 24-hour window belongs to that number. So a transfer moves who
+			 * owns the work and leaves the channel exactly where it was — the KSA
+			 * team answers, and the reply still leaves from the UAE number.
+			 *
+			 * The warnings are the platform's, not the screen's. Nothing here
+			 * decides whether a handover is sensible; it asks
+			 * ENGINE.transferConversation and prints the answer.
+			 */
+			function transferPanel(conv) {
+				const teams = state.teams.filter(
+					(team) =>
+						team.id !== conv.assignedTeamId || team.regionId !== conv.regionId,
+				);
+				const caller = currentCaller();
+				const recent = state.transfers
+					.filter((r) => r.conversationId === conv.id)
+					.slice(-3)
+					.reverse();
+
+				const options = teams
+					.map((team) => {
+						const decision = ENGINE.canTransfer(caller, conv, team.regionId);
+						return `<option value="${esc(team.id)}" data-region="${esc(team.regionId)}" ${decision.allowed ? "" : "disabled"}>
+							${esc(team.label)}${team.regionId === conv.regionId ? "" : " · " + esc(team.regionId.toUpperCase())}${decision.allowed ? "" : " — not permitted"}
+						</option>`;
+					})
+					.join("");
+
+				return `<section class="card">
+					<h2>Transfer <small>${esc(signedInAs().displayName)} · ${esc(signedInAs().role.replace(/_/g, " "))}</small></h2>
+					<div class="actions" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+						<select id="transferTeam" class="ghost">${options}</select>
+						<input id="transferReason" type="text" placeholder="Reason (required)" style="flex:1;min-width:200px" />
+						<button class="ghost" type="button" id="transferBtn">Transfer</button>
+					</div>
+					<p class="muted" style="font-size:12px;margin:8px 0 0">
+						Ownership moves; the WhatsApp number does not. Replies still leave
+						from <span class="mono">${esc(regionOf(conv.regionId).displayNumber)}</span>,
+						because that is the thread the customer has. The service clock is
+						carried over rather than restarted — a transfer is not a way to
+						clear a late queue.
+					</p>
+					<div id="transferResult">${
+						recent.length
+							? `<div class="tablewrap" style="margin-top:10px"><table>
+								<thead><tr><th>When</th><th>From</th><th>To</th><th>Why</th></tr></thead>
+								<tbody>${recent
+									.map(
+										(r) => `<tr>
+										<td class="mono">${esc(ago(r.at))}</td>
+										<td>${esc(r.fromTeamId ?? "unassigned")}</td>
+										<td>${esc(r.toTeamId)} ${r.crossRegion ? `<span class="pill">${esc(r.toRegionId.toUpperCase())}</span>` : ""}</td>
+										<td class="muted">${esc(r.reason)}</td>
+									</tr>`,
+									)
+									.join("")}</tbody>
+							</table></div>`
+							: ""
+					}</div>
+				</section>`;
+			}
+
+			/** The signed-in person, as the Setup screen's people list holds them. */
+			function signedInAs() {
+				return (
+					state.staff.find((u) => u.id === "usr_hakkeem") ?? {
+						id: "usr_hakkeem",
+						displayName: "Hakkeem M",
+						role: "master_admin",
+						status: "active",
+					}
+				);
+			}
+
+			/**
+			 * The signed-in person as the platform's authorisation functions expect
+			 * them: a Caller, with the regions their teams place them in.
+			 *
+			 * Built from the Setup screen's own records rather than hard-coded, so
+			 * demoting yourself there changes what you may do here. That is the
+			 * point of asking the platform instead of the screen.
+			 */
+			function currentCaller() {
+				const me = signedInAs();
+				const teamIds = state.teams
+					.filter(
+						(team) => me.role !== "agent" || team.regionId === state.regionId,
+					)
+					.map((team) => team.id);
+				const regionIds =
+					me.role === "master_admin"
+						? REGIONS.map((r) => r.id)
+						: [
+								...new Set(
+									state.teams
+										.filter((t) => teamIds.includes(t.id))
+										.map((t) => t.regionId),
+								),
+							];
+				return {
+					kind: "user",
+					id: me.id,
+					email: me.email ?? "",
+					displayName: me.displayName,
+					role: me.role,
+					status: me.status,
+					regionIds,
+					teamIds,
+				};
 			}
 
 			/**
@@ -5947,7 +6810,9 @@ var ENGINE = (() => {
 				const customer = customerById(conv.customerId);
 				if (!customer) return "<div></div>";
 				const acts = activitiesFor(customer.id);
-				const booking = state.bookings.find((b) => b.customerId === customer.id);
+				const booking = state.bookings.find(
+					(b) => b.customerId === customer.id,
+				);
 				const ticket = openTicketFor(customer.id);
 				const lead = openLeadFor(customer.id);
 
@@ -6010,7 +6875,9 @@ var ENGINE = (() => {
 
 			function viewLeads() {
 				const leads = state.leads.filter((l) => l.regionId === state.regionId);
-				const quotes = state.quotations.filter((q) => q.regionId === state.regionId);
+				const quotes = state.quotations.filter(
+					(q) => q.regionId === state.regionId,
+				);
 
 				return `<div class="grid2">
 					<section class="card">
@@ -6068,7 +6935,9 @@ var ENGINE = (() => {
 			}
 
 			function quoteRow(q) {
-				const nexts = QUOTATION_STATUSES.filter((s) => canMoveQuotation(q.status, s));
+				const nexts = QUOTATION_STATUSES.filter((s) =>
+					canMoveQuotation(q.status, s),
+				);
 				return `<tr>
 					<td class="mono">${esc(q.ref)}</td>
 					<td>${esc(q.origin)} → ${esc(q.destination)}<div class="muted" style="font-size:12px">${esc(titleCase(q.mode))}</div></td>
@@ -6175,7 +7044,9 @@ var ENGINE = (() => {
 			function bookingRow(b) {
 				const customer = customerById(b.customerId);
 				const stall = checkStall(b.milestone, b.milestoneAt, now());
-				const nexts = MILESTONES.filter((m) => canAdvanceMilestone(b.milestone, m));
+				const nexts = MILESTONES.filter((m) =>
+					canAdvanceMilestone(b.milestone, m),
+				);
 				return `<tr>
 					<td class="mono">${esc(b.ref)}</td>
 					<td>${esc(customer ? customer.displayName : "—")}</td>
@@ -6189,7 +7060,13 @@ var ENGINE = (() => {
 								: `<span class="pill pill-open">ok</span><div class="muted" style="font-size:11.5px">flags at ${esc(stall.thresholdHours)}h</div>`
 					}</td>
 					<td><div class="acts">
-						${nexts.slice(0, 3).map((m) => `<button type="button" data-booking="${esc(b.id)}" data-milestone="${esc(m)}">${esc(titleCase(m))}${shouldNotifyCustomer(m) ? " ✉" : ""}</button>`).join("")}
+						${nexts
+							.slice(0, 3)
+							.map(
+								(m) =>
+									`<button type="button" data-booking="${esc(b.id)}" data-milestone="${esc(m)}">${esc(titleCase(m))}${shouldNotifyCustomer(m) ? " ✉" : ""}</button>`,
+							)
+							.join("")}
 						${nexts.length === 0 ? '<span class="muted" style="font-size:12px">delivered</span>' : ""}
 					</div></td>
 				</tr>`;
@@ -6338,10 +7215,7 @@ var ENGINE = (() => {
 						(n, c) =>
 							n +
 							c.messages.filter(
-								(m) =>
-									m.dir === "in" &&
-									m.at >= day.from &&
-									m.at < day.to,
+								(m) => m.dir === "in" && m.at >= day.from && m.at < day.to,
 							).length,
 						0,
 					);
@@ -6375,7 +7249,9 @@ var ENGINE = (() => {
 					.filter((c) => isUnanswered(c))
 					.map((c) => ({
 						c,
-						mins: Math.floor((now().getTime() - Date.parse(lastInboundAt(c))) / 60000),
+						mins: Math.floor(
+							(now().getTime() - Date.parse(lastInboundAt(c))) / 60000,
+						),
 					}))
 					.sort((a, b) => b.mins - a.mins)
 					.slice(0, 8);
@@ -6422,7 +7298,10 @@ var ENGINE = (() => {
 			 */
 			function viewBot() {
 				const region = currentRegion();
-				const starter = ENGINE.buildStarterFlow({ id: region.id, label: region.label });
+				const starter = ENGINE.buildStarterFlow({
+					id: region.id,
+					label: region.label,
+				});
 				const flow = {
 					id: "demo",
 					regionId: region.id,
@@ -6461,7 +7340,9 @@ var ENGINE = (() => {
 
 				const turns = (result?.turns ?? [])
 					.map(
-						(t) => `<div style="border-top:1px solid var(--rule-soft);padding:10px 0">
+						(
+							t,
+						) => `<div style="border-top:1px solid var(--rule-soft);padding:10px 0">
 						<div class="mono" style="font-size:12px;color:var(--ink-3)">customer</div>
 						<div style="margin:2px 0 8px">${esc(t.customer)}</div>
 						${t.replies
@@ -6617,7 +7498,9 @@ var ENGINE = (() => {
 				// Resolved against the demonstration's own customers, the same way
 				// the service does it: everyone the filters reach, with the
 				// marketing opt-in recorded as a skip rather than a silent drop.
-				const candidates = state.customers.filter((c) => c.regionId === region.id);
+				const candidates = state.customers.filter(
+					(c) => c.regionId === region.id,
+				);
 				const audience = [];
 				const skipped = [];
 				for (const c of candidates) {
@@ -6660,7 +7543,11 @@ var ENGINE = (() => {
 					regionIds: [region.id],
 					teamIds: [],
 				};
-				const colleague = { ...author, id: "usr_mariam", displayName: "Mariam" };
+				const colleague = {
+					...author,
+					id: "usr_mariam",
+					displayName: "Mariam",
+				};
 
 				const selfApprove = ENGINE.canApproveBroadcast(author, bc);
 				const colleagueApprove = ENGINE.canApproveBroadcast(colleague, bc);
@@ -6772,7 +7659,9 @@ var ENGINE = (() => {
 				const atRisk = convs.filter(
 					(c) => !c.firstResponseAt && c.firstResponseDueAt,
 				);
-				const breached = atRisk.filter((c) => isBreached(c.firstResponseDueAt, now()));
+				const breached = atRisk.filter((c) =>
+					isBreached(c.firstResponseDueAt, now()),
+				);
 
 				const byRegion = REGIONS.map((r) => {
 					const mine = convs.filter((c) => c.regionId === r.id);
@@ -6798,12 +7687,29 @@ var ENGINE = (() => {
 								answered.reduce(
 									(n, c) =>
 										n +
-										(Date.parse(c.firstResponseAt) - Date.parse(c.lastInboundAt)),
+										(Date.parse(c.firstResponseAt) -
+											Date.parse(c.lastInboundAt)),
 									0,
 								) /
 									answered.length /
 									60000,
 							);
+
+				// Satisfaction and deflection, both measured rather than asserted.
+				// Each refuses to publish a figure below its own minimum sample, and
+				// the screen prints the reason instead of a number.
+				const csatAll = ENGINE.summarise(
+					state.csat.responses,
+					Object.values(state.csat.sent).reduce((n, v) => n + v, 0),
+				);
+				const csatByRegion = ENGINE.summariseByRegion(
+					state.csat.responses,
+					state.csat.sent,
+				);
+				const deflection = ENGINE.summariseDeflection(state.botSessions);
+				const deflectionByFlow = ENGINE.summariseByFlow(state.botSessions);
+				const hotspots = ENGINE.abandonmentHotspots(state.botSessions);
+				const pct = (v) => `${Math.round(v * 100)}%`;
 
 				return `<div style="display:grid;gap:14px">
 					<section class="card">
@@ -6818,8 +7724,156 @@ var ENGINE = (() => {
 						<div class="stat"><div class="n">${convs.length}</div><div class="l">Conversations</div><div class="h">all channels</div></div>
 						<div class="stat"><div class="n">${avgFirst === null ? "—" : esc(ENGINE.describeMinutes(Math.abs(avgFirst)))}</div><div class="l">Avg first response</div><div class="h">target ${CONVERSATION_FIRST_RESPONSE_MINUTES}m</div></div>
 						<div class="stat"><div class="n">${breached.length}</div><div class="l">SLA breaches</div><div class="h">${atRisk.length} still at risk</div></div>
-						<div class="stat"><div class="n">—</div><div class="l">Bot deflection</div><div class="h">not measured yet</div></div>
-						<div class="stat"><div class="n">—</div><div class="l">CSAT</div><div class="h">no survey yet</div></div>
+						<div class="stat">
+							<div class="n">${deflection.reportable && deflection.deflectionRate !== null ? esc(pct(deflection.deflectionRate)) : "—"}</div>
+							<div class="l">Bot deflection</div>
+							<div class="h">${deflection.reportable ? `of ${deflection.resolved} ended sessions` : esc(deflection.note)}</div>
+						</div>
+						<div class="stat">
+							<div class="n">${csatAll.reportable && csatAll.mean !== null ? esc(csatAll.mean.toFixed(1)) : "—"}</div>
+							<div class="l">CSAT</div>
+							<div class="h">${csatAll.reportable ? `${csatAll.responses} of ${csatAll.sent} answered` : esc(csatAll.note)}</div>
+						</div>
+					<section class="card">
+						<h2>Bot deflection <small>${deflection.resolved} ended sessions</small></h2>
+						<p class="muted" style="margin:2px 0 10px">
+							A session counts as deflected when the flow finished and no
+							human sent a message. A handover, a request for an agent and a
+							flow that got stuck all count as escalated — a bot failing is
+							not a bot deflecting.
+						</p>
+						<div class="tablewrap"><table>
+							<thead><tr><th>Outcome</th><th>Sessions</th><th>Share</th><th>Reading</th></tr></thead>
+							<tbody>
+								<tr>
+									<td>Deflected</td>
+									<td class="mono">${deflection.deflected}</td>
+									<td class="mono">${deflection.deflectionRate === null ? "—" : esc(pct(deflection.deflectionRate))}</td>
+									<td class="muted" style="font-size:12px">Bot answered, nobody needed</td>
+								</tr>
+								<tr>
+									<td>Escalated</td>
+									<td class="mono">${deflection.escalated}</td>
+									<td class="mono">${deflection.resolved ? esc(pct(deflection.escalated / deflection.resolved)) : "—"}</td>
+									<td class="muted" style="font-size:12px">A person finished it, or the bot failed</td>
+								</tr>
+								<tr>
+									<td>Abandoned</td>
+									<td class="mono">${deflection.abandoned}</td>
+									<td class="mono">${deflection.abandonmentRate === null ? "—" : esc(pct(deflection.abandonmentRate))}</td>
+									<td class="muted" style="font-size:12px">Customer went quiet. Nobody can say whether they were helped</td>
+								</tr>
+								<tr>
+									<td class="muted">Still running</td>
+									<td class="mono muted">${deflection.inProgress}</td>
+									<td class="muted">—</td>
+									<td class="muted" style="font-size:12px">Counted nowhere until they end</td>
+								</tr>
+							</tbody>
+						</table></div>
+						<p class="muted" style="font-size:12px;margin-top:10px">
+							<strong>The headline figure counts abandonment in the
+							denominator.</strong> Excluding it gives
+							<strong class="mono">${deflection.rateExcludingAbandoned === null ? "—" : esc(pct(deflection.rateExcludingAbandoned))}</strong>,
+							which is the same data read more kindly. Both are shown so that
+							neither can be quoted without the other.
+						</p>
+					</section>
+
+					<div class="grid2">
+						<section class="card">
+							<h2>Deflection by flow</h2>
+							<p class="muted" style="margin:2px 0 10px">
+								An overall rate says the bot is doing well or badly. It never
+								says which flow to fix.
+							</p>
+							<div class="tablewrap"><table>
+								<thead><tr><th>Flow</th><th>Ended</th><th>Deflected</th><th>Rate</th></tr></thead>
+								<tbody>
+									${Object.entries(deflectionByFlow)
+										.sort((a, b) => b[1].resolved - a[1].resolved)
+										.map(
+											([flowId, summary]) => `<tr>
+										<td class="mono">${esc(flowId)}</td>
+										<td class="mono">${summary.resolved}</td>
+										<td class="mono">${summary.deflected}</td>
+										<td class="mono">${
+											summary.reportable && summary.deflectionRate !== null
+												? esc(pct(summary.deflectionRate))
+												: `<span class="muted" title="${esc(summary.note ?? "")}">—</span>`
+										}</td>
+									</tr>`,
+										)
+										.join("")}
+								</tbody>
+							</table></div>
+							<p class="muted" style="font-size:12px;margin-top:10px">
+								Each flow is held to the same minimum sample on its own. A
+								healthy total does not license publishing a rate for a flow
+								that has barely run.
+							</p>
+						</section>
+
+						<section class="card">
+							<h2>Where customers stop replying</h2>
+							<p class="muted" style="margin:2px 0 10px">
+								Abandonment cannot be interpreted in aggregate. Per step it
+								can: if the same question loses everybody, the question is the
+								problem.
+							</p>
+							${
+								hotspots.length
+									? `<div class="tablewrap"><table>
+										<thead><tr><th>Step</th><th>Abandoned at</th></tr></thead>
+										<tbody>${hotspots
+											.map(
+												(h) =>
+													`<tr><td class="mono">${esc(h.stepId)}</td><td class="mono">${h.count}</td></tr>`,
+											)
+											.join("")}</tbody>
+									</table></div>`
+									: `<p class="muted">No abandoned sessions recorded a step.</p>`
+							}
+						</section>
+					</div>
+
+					<section class="card">
+						<h2>Customer satisfaction</h2>
+						<p class="muted" style="margin:2px 0 10px">
+							Asked once per conversation, at most once a month per customer,
+							never when the customer has opted out. Eligibility turns on the
+							channel, consent and survey fatigue — never on how the
+							conversation went, because a score you can shape by choosing who
+							to ask is worse than no score.
+						</p>
+						<div class="tablewrap"><table>
+							<thead><tr><th>Region</th><th>Sent</th><th>Answered</th><th>Response rate</th><th>Score</th></tr></thead>
+							<tbody>
+								${REGIONS.map((r) => {
+									const c = csatByRegion[r.id] ?? ENGINE.summarise([], 0);
+									return `<tr>
+										<td><span class="dot dot-${esc(r.id)}"></span>${esc(r.label)}</td>
+										<td class="mono">${c.sent}</td>
+										<td class="mono">${c.responses}</td>
+										<td class="mono">${c.responseRate === null ? "—" : esc(pct(c.responseRate))}</td>
+										<td class="mono">${
+											c.reportable && c.mean !== null
+												? esc(c.mean.toFixed(1)) + " / 5"
+												: `<span class="muted" title="${esc(c.note ?? "")}">${esc(c.note ?? "—")}</span>`
+										}</td>
+									</tr>`;
+								}).join("")}
+							</tbody>
+						</table></div>
+						<p class="muted" style="font-size:12px;margin-top:10px">
+							<strong>KSA shows a sentence instead of a score on purpose.</strong>
+							Three replies is three opinions, not a satisfaction figure, and
+							each region has to clear the minimum on its own — a healthy group
+							sample is exactly how a thin regional one gets laundered into a
+							headline.
+						</p>
+					</section>
+
 					</div>
 
 					<div class="grid2">
@@ -6932,7 +7986,6 @@ var ENGINE = (() => {
 				</div>`;
 			}
 
-
 			/* ----------------------------------------------------- view: contacts */
 
 			/*
@@ -6946,7 +7999,9 @@ var ENGINE = (() => {
 				const convs = state.conversations.filter(
 					(c) => c.customerId === customer.id,
 				);
-				const tickets = state.tickets.filter((t) => t.customerId === customer.id);
+				const tickets = state.tickets.filter(
+					(t) => t.customerId === customer.id,
+				);
 				const deals = state.leads.filter((l) => l.customerId === customer.id);
 				const shipments = state.bookings.filter(
 					(b) => b.customerId === customer.id,
@@ -6957,8 +8012,16 @@ var ENGINE = (() => {
 					...convs.flatMap((c) =>
 						c.messages.map((m) => [m.at, CHANNEL_LABELS[channelOf(c)], m.text]),
 					),
-					...deals.map((d) => [d.createdAt, "Deal", `${d.ref} ${d.origin || ""}→${d.destination || ""}`]),
-					...shipments.map((b) => [b.createdAt, "Shipment", `${b.ref} ${b.milestone}`]),
+					...deals.map((d) => [
+						d.createdAt,
+						"Deal",
+						`${d.ref} ${d.origin || ""}→${d.destination || ""}`,
+					]),
+					...shipments.map((b) => [
+						b.createdAt,
+						"Shipment",
+						`${b.ref} ${b.milestone}`,
+					]),
 					...calls.map((c) => [c.startedAt, "Call", c.outcome || ""]),
 				]
 					.filter(([at]) => at)
@@ -6984,7 +8047,11 @@ var ENGINE = (() => {
 							? `<p class="muted" style="font-size:12px">Nothing recorded yet.</p>`
 							: timeline
 									.map(
-										([at, kind, text]) => `<div style="padding:6px 0;border-top:1px solid var(--rule-soft);display:flex;gap:10px">
+										([
+											at,
+											kind,
+											text,
+										]) => `<div style="padding:6px 0;border-top:1px solid var(--rule-soft);display:flex;gap:10px">
 							<span class="pill" style="min-width:86px">${esc(kind)}</span>
 							<span style="flex:1">${esc(String(text).slice(0, 110))}</span>
 							<span class="mono muted" style="font-size:11.5px">${esc(ago(at))}</span>
@@ -7022,7 +8089,10 @@ var ENGINE = (() => {
 								? `<p class="muted" style="font-size:12px">—</p>`
 								: inStage
 										.map(
-											({ c, life }) => `<div data-contact="${esc(c.id)}" role="button" tabindex="0" style="padding:6px 0;border-top:1px solid var(--rule-soft);cursor:pointer">
+											({
+												c,
+												life,
+											}) => `<div data-contact="${esc(c.id)}" role="button" tabindex="0" style="padding:6px 0;border-top:1px solid var(--rule-soft);cursor:pointer">
 								<div>${esc(c.displayName)}</div>
 								<div class="muted" style="font-size:11.5px">${esc(c.company ?? "")}</div>
 								<div class="mono" style="font-size:11.5px;color:var(--ink-3)">${esc(life.band)} · ${life.temperature}</div>
@@ -7065,10 +8135,16 @@ var ENGINE = (() => {
 					teamIds: ["team_uae"],
 				});
 				const rows = [
-					["Hakkeem — in the thread", person("usr_hakkeem", "Hakkeem", "agent")],
+					[
+						"Hakkeem — in the thread",
+						person("usr_hakkeem", "Hakkeem", "agent"),
+					],
 					["Mariam — in the thread", person("usr_mariam", "Mariam", "agent")],
 					["Omar — not in it", person("usr_omar", "Omar", "agent")],
-					["A master admin, not in it", person("usr_admin", "Admin", "master_admin")],
+					[
+						"A master admin, not in it",
+						person("usr_admin", "Admin", "master_admin"),
+					],
 					["The shipment system", { kind: "service", name: "shipment-system" }],
 				];
 
@@ -7136,38 +8212,118 @@ var ENGINE = (() => {
 				</section>`;
 			}
 
+			/**
+			 * Service targets, per team, with the provenance of every row.
+			 *
+			 * The screen designs set targets on the team; the platform used to set
+			 * them per region and per ticket type only. Both now apply, and the
+			 * table says which level each figure came from, because a supervisor
+			 * looking at a five-minute target will ask why and "inherited from the
+			 * region" is a different answer from "this team sets it".
+			 */
 			function setupSla() {
+				const teams = state.teams;
+				const policies = state.teamSlaPolicies;
+				const regionPolicies = state.regionSlaPolicies;
+
+				const teamBlocks = teams
+					.map((team) => {
+						const rows = ENGINE.effectivePolicyTable({
+							teamId: team.id,
+							regionId: team.regionId,
+							teamPolicies: policies,
+							regionPolicies,
+						});
+						// Anything the platform refused to apply, collected from the
+						// same resolution the table above ran.
+						const ignored = [];
+						for (const type of ENGINE.TICKET_TYPES) {
+							const resolved = ENGINE.resolveTarget(type, "normal", {
+								teamIds: [team.id],
+								regionId: team.regionId,
+								teamPolicies: policies,
+								regionPolicies,
+							});
+							for (const bad of resolved.ignored) {
+								if (!ignored.some((i) => i.problem === bad.problem)) {
+									ignored.push(bad);
+								}
+							}
+						}
+
+						const body = rows
+							.map(
+								(row) => `<tr>
+							<td>${esc(titleCase(row.type))}</td>
+							<td class="mono">${esc(String(row.stated.firstResponseMinutes))}m</td>
+							<td class="mono">${esc(String(row.stated.resolutionMinutes))}m</td>
+							<td class="${row.inherited ? "muted" : ""}" style="font-size:12px">
+								${esc(ENGINE.TARGET_SOURCE_LABELS[row.source])}
+							</td>
+						</tr>`,
+							)
+							.join("");
+
+						return `<details ${team.id === "uae-support" ? "open" : ""}>
+						<summary><strong>${esc(team.label)}</strong>
+							<span class="pill">${esc(team.regionId.toUpperCase())}</span>
+							${
+								rows.every((r) => r.inherited)
+									? `<span class="mono muted" style="font-size:11.5px">all inherited</span>`
+									: `<span class="mono" style="font-size:11.5px">${rows.filter((r) => !r.inherited).length} of ${rows.length} set by this team</span>`
+							}
+						</summary>
+						<div class="tablewrap" style="margin-top:8px"><table>
+							<thead><tr><th>Ticket type</th><th>First response</th><th>Resolution</th><th>From</th></tr></thead>
+							<tbody>${body}</tbody>
+						</table></div>
+						${
+							ignored.length
+								? `<p class="muted" style="font-size:12px;margin:8px 0 0;color:var(--bad,#b00)">
+									<strong>Ignored:</strong> ${ignored.map((i) => esc(i.problem)).join("; ")}.
+									The platform fell through to the next level rather than apply it
+									or fail the queue.
+								</p>`
+								: ""
+						}
+					</details>`;
+					})
+					.join("");
+
 				return `<section class="card">
-					<h2>Service targets</h2>
+					<h2>Service targets <small>per team</small></h2>
 					<div class="tablewrap"><table>
 						<thead><tr><th>Applies to</th><th>First response</th><th>Resolution</th></tr></thead>
 						<tbody>
 							<tr><td>Conversation, any channel</td><td class="mono">${CONVERSATION_FIRST_RESPONSE_MINUTES}m</td><td class="muted">—</td></tr>
-							${Object.entries(ENGINE.DEFAULT_TICKET_TARGETS)
-								.map(
-									([type, target]) => `<tr>
-								<td>${esc(titleCase(type))} ticket</td>
-								<td class="mono">${esc(String(target.firstResponseMinutes))}m</td>
-								<td class="mono">${esc(String(target.resolutionMinutes))}m</td>
-							</tr>`,
-								)
-								.join("")}
 						</tbody>
 					</table></div>
-					<p class="muted" style="font-size:12px;margin-top:10px">
+					<div style="display:grid;gap:6px;margin-top:12px">${teamBlocks}</div>
+					<p class="muted" style="font-size:12px;margin-top:12px">
 						Counted in <strong>business minutes</strong> on each region's own
-						calendar, not wall-clock. The wireframe sets targets per team
-						(UAE Support 5m/4h, UAE Sales 15m/1d); the platform sets them per
-						region and per ticket type. Per-team targets are not built.
+						calendar, not wall-clock. The most specific policy wins: the team's
+						own entry for the ticket type, then the team's default, then the
+						region's, then the platform's. A malformed policy is ignored and
+						reported rather than obeyed — open <strong>KSA Night Desk</strong>
+						to see one. Priority shortens a target on top of all of this; an
+						urgent claim is a quarter of the figure shown.
 					</p>
 				</section>`;
 			}
 
 			function setupRoles() {
 				const rows = [
-					["Agent", "Own conversations only, own region", "Can take unclaimed work; no cross-agent visibility"],
+					[
+						"Agent",
+						"Own conversations only, own region",
+						"Can take unclaimed work; no cross-agent visibility",
+					],
 					["Team lead", "All queues in their region", "Reassign, escalate"],
-					["Master admin", "All three regions", "Channels, bots, users, keys, audit log"],
+					[
+						"Master admin",
+						"All three regions",
+						"Channels, bots, users, keys, audit log",
+					],
 				];
 				return `<section class="card">
 					<h2>Roles and visibility</h2>
@@ -7239,7 +8395,6 @@ var ENGINE = (() => {
 					</section>
 				</div>`;
 			}
-
 
 			/* ------------------------------------------------------ view: overview */
 
@@ -7380,7 +8535,9 @@ var ENGINE = (() => {
 			}
 
 			document.addEventListener("click", (event) => {
-				const t = event.target.closest("[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend],[data-inbox-filter],[data-contact],[data-contact-back]");
+				const t = event.target.closest(
+					"[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend],[data-inbox-filter],[data-contact],[data-contact-back]",
+				);
 				if (t) {
 					if (t.dataset.region) {
 						state.regionId = t.dataset.region;
@@ -7444,7 +8601,9 @@ var ENGINE = (() => {
 							actingUserId: "usr_hakkeem",
 							targetUserId: targetId,
 							activeAdminIds: state.staff
-								.filter((u) => u.role === "master_admin" && u.status === "active")
+								.filter(
+									(u) => u.role === "master_admin" && u.status === "active",
+								)
 								.map((u) => u.id),
 							next,
 						});
@@ -7536,6 +8695,79 @@ var ENGINE = (() => {
 					return;
 				}
 
+				if (id === "transferBtn") {
+					const conv = conversationById(state.selectedConversationId);
+					if (!conv) return;
+					const select = document.getElementById("transferTeam");
+					const option = select.options[select.selectedIndex];
+					const reason = (
+						document.getElementById("transferReason").value || ""
+					).trim();
+
+					// The platform decides. The screen only collects the request and
+					// prints whatever comes back, refusal or warning.
+					const outcome = ENGINE.transferConversation(
+						currentCaller(),
+						conv,
+						{
+							toTeamId: select.value,
+							toRegionId: option.dataset.region,
+							reason,
+						},
+						REGIONS,
+						now(),
+					);
+
+					if (!outcome.ok) {
+						toast(outcome.message);
+						return;
+					}
+
+					ENGINE.assertChannelUnchanged(conv, outcome.patch.phoneNumberId);
+					conv.regionId = outcome.patch.regionId;
+					conv.assignedTeamId = outcome.patch.assignedTeamId;
+					conv.assignedAgentId = outcome.patch.assignedAgentId;
+					conv.firstResponseDueAt = outcome.patch.firstResponseDueAt;
+					state.transfers.push(outcome.record);
+					state.activities.push(
+						act(
+							conv.customerId,
+							outcome.patch.regionId,
+							"note",
+							null,
+							`Transferred to ${option.textContent.trim().replace(/\s+/g, " ")}`,
+							outcome.record.reason,
+							signedInAs().displayName,
+							outcome.record.at,
+						),
+					);
+
+					// Follow the conversation into its new region, otherwise the agent
+					// is left looking at a number the thread is no longer filed under.
+					state.regionId = outcome.patch.regionId;
+					save();
+					renderApp();
+
+					const host = document.getElementById("transferResult");
+					if (host && outcome.warnings.length) {
+						host.insertAdjacentHTML(
+							"afterbegin",
+							`<div class="card" style="margin-top:10px;border-color:var(--warn,#c80)">
+								<strong style="font-size:13px">Transferred, with warnings</strong>
+								<ul style="margin:6px 0 0;padding-left:18px">
+									${outcome.warnings.map((w) => `<li class="muted" style="font-size:12.5px">${esc(w.message)}</li>`).join("")}
+								</ul>
+							</div>`,
+						);
+					}
+					toast(
+						outcome.warnings.length
+							? `Transferred. ${outcome.warnings.length} warning${outcome.warnings.length === 1 ? "" : "s"}.`
+							: "Transferred.",
+					);
+					return;
+				}
+
 				if (id === "templateBtn") {
 					const sel = document.getElementById("templateSelect");
 					sendTemplate(state.selectedConversationId, sel.value);
@@ -7545,7 +8777,9 @@ var ENGINE = (() => {
 				if (id === "callBtn") {
 					const customerId = document.getElementById("callCustomer").value;
 					const direction = document.getElementById("callDirection").value;
-					const seconds = Number(document.getElementById("callSeconds").value || 0);
+					const seconds = Number(
+						document.getElementById("callSeconds").value || 0,
+					);
 					const outcome = document.getElementById("callOutcome").value.trim();
 					if (!customerId) {
 						toast("Choose a customer.");
@@ -7611,9 +8845,16 @@ var ENGINE = (() => {
 					return;
 				}
 
-				if (id === "bcReview" || id === "bcApproveSelf" || id === "bcApproveOther") {
+				if (
+					id === "bcReview" ||
+					id === "bcApproveSelf" ||
+					id === "bcApproveOther"
+				) {
 					const wanted = id === "bcReview" ? "review" : "approved";
-					const step = ENGINE.canTransition(state.broadcastStatus ?? "draft", wanted);
+					const step = ENGINE.canTransition(
+						state.broadcastStatus ?? "draft",
+						wanted,
+					);
 					if (!step.allowed) {
 						toast(step.message);
 						return;
@@ -7694,7 +8935,8 @@ var ENGINE = (() => {
 				}
 
 				if (id === "resetBtn") {
-					if (!window.confirm("Clear the demonstration and start again?")) return;
+					if (!window.confirm("Clear the demonstration and start again?"))
+						return;
 					activityId = 1;
 					clockOffsetMs = 0;
 					state = seed();
@@ -7720,7 +8962,8 @@ var ENGINE = (() => {
 					// person read is not the thing that goes out.
 					state.broadcastResolvedAt = null;
 					state.broadcastApprovedBy = null;
-					if (state.broadcastStatus !== "draft") state.broadcastStatus = "draft";
+					if (state.broadcastStatus !== "draft")
+						state.broadcastStatus = "draft";
 					save();
 					renderApp();
 				}
@@ -7731,7 +8974,10 @@ var ENGINE = (() => {
 				if (event.target.id === "simBox") {
 					event.preventDefault();
 					document.getElementById("simBtn").click();
-				} else if (event.target.id === "replyBox" && (event.metaKey || event.ctrlKey)) {
+				} else if (
+					event.target.id === "replyBox" &&
+					(event.metaKey || event.ctrlKey)
+				) {
 					event.preventDefault();
 					document.getElementById("replyBtn").click();
 				}
