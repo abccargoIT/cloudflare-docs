@@ -148,12 +148,13 @@ pre-existing records on `abccargosupport.com` are untouched.
 
 ## 5. What is deliberately deferred
 
-| Item                  | Why it waits                                                                                                                     |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| The four secrets      | Not needed to prove the hostname. Set them when the cutover is scheduled                                                         |
-| Real phone number IDs | Still outstanding from Meta WhatsApp Manager                                                                                     |
-| Meta callback URL     | Stage B. This is the step that moves customer traffic                                                                            |
-| Workers Paid upgrade  | Nothing to pay for until traffic exists. Settle before cutover, because the Free plan's 24-hour queue retention cannot be raised |
+| Item                               | Why it waits                                                                                                                                                                                                                                                                       |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The four secrets                   | Not needed to prove the hostname. Set them when the cutover is scheduled                                                                                                                                                                                                           |
+| Real phone number IDs              | Still outstanding from Meta WhatsApp Manager                                                                                                                                                                                                                                       |
+| Meta callback URL                  | Stage B. This is the step that moves customer traffic                                                                                                                                                                                                                              |
+| Workers Paid upgrade               | Nothing to pay for until traffic exists. Settle before cutover, because the Free plan's 24-hour queue retention cannot be raised                                                                                                                                                   |
+| Access exemption for `/webhooks/*` | Stage B. Meta and Microsoft Graph cannot sign in to Cloudflare Access, so the webhook paths must be exempted on the day a number is cut over — not before, because the demonstration Worker has no webhook route to exempt. Prepared procedure: `docs/access-webhook-exemption.md` |
 
 A Worker deployed without secrets and with placeholder phone numbers answers
 `/health`, rejects unsigned webhooks, and does nothing else. That is exactly
