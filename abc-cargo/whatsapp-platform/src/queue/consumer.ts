@@ -2,6 +2,8 @@ import type { Env } from "../env.ts";
 import { Repository } from "../db/repo.ts";
 import { conversationIdFor } from "../conversation.ts";
 import { CrmService } from "../crm/service.ts";
+import { BotRunner } from "../bots/runner.ts";
+import { MILESTONE_LABELS } from "../crm/types.ts";
 import type { WebhookQueueMessage } from "../whatsapp/webhook.ts";
 import {
 	findRegionByPhoneNumberId,
@@ -60,17 +62,27 @@ export async function processWebhookMessage(
 	);
 
 	const crm = new CrmService(env.DB);
+	const bots = new BotRunner(env.DB, crm);
+
+	// Asked once per batch rather than once per message. With no published flow
+	// for this region the rest of this function behaves exactly as it did
+	// before the bot existed: the automated reply is sent from the Durable
+	// Object and nothing else happens.
+	const botFronted = await bots.hasPublishedFlow(region.id);
 
 	for (const inbound of value.messages ?? []) {
 		const conversationId = conversationIdFor(phoneNumberId, inbound.from);
 		const stub = env.CONVERSATION.get(
 			env.CONVERSATION.idFromName(conversationId),
 		);
-		await stub.handleInbound({
+		const stored = await stub.handleInbound({
 			phoneNumberId,
 			contact: contactsByWaId.get(inbound.from),
 			message: inbound,
 			receivedAt: message.receivedAt,
+			// The bot is going to answer, so the customer should not also get
+			// the automated reply in the same moment.
+			autoReply: !botFronted,
 		});
 
 		// Classify the message and open whatever record it implies — a rate
@@ -78,13 +90,39 @@ export async function processWebhookMessage(
 		// ticket with its clock already running. Storing the message in the
 		// Durable Object is idempotent by WhatsApp message id, so a retry
 		// after a failure here cannot duplicate the conversation entry.
-		await crm.handleInboundMessage({
+		const handling = await crm.handleInboundMessage({
 			waId: inbound.from,
 			profileName: contactsByWaId.get(inbound.from)?.profile?.name,
 			region,
 			conversationId,
 			text: inboundText(inbound),
 			occurredAt: waTimestampToIso(inbound.timestamp, message.receivedAt),
+		});
+
+		// A webhook Meta has already delivered must not advance the flow. The
+		// customer would be answered twice and the session would move two steps
+		// on one message.
+		if (!botFronted || stored.duplicate) continue;
+
+		await bots.handleInbound({
+			conversationId,
+			region,
+			customerId: handling.customer.id,
+			text: inboundText(inbound),
+			facts: {
+				references: handling.intent.references,
+				contactName: handling.customer.display_name,
+				booking: handling.booking
+					? {
+							ref: handling.booking.ref,
+							// The label, not the stored identifier: "in_transit" is
+							// correct in a column and wrong in a WhatsApp message.
+							milestone: MILESTONE_LABELS[handling.booking.milestone],
+							updatedAt: handling.booking.milestone_at,
+						}
+					: null,
+			},
+			conversation: stub,
 		});
 	}
 

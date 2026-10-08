@@ -37,6 +37,15 @@ export interface InboundEvent {
 	contact?: WebhookContact;
 	message: InboundMessage;
 	receivedAt: string;
+	/**
+	 * False when a published bot flow is going to answer this message, so the
+	 * customer does not receive the automated reply and a bot greeting at the
+	 * same moment. The caller then asks for the automated reply separately, if
+	 * the bot hands the conversation over and there is still nobody to take it.
+	 *
+	 * Defaults to the behaviour that existed before the bot did: reply here.
+	 */
+	autoReply?: boolean;
 }
 
 export interface ConversationInit {
@@ -150,6 +159,9 @@ export class Conversation extends DurableObject<Env> {
 			console.warn("markAsRead failed", describeError(error));
 		}
 
+		if (event.autoReply === false)
+			return { duplicate: false, autoReplied: false };
+
 		const reason = await this.autoReplyReason(state, region, receivedAt);
 		if (!reason) return { duplicate: false, autoReplied: false };
 
@@ -165,6 +177,54 @@ export class Conversation extends DurableObject<Env> {
 		await this.saveState(state);
 		await this.repo.audit("auto", "auto_reply", state.id, { reason }, nowIso);
 		return { duplicate: false, autoReplied: true };
+	}
+
+	// -------------------------------------------------------------------- bot
+
+	/**
+	 * Sends something the bot decided to say.
+	 *
+	 * It goes through the same path as an agent reply, so it lands in the
+	 * conversation history and in the message log as an outbound message that
+	 * was sent by "bot". A customer complaining about what they were told, and
+	 * a supervisor checking it, both need to be able to see it.
+	 */
+	async sendBotText(text: string): Promise<{ messageId: string }> {
+		const state = await this.requireState();
+		const messageId = await this.sendTextInternal(state, text, "bot");
+		return { messageId };
+	}
+
+	/**
+	 * Sends the ordinary automated reply if one is still warranted.
+	 *
+	 * Called after the bot has handed a conversation to an agent. Without it a
+	 * customer who reaches the end of a flow at two in the morning is told a
+	 * colleague will reply and then hears nothing until the office opens, with
+	 * no idea when that is.
+	 */
+	async autoReplyIfNeeded(): Promise<{
+		sent: boolean;
+		reason?: AutoReplyReason;
+	}> {
+		const state = await this.requireState();
+		const region = this.requireRegion(state.phoneNumberId);
+		const now = new Date();
+		const reason = await this.autoReplyReason(state, region, now);
+		if (!reason) return { sent: false };
+
+		const text = buildAutoReply({
+			region,
+			reason,
+			contactName: state.profileName,
+			trackingUrl: this.env.TRACKING_URL || undefined,
+		});
+		const nowIso = now.toISOString();
+		await this.sendTextInternal(state, text, "auto");
+		state.lastAutoReplyAt = nowIso;
+		await this.saveState(state);
+		await this.repo.audit("auto", "auto_reply", state.id, { reason }, nowIso);
+		return { sent: true, reason };
 	}
 
 	// --------------------------------------------------------------- outbound

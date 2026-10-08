@@ -68,22 +68,23 @@ management slide.
 
 ## 4. What the package has that the build does not
 
-This is the useful half, and it is substantial. None of it is built today.
+This is the useful half, and it is substantial. The "build today" column is
+kept current as modules land; it was written when none of this existed.
 
-| Module                 | Design intent                                                                                    | Build today                                                     |
-| ---------------------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------- |
-| **Login and roles**    | Agent / Team lead / Master admin, multi-team users, agents see only their own conversations      | None. The plan assumed Cloudflare Access in front of `/api/*`   |
-| **Bots**               | Flows per number, AI agent templates, test preview                                               | None — and this is the blocking export                          |
-| **Setup**              | Organisation, channels, teams, security, SLA policies, integrations, API keys, backup, audit log | Partly: SLA and regions in config, audit in the activity stream |
-| **Team chat**          | Internal messages between agents across regions                                                  | None                                                            |
-| **Dashboard**          | Greeting, live KPIs, volume by region                                                            | None                                                            |
-| **Reports**            | Charts plus a report library                                                                     | None                                                            |
-| **Broadcasts**         | Template broadcasts with audience, delivered, read, replied                                      | None                                                            |
-| **Contacts directory** | Searchable list, 360 view, notes                                                                 | Customer 360 exists in the API; no directory UI                 |
-| **Composer**           | Internal note, voice note, file, location                                                        | Text and template only                                          |
-| **Email and phone**    | Named as channels alongside WhatsApp                                                             | WhatsApp only; telephony read-only via Graph                    |
-| **ERP lookup**         | Bot queries shipment status from the ERP                                                         | Open decision — shipment system API availability                |
-| **Personalisation**    | Light/dark theme, accent colour                                                                  | Demo follows the system theme                                   |
+| Module                 | Design intent                                                                                    | Build today                                                                                                      |
+| ---------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| **Login and roles**    | Agent / Team lead / Master admin, multi-team users, agents see only their own conversations      | Built. Cloudflare Access in front of `/api/*`, roles and multi-team users enforced in `src/auth/`                |
+| **Bots**               | Flows per number, AI agent templates, test preview                                               | Runtime, validator and preview built; the three live flow exports are still the blocker. See `bots-and-flows.md` |
+| **Setup**              | Organisation, channels, teams, security, SLA policies, integrations, API keys, backup, audit log | Built: people, teams and the access log in `src/admin/`. Channels and keys still config-file only                |
+| **Team chat**          | Internal messages between agents across regions                                                  | Built. `src/chat/` — membership-governed, crosses regions on purpose                                             |
+| **Dashboard**          | Greeting, live KPIs, volume by region                                                            | None                                                                                                             |
+| **Reports**            | Charts plus a report library                                                                     | Regional summary API built; no charts and no report library                                                      |
+| **Broadcasts**         | Template broadcasts with audience, delivered, read, replied                                      | None                                                                                                             |
+| **Contacts directory** | Searchable list, 360 view, notes                                                                 | Built. Directory and lifecycle board in `src/crm/contacts.ts`; no UI yet                                         |
+| **Composer**           | Internal note, voice note, file, location                                                        | Text and template only                                                                                           |
+| **Email and phone**    | Named as channels alongside WhatsApp                                                             | WhatsApp only; telephony read-only via Graph                                                                     |
+| **ERP lookup**         | Bot queries shipment status from the ERP                                                         | Open decision — shipment system API availability                                                                 |
+| **Personalisation**    | Light/dark theme, accent colour                                                                  | Demo follows the system theme                                                                                    |
 
 ## 5. What the build has that the package does not
 

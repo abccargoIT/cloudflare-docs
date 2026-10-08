@@ -43,6 +43,11 @@ import { Reports, parseWindow } from "./crm/reports.ts";
 import { Contacts, isCustomerStage } from "./crm/contacts.ts";
 import { ChatService, isRefKind } from "./chat/service.ts";
 import { AdminService } from "./admin/service.ts";
+import { BotService } from "./bots/service.ts";
+import { buildStarterFlow } from "./bots/templates.ts";
+import { previewFlow, type PreviewMessage } from "./bots/preview.ts";
+import { parseSteps } from "./bots/parse.ts";
+import { validateFlow } from "./bots/validate.ts";
 import { isUserStatus, validateTeam, validateUser } from "./admin/guards.ts";
 import {
 	canPostToThread,
@@ -1187,6 +1192,206 @@ async function handleOperationsApi(
 					limit,
 				}),
 			});
+		}
+	}
+
+	/* ------------------------------------------------------------------ bots */
+
+	// The flows that front each number.
+	//
+	// Reading a flow and running a preview are open to anybody who can reach
+	// the region, because that is how a supervisor checks what a customer is
+	// being told. Saving and publishing are master admin only: publishing
+	// changes what every customer of that number meets next.
+	if (resource === "bots") {
+		const bots = new BotService(env.DB);
+		const regions = parseRegionConfig(env.REGION_NUMBERS);
+
+		// GET /api/bots/flows?region=uae
+		if (id === "flows" && !action && request.method === "GET") {
+			const regionId = url.searchParams.get("region");
+			if (!regionId) return json({ error: "region is required" }, 400);
+			const mayRead = canReadRegionalRecord(caller, regionId);
+			if (!mayRead.allowed) return refuse(mayRead.reason);
+			return json({ flows: await bots.listFlows(regionId) });
+		}
+
+		// GET /api/bots/flows/:flowId — the flow itself, steps and all.
+		if (id === "flows" && action && request.method === "GET") {
+			const row = await bots.getFlowRow(action);
+			if (!row) return json({ error: "Not found" }, 404);
+			const mayRead = canReadRegionalRecord(caller, row.region_id);
+			if (!mayRead.allowed) return refuse(mayRead.reason);
+			const parsed = parseSteps(row.steps);
+			return json({
+				flow: { ...row, steps: parsed.steps },
+				problems: [
+					...parsed.problems,
+					...validateFlow({
+						id: row.id,
+						regionId: row.region_id,
+						name: row.name,
+						version: row.version,
+						status: "draft",
+						entryStepId: row.entry_step_id,
+						steps: parsed.steps,
+					}).problems,
+				],
+			});
+		}
+
+		// GET /api/bots/starter?region=uae — a flow of realistic shape to work
+		// from. Explicitly not any of the three live Freshchat flows.
+		if (id === "starter" && request.method === "GET") {
+			const regionId = url.searchParams.get("region");
+			const region = regionId ? findRegionById(regions, regionId) : undefined;
+			if (!region) return json({ error: "unknown region" }, 400);
+			const mayRead = canReadRegionalRecord(caller, region.id);
+			if (!mayRead.allowed) return refuse(mayRead.reason);
+			const starter = buildStarterFlow({ id: region.id, label: region.label });
+			return json({
+				starter,
+				note: "A starting point, not ABC Cargo's live Freshchat flow for this number.",
+			});
+		}
+
+		// POST /api/bots/preview   { flow | flowId, messages: [{ text, facts }] }
+		//
+		// Runs the same function a live message goes through, and sends nothing.
+		if (id === "preview" && request.method === "POST") {
+			const body = await readJson<{
+				flowId?: string;
+				regionId?: string;
+				name?: string;
+				entryStepId?: string;
+				steps?: unknown;
+				messages?: PreviewMessage[];
+			}>(request);
+
+			let flow;
+			if (body?.flowId) {
+				const row = await bots.getFlowRow(body.flowId);
+				if (!row) return json({ error: "Not found" }, 404);
+				const mayRead = canReadRegionalRecord(caller, row.region_id);
+				if (!mayRead.allowed) return refuse(mayRead.reason);
+				const parsed = parseSteps(row.steps);
+				flow = {
+					id: row.id,
+					regionId: row.region_id,
+					name: row.name,
+					version: row.version,
+					status: "draft" as const,
+					entryStepId: row.entry_step_id,
+					steps: parsed.steps,
+				};
+			} else {
+				const regionId = body?.regionId;
+				if (!regionId || !body?.entryStepId) {
+					return json({ error: "regionId and entryStepId are required" }, 400);
+				}
+				const mayRead = canReadRegionalRecord(caller, regionId);
+				if (!mayRead.allowed) return refuse(mayRead.reason);
+				flow = {
+					id: "preview",
+					regionId,
+					name: body.name ?? "preview",
+					version: 0,
+					status: "draft" as const,
+					entryStepId: body.entryStepId,
+					steps: parseSteps(body.steps).steps,
+				};
+			}
+
+			const messages = Array.isArray(body?.messages) ? body.messages : [];
+			if (messages.length === 0) {
+				return json({ error: "messages is required" }, 400);
+			}
+			if (messages.length > 40) {
+				return json({ error: "a preview takes at most 40 messages" }, 400);
+			}
+			return json(previewFlow({ flow, messages }));
+		}
+
+		/* ------------------------------------------- changing what is live */
+
+		const mayAdminister = canAdminister(caller);
+
+		// POST /api/bots/drafts   { regionId, name, entryStepId, steps }
+		if (id === "drafts" && request.method === "POST") {
+			if (!mayAdminister.allowed) return refuse(mayAdminister.reason);
+			const body = await readJson<{
+				regionId?: string;
+				name?: string;
+				entryStepId?: string;
+				steps?: unknown;
+			}>(request);
+			const region = body?.regionId
+				? findRegionById(regions, body.regionId)
+				: undefined;
+			if (!region) return json({ error: "unknown region" }, 400);
+			if (!body?.name?.trim() || !body?.entryStepId?.trim()) {
+				return json({ error: "name and entryStepId are required" }, 400);
+			}
+			// A draft is allowed to be broken — half-finished work has to be
+			// saveable — so the problems are reported rather than refused.
+			const saved = await bots.saveDraft({
+				regionId: region.id,
+				name: body.name,
+				entryStepId: body.entryStepId,
+				steps: body.steps,
+				author: caller.kind === "user" ? caller.email : null,
+			});
+			return json(saved, 201);
+		}
+
+		// POST /api/bots/flows/:flowId/publish
+		if (id === "flows" && action && request.method === "POST") {
+			if (!mayAdminister.allowed) return refuse(mayAdminister.reason);
+			if (segments[4] !== "publish") return json({ error: "Not found" }, 404);
+			const result = await bots.publish({
+				flowId: action,
+				actor: caller.kind === "user" ? caller.email : null,
+			});
+			if (!result.ok) {
+				if (result.reason === "not_found") {
+					return json({ error: "Not found" }, 404);
+				}
+				// A refusal about the state of things, not a malformed request.
+				return json(
+					{
+						error: "the flow was not published",
+						reason: result.reason,
+						problems: result.problems,
+					},
+					409,
+				);
+			}
+			return json(result);
+		}
+
+		// POST /api/bots/unpublish   { regionId }
+		//
+		// Takes the region's bot out of service without deleting anything. With
+		// no published flow the platform falls back to the automated reply and
+		// the agent queue, which is what we want if a flow turns out to be
+		// wrong on a live number at two in the morning.
+		if (id === "unpublish" && request.method === "POST") {
+			if (!mayAdminister.allowed) return refuse(mayAdminister.reason);
+			const body = await readJson<{ regionId?: string }>(request);
+			const region = body?.regionId
+				? findRegionById(regions, body.regionId)
+				: undefined;
+			if (!region) return json({ error: "unknown region" }, 400);
+			return json({ retired: await bots.unpublish(region.id) });
+		}
+
+		// GET /api/bots/turns/:conversationId — why the bot did what it did.
+		if (id === "turns" && action && request.method === "GET") {
+			const conversation = await new Repository(env.DB).getConversation(action);
+			if (!conversation) return json({ error: "Not found" }, 404);
+			const mayRead = canReadRegionalRecord(caller, conversation.region_id);
+			if (!mayRead.allowed) return refuse(mayRead.reason);
+			return json({ turns: await bots.turnsFor(action, limit) });
 		}
 	}
 

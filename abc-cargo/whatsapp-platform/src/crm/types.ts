@@ -39,6 +39,23 @@ export const MILESTONES = [
 ] as const;
 export type Milestone = (typeof MILESTONES)[number];
 
+/**
+ * How a milestone is written when a customer is going to read it.
+ *
+ * The stored values are identifiers — "in_transit" is correct in a column and
+ * wrong in a WhatsApp message. Kept here, beside the list, so a second screen
+ * cannot invent its own wording for the same state.
+ */
+export const MILESTONE_LABELS: Record<Milestone, string> = {
+	booked: "Booked",
+	collected: "Collected",
+	departed: "Departed origin",
+	in_transit: "In transit",
+	arrived: "Arrived at destination",
+	cleared: "Cleared customs",
+	delivered: "Delivered",
+};
+
 export const TICKET_TYPES = [
 	"claim",
 	"delay",
