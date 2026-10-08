@@ -49,6 +49,15 @@
 		// first live number is cut over: the demonstration carries invented
 		// customer data and has no place on a production endpoint.
 		"SERVE_DEMO": "true",
+		// Whether this deployment may actually send broadcasts.
+		//
+		// "false" here, and that is deliberate. Broadcasts are the one thing in
+		// this platform that reaches thousands of real customers from a single
+		// action, so turning them on is a separate decision from deploying the
+		// Worker. With this unset or anything other than "true", an approved
+		// broadcast will not dispatch a single message and the pacer does
+		// nothing.
+		"BROADCASTS_ENABLED": "false",
 	},
 	// Secrets are NOT stored here. Set them with `wrangler secret put <NAME>`:
 	//   WHATSAPP_ACCESS_TOKEN  - permanent System User token (whatsapp_business_messaging,
@@ -64,6 +73,11 @@
 		"bindings": [{ "name": "CONVERSATION", "class_name": "Conversation" }],
 	},
 	"migrations": [{ "tag": "v1", "new_sqlite_classes": ["Conversation"] }],
+	// The broadcast pacer. A campaign of several thousand cannot be sent inside
+	// the request that pressed Send, so Send only marks the broadcast as
+	// sending and this dispatches a paced batch each minute. It does nothing
+	// unless BROADCASTS_ENABLED is "true", which is not the default.
+	"triggers": { "crons": ["* * * * *"] },
 	"queues": {
 		"producers": [
 			{ "binding": "WEBHOOK_QUEUE", "queue": "abc-whatsapp-webhooks" },

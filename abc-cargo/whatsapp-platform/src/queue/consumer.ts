@@ -3,6 +3,7 @@ import { Repository } from "../db/repo.ts";
 import { conversationIdFor } from "../conversation.ts";
 import { CrmService } from "../crm/service.ts";
 import { BotRunner } from "../bots/runner.ts";
+import { BroadcastService } from "../broadcasts/service.ts";
 import { MILESTONE_LABELS } from "../crm/types.ts";
 import type { WebhookQueueMessage } from "../whatsapp/webhook.ts";
 import {
@@ -63,6 +64,7 @@ export async function processWebhookMessage(
 
 	const crm = new CrmService(env.DB);
 	const bots = new BotRunner(env.DB, crm);
+	const broadcasts = new BroadcastService(env.DB);
 
 	// Asked once per batch rather than once per message. With no published flow
 	// for this region the rest of this function behaves exactly as it did
@@ -98,6 +100,15 @@ export async function processWebhookMessage(
 			text: inboundText(inbound),
 			occurredAt: waTimestampToIso(inbound.timestamp, message.receivedAt),
 		});
+
+		// An inbound message within three days of a broadcast send on this
+		// conversation counts as a reply to it. Attributed here rather than in
+		// the CRM because it is a fact about the campaign, not about the
+		// customer, and a duplicate webhook must not count twice — which the
+		// replied_at guard in the service handles.
+		if (!stored.duplicate) {
+			await broadcasts.recordReply({ conversationId });
+		}
 
 		// A webhook Meta has already delivered must not advance the flow. The
 		// customer would be answered twice and the session would move two steps
@@ -136,6 +147,17 @@ export async function processWebhookMessage(
 				firstError?.code,
 				firstError?.title,
 			);
+			// A broadcast recipient tracks the same status, so "delivered" and
+			// "read" on a campaign are the real figures rather than an
+			// estimate. Moves forward only: Meta does not promise the order
+			// these arrive in, and a late "delivered" after a "read" must not
+			// make a campaign's read count fall.
+			if (status.status === "delivered" || status.status === "read") {
+				await broadcasts.recordDeliveryStatus({
+					waMessageId: status.id,
+					status: status.status,
+				});
+			}
 		}
 	}
 

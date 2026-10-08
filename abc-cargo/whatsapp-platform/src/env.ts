@@ -20,6 +20,18 @@ export interface Env {
 	TRACKING_URL: string;
 	/** "true" serves the offline demonstration at /. See wrangler.jsonc. */
 	SERVE_DEMO?: string;
+	/**
+	 * "true" allows broadcasts to actually send. Anything else — including
+	 * being unset, which is the default — and an approved broadcast will not
+	 * dispatch a single message.
+	 *
+	 * This exists because broadcasts are the one thing in the platform that
+	 * reaches thousands of real customers from a single action. A deployment
+	 * that could do that the moment it went up is one bad merge away from
+	 * doing it. Turning this on is a deliberate, separate decision from
+	 * deploying the Worker.
+	 */
+	BROADCASTS_ENABLED?: string;
 
 	// Secrets
 	WHATSAPP_ACCESS_TOKEN: string;

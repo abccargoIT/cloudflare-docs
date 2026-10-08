@@ -49,6 +49,27 @@ import { ChatService, isRefKind } from "./chat/service.ts";
 import { AdminService } from "./admin/service.ts";
 import { BotService } from "./bots/service.ts";
 import { DashboardService } from "./dashboard/service.ts";
+import { BroadcastService } from "./broadcasts/service.ts";
+import { runSendPass, sendingEnabled } from "./broadcasts/sender.ts";
+import {
+	describeAudience,
+	validateAudience,
+	type AudienceRule,
+} from "./broadcasts/audience.ts";
+import {
+	canApproveBroadcast,
+	canComposeBroadcast,
+	canResolveAudience,
+	canStopBroadcast,
+	canTransition,
+	checkReadyToSend,
+} from "./broadcasts/policy.ts";
+import {
+	looksLikeLanguageCode,
+	looksLikeTemplateName,
+	parseTemplateComponents,
+} from "./broadcasts/template.ts";
+import { isBroadcastKind, type BroadcastStatus } from "./broadcasts/types.ts";
 import { buildStarterFlow } from "./bots/templates.ts";
 import { previewFlow, type PreviewMessage } from "./bots/preview.ts";
 import { parseSteps } from "./bots/parse.ts";
@@ -134,6 +155,30 @@ export default {
 
 	async queue(batch, env): Promise<void> {
 		await handleWebhookBatch(batch, env);
+	},
+
+	/**
+	 * The broadcast pacer.
+	 *
+	 * A campaign of several thousand cannot be sent inside the request that
+	 * pressed Send — that request would be killed part way through with no
+	 * record of how far it got. So Send only moves the broadcast to `sending`,
+	 * and this sends a paced batch each minute.
+	 *
+	 * It does nothing at all unless BROADCASTS_ENABLED is "true", which is not
+	 * the default. A deployment that could message every customer the moment it
+	 * went up is one bad merge away from doing so.
+	 */
+	async scheduled(_controller, env, ctx): Promise<void> {
+		ctx.waitUntil(
+			runSendPass(env).then((passes) => {
+				for (const pass of passes) {
+					if (pass.sent + pass.failed + pass.skipped > 0 || pass.finished) {
+						console.info("broadcast pass", pass);
+					}
+				}
+			}),
+		);
 	},
 } satisfies ExportedHandler<Env, WebhookQueueMessage>;
 
@@ -383,6 +428,83 @@ async function resolveCaller(
 /** The refusal a policy decision turns into. */
 function refuse(reason: string): Response {
 	return json({ error: "Forbidden", reason }, 403);
+}
+
+/**
+ * What must be true of a campaign before it is stored.
+ *
+ * Checked here rather than at send time because every one of these produces a
+ * failure per recipient: a template name Meta will not accept becomes five
+ * thousand rejections and a quality-rating problem on the number.
+ */
+function validateCampaign(
+	body: Record<string, unknown> | null,
+	options: { partial?: boolean } = {},
+): { field: string; message: string }[] {
+	const problems: { field: string; message: string }[] = [];
+	const present = (key: string) => body?.[key] !== undefined;
+	const required = (key: string) => !options.partial || present(key);
+
+	if (required("name")) {
+		const name = body?.["name"];
+		if (typeof name !== "string" || name.trim().length === 0) {
+			problems.push({ field: "name", message: "a name is required" });
+		}
+	}
+	if (required("kind")) {
+		const kind = body?.["kind"];
+		if (typeof kind !== "string" || !isBroadcastKind(kind)) {
+			problems.push({
+				field: "kind",
+				message: "kind must be marketing or service",
+			});
+		}
+	}
+	if (required("templateName")) {
+		const template = body?.["templateName"];
+		if (typeof template !== "string" || !looksLikeTemplateName(template)) {
+			problems.push({
+				field: "templateName",
+				message:
+					"a template name is lower case letters, digits and underscores, as Meta registers it",
+			});
+		}
+	}
+	if (present("languageCode")) {
+		const language = body?.["languageCode"];
+		if (typeof language !== "string" || !looksLikeLanguageCode(language)) {
+			problems.push({
+				field: "languageCode",
+				message: 'a language code looks like "en", "en_US" or "ar"',
+			});
+		}
+	}
+	if (present("components")) {
+		const parsed = parseTemplateComponents(body?.["components"]);
+		if (!parsed.ok) {
+			for (const problem of parsed.problems) {
+				problems.push({ field: problem.where, message: problem.message });
+			}
+		}
+	}
+	if (required("audience")) {
+		const audience = body?.["audience"];
+		if (
+			typeof audience !== "object" ||
+			audience === null ||
+			Array.isArray(audience)
+		) {
+			problems.push({
+				field: "audience",
+				message: "an audience rule is required, as an object",
+			});
+		} else {
+			for (const problem of validateAudience(audience as AudienceRule)) {
+				problems.push(problem);
+			}
+		}
+	}
+	return problems;
 }
 
 async function handleApi(
@@ -1205,6 +1327,240 @@ async function handleOperationsApi(
 					limit,
 				}),
 			});
+		}
+	}
+
+	/* ------------------------------------------------------------ broadcasts */
+
+	// Template broadcasts. The one part of the platform that reaches thousands
+	// of customers from a single action, so the route is as cautious as the
+	// module: composing is a supervisor's job, approval is a second person's,
+	// and sending is refused outright unless this deployment has been switched
+	// on for it.
+	if (resource === "broadcasts") {
+		const broadcasts = new BroadcastService(env.DB);
+		const regions = parseRegionConfig(env.REGION_NUMBERS);
+		const actor = caller.kind === "user" ? caller.id : "service";
+		// The platform audit log, not the CRM repository this handler otherwise
+		// uses. Every lifecycle step on a broadcast is recorded there: who
+		// resolved the audience, who approved it and how many people that was,
+		// who started it and who stopped it.
+		const audit = new Repository(env.DB);
+
+		// GET /api/broadcasts?region=
+		if (!id && request.method === "GET") {
+			const scoped = resolveRegionFilter(
+				caller,
+				url.searchParams.get("region"),
+			);
+			const regionIds = scoped ?? regions.map((r) => r.id);
+			return json({
+				broadcasts: await broadcasts.list(regionIds, limit),
+				sendingEnabled: sendingEnabled(env),
+			});
+		}
+
+		// POST /api/broadcasts   { regionId, name, kind, templateName, ... }
+		if (!id && request.method === "POST") {
+			const body = await readJson<{
+				regionId?: string;
+				name?: string;
+				kind?: string;
+				templateName?: string;
+				languageCode?: string;
+				components?: unknown;
+				audience?: AudienceRule;
+				ratePerMinute?: number;
+			}>(request);
+
+			const region = body?.regionId
+				? findRegionById(regions, body.regionId)
+				: undefined;
+			if (!region) return json({ error: "unknown region" }, 400);
+			const may = canComposeBroadcast(caller, region.id);
+			if (!may.allowed) return refuse(may.reason);
+
+			const problems = validateCampaign(body);
+			if (problems.length > 0) return json({ error: "invalid", problems }, 400);
+
+			const created = await broadcasts.create({
+				regionId: region.id,
+				name: body?.name ?? "",
+				kind: (body?.kind ?? "service") as "marketing" | "service",
+				templateName: body?.templateName ?? "",
+				languageCode: body?.languageCode ?? region.language,
+				components: body?.components,
+				audience: body?.audience ?? {},
+				ratePerMinute: body?.ratePerMinute,
+				createdBy: actor,
+			});
+			return json({ broadcast: created }, 201);
+		}
+
+		if (!id) return json({ error: "Not found" }, 404);
+
+		const broadcast = await broadcasts.get(id);
+		if (!broadcast) return json({ error: "Not found" }, 404);
+		const ref = {
+			id: broadcast.id,
+			regionId: broadcast.region_id,
+			status: broadcast.status as BroadcastStatus,
+			createdBy: broadcast.created_by,
+			resolvedAt: broadcast.resolved_at,
+			resolvedCount: broadcast.resolved_count,
+			approvedBy: broadcast.approved_by,
+			approvedAt: broadcast.approved_at,
+			startedAt: broadcast.started_at,
+		};
+
+		// Reading one is open to anybody who may see the region's records; the
+		// rest of this block is not.
+		if (!action && request.method === "GET") {
+			const mayRead = canReadRegionalRecord(caller, broadcast.region_id);
+			if (!mayRead.allowed) return refuse(mayRead.reason);
+			return json({
+				broadcast,
+				audienceDescription: describeAudience(
+					JSON.parse(broadcast.audience) as AudienceRule,
+					broadcast.kind === "marketing",
+				),
+				progress: await broadcasts.progress(broadcast.id),
+			});
+		}
+
+		// GET /api/broadcasts/:id/recipients?state=
+		if (action === "recipients" && request.method === "GET") {
+			const mayRead = canReadRegionalRecord(caller, broadcast.region_id);
+			if (!mayRead.allowed) return refuse(mayRead.reason);
+			const state = url.searchParams.get("state") ?? undefined;
+			return json({
+				recipients: await broadcasts.recipients(broadcast.id, {
+					state: state as never,
+					limit,
+				}),
+			});
+		}
+
+		// PATCH /api/broadcasts/:id — editing voids an approval.
+		if (!action && request.method === "PATCH") {
+			const may = canComposeBroadcast(caller, broadcast.region_id);
+			if (!may.allowed) return refuse(may.reason);
+			if (broadcast.started_at !== null) {
+				return json(
+					{
+						error:
+							"this broadcast has started sending and can no longer be edited",
+						reason: "already_finished",
+					},
+					409,
+				);
+			}
+			const body = await readJson<Record<string, unknown>>(request);
+			const problems = validateCampaign(body, { partial: true });
+			if (problems.length > 0) return json({ error: "invalid", problems }, 400);
+			const updated = await broadcasts.update({
+				id: broadcast.id,
+				changes: (body ?? {}) as never,
+			});
+			return json(updated);
+		}
+
+		// POST /api/broadcasts/:id/resolve — write down exactly who gets it.
+		if (action === "resolve" && request.method === "POST") {
+			const may = canResolveAudience(caller, ref);
+			if (!may.allowed) {
+				return json({ error: may.message, reason: may.reason }, 409);
+			}
+			const result = await broadcasts.resolveAudience({ broadcast });
+			if (!result.ok) {
+				return json({ error: result.message, reason: result.reason }, 409);
+			}
+			await audit.audit(
+				actor,
+				"broadcast_resolve",
+				null,
+				{ broadcastId: broadcast.id, ...result },
+				new Date().toISOString(),
+			);
+			return json(result);
+		}
+
+		// POST /api/broadcasts/:id/status   { status, reason? }
+		//
+		// review, approved, sending, paused and cancelled all come through
+		// here, each with its own guard. Approval is the one that needs a
+		// second person.
+		if (action === "status" && request.method === "POST") {
+			const body = await readJson<{ status?: string; reason?: string }>(
+				request,
+			);
+			const wanted = body?.status as BroadcastStatus | undefined;
+			if (!wanted) return json({ error: "status is required" }, 400);
+
+			const step = canTransition(ref.status, wanted);
+			if (!step.allowed) {
+				return json({ error: step.message, reason: step.reason }, 409);
+			}
+
+			if (wanted === "approved") {
+				const may = canApproveBroadcast(caller, ref);
+				if (!may.allowed) {
+					return json({ error: may.message, reason: may.reason }, 409);
+				}
+				const approved = await broadcasts.approve({
+					id: broadcast.id,
+					approvedBy: actor,
+				});
+				await audit.audit(
+					actor,
+					"broadcast_approve",
+					null,
+					{ broadcastId: broadcast.id, recipients: broadcast.resolved_count },
+					new Date().toISOString(),
+				);
+				return json({ broadcast: approved });
+			}
+
+			if (wanted === "sending") {
+				const may = checkReadyToSend({
+					caller,
+					broadcast: ref,
+					sendingEnabled: sendingEnabled(env),
+					now: new Date(),
+				});
+				if (!may.allowed) {
+					return json({ error: may.message, reason: may.reason }, 409);
+				}
+			} else {
+				const may =
+					wanted === "cancelled" || wanted === "paused"
+						? canStopBroadcast(caller, ref)
+						: canComposeBroadcast(caller, broadcast.region_id);
+				if (!may.allowed) {
+					return json(
+						{
+							error: "message" in may ? may.message : "refused",
+							reason: may.reason,
+						},
+						409,
+					);
+				}
+			}
+
+			const updated = await broadcasts.setStatus({
+				id: broadcast.id,
+				status: wanted,
+				actor,
+				reason: body?.reason,
+			});
+			await audit.audit(
+				actor,
+				`broadcast_${wanted}`,
+				null,
+				{ broadcastId: broadcast.id, reason: body?.reason ?? null },
+				new Date().toISOString(),
+			);
+			return json({ broadcast: updated });
 		}
 	}
 
