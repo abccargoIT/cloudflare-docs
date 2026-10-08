@@ -19,9 +19,11 @@ import {
 	canReadRegionalRecord,
 	canReplyToConversation,
 	canViewReports,
+	isRole,
 	reportableRegions,
 	resolveRegionFilter,
 	type Caller,
+	type Role,
 } from "./auth/policy.ts";
 import {
 	NotificationRejected,
@@ -40,6 +42,8 @@ import { CrmService } from "./crm/service.ts";
 import { Reports, parseWindow } from "./crm/reports.ts";
 import { Contacts, isCustomerStage } from "./crm/contacts.ts";
 import { ChatService, isRefKind } from "./chat/service.ts";
+import { AdminService } from "./admin/service.ts";
+import { isUserStatus, validateTeam, validateUser } from "./admin/guards.ts";
 import {
 	canPostToThread,
 	canReadThread,
@@ -1056,6 +1060,134 @@ async function handleOperationsApi(
 			linkedId: body.linkedId,
 		});
 		return json({ ok: true }, 201);
+	}
+
+	/* ---------------------------------------------------------------- setup */
+
+	// Administration: people, teams and the record of who was let in.
+	// Master admin only, and a service key is not an administrator.
+	if (resource === "admin") {
+		const mayAdminister = canAdminister(caller);
+		if (!mayAdminister.allowed) return refuse(mayAdminister.reason);
+		// Narrowed by canAdminister, which refuses a service caller outright.
+		const actingUserId = caller.kind === "user" ? caller.id : "";
+		const admin = new AdminService(env.DB);
+		const knownRegions = parseRegionConfig(env.REGION_NUMBERS).map((r) => r.id);
+
+		// GET /api/admin/users
+		if (id === "users" && !action && request.method === "GET") {
+			return json({ users: await admin.listUsers(limit) });
+		}
+
+		// POST /api/admin/users   { email, displayName, role }
+		if (id === "users" && !action && request.method === "POST") {
+			const body = await readJson<{
+				email?: string;
+				displayName?: string;
+				role?: string;
+			}>(request);
+			const check = validateUser({
+				email: body?.email ?? "",
+				displayName: body?.displayName ?? "",
+				role: body?.role ?? "",
+			});
+			if (!check.ok)
+				return json({ error: check.message, reason: check.reason }, 400);
+			return json(
+				{
+					user: await admin.createUser({
+						email: body?.email ?? "",
+						displayName: body?.displayName ?? "",
+						role: (body?.role ?? "agent") as Role,
+					}),
+				},
+				201,
+			);
+		}
+
+		// PATCH /api/admin/users/:id   { role?, status?, displayName? }
+		if (id === "users" && action && request.method === "PATCH") {
+			const body = await readJson<{
+				role?: string;
+				status?: string;
+				displayName?: string;
+			}>(request);
+			if (body?.role !== undefined && !isRole(body.role)) {
+				return json({ error: "role is not one this platform knows" }, 400);
+			}
+			if (body?.status !== undefined && !isUserStatus(body.status)) {
+				return json({ error: "status must be active or suspended" }, 400);
+			}
+			const result = await admin.updateUser({
+				actingUserId,
+				targetUserId: action,
+				role: body?.role,
+				status: body?.status,
+				displayName: body?.displayName,
+			});
+			if (!result.ok) {
+				// 409: the request is well formed, the platform's state refuses
+				// it. A 400 would suggest the body was wrong.
+				return json(
+					{
+						error: result.check.ok ? "" : result.check.message,
+						reason: result.check.ok ? "" : result.check.reason,
+					},
+					409,
+				);
+			}
+			return json({ user: result.user });
+		}
+
+		// GET /api/admin/teams
+		if (id === "teams" && !action && request.method === "GET") {
+			return json({ teams: await admin.listTeams() });
+		}
+
+		// POST /api/admin/teams   { name, region }
+		if (id === "teams" && !action && request.method === "POST") {
+			const body = await readJson<{ name?: string; region?: string }>(request);
+			const check = validateTeam(
+				{ name: body?.name ?? "", regionId: body?.region ?? "" },
+				knownRegions,
+			);
+			if (!check.ok)
+				return json({ error: check.message, reason: check.reason }, 400);
+			return json(
+				{
+					team: await admin.createTeam({
+						name: body?.name ?? "",
+						regionId: body?.region ?? "",
+					}),
+				},
+				201,
+			);
+		}
+
+		// POST /api/admin/membership   { userId, teamId, remove? }
+		if (id === "membership" && request.method === "POST") {
+			const body = await readJson<{
+				userId?: string;
+				teamId?: string;
+				remove?: boolean;
+			}>(request);
+			if (!body?.userId || !body.teamId) {
+				return json({ error: "userId and teamId are required" }, 400);
+			}
+			if (body.remove) await admin.removeFromTeam(body.userId, body.teamId);
+			else await admin.addToTeam(body.userId, body.teamId);
+			return json({ ok: true });
+		}
+
+		// GET /api/admin/access-log?denied=true
+		if (id === "access-log" && request.method === "GET") {
+			return json({
+				entries: await admin.accessLog({
+					deniedOnly: url.searchParams.get("denied") === "true",
+					limit,
+				}),
+			});
+		}
 	}
 
 	/* ------------------------------------------------------------ team chat */
