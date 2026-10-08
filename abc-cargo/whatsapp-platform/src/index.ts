@@ -39,6 +39,12 @@ import { conversationIdFor, WindowClosedError } from "./conversation.ts";
 import { CrmService } from "./crm/service.ts";
 import { Reports, parseWindow } from "./crm/reports.ts";
 import { Contacts, isCustomerStage } from "./crm/contacts.ts";
+import { ChatService, isRefKind } from "./chat/service.ts";
+import {
+	canPostToThread,
+	canReadThread,
+	canStartDirect,
+} from "./chat/policy.ts";
 import { CUSTOMER_STAGES } from "./crm/customer-lifecycle.ts";
 import { InvalidTransitionError } from "./crm/lifecycle.ts";
 import {
@@ -1050,6 +1056,105 @@ async function handleOperationsApi(
 			linkedId: body.linkedId,
 		});
 		return json({ ok: true }, 201);
+	}
+
+	/* ------------------------------------------------------------ team chat */
+
+	// Internal staff messaging. The one part of the platform that crosses
+	// regions on purpose, so what governs a thread is membership rather than
+	// region: you are in it, or you are not.
+	if (resource === "chat") {
+		if (caller.kind !== "user") return refuse("service_caller");
+		const chat = new ChatService(env.DB);
+
+		// GET /api/chat/threads
+		if (id === "threads" && !action && request.method === "GET") {
+			return json({ threads: await chat.threadsFor(caller.id, limit) });
+		}
+
+		// POST /api/chat/direct   { userId }
+		if (id === "direct" && request.method === "POST") {
+			const body = await readJson<{ userId?: string }>(request);
+			const other = body?.userId?.trim();
+			if (!other) return json({ error: "userId is required" }, 400);
+			const may = canStartDirect(caller, other);
+			if (!may.allowed) return refuse(may.reason);
+			return json({ thread: await chat.openDirect(caller.id, other) }, 201);
+		}
+
+		// GET /api/chat/:threadId  —  the thread and its messages
+		if (id && !action && request.method === "GET") {
+			const thread = await chat.getThread(id);
+			if (!thread) return json({ error: "Not found" }, 404);
+			const participantIds = await chat.participantsOf(id);
+			const may = canReadThread(caller, {
+				id: thread.id,
+				kind: thread.kind,
+				teamId: thread.team_id,
+				participantIds,
+			});
+			if (!may.allowed) return refuse(may.reason);
+			return json({
+				thread,
+				participantIds,
+				messages: await chat.messages(id, limit),
+			});
+		}
+
+		// POST /api/chat/:threadId/messages   { body, refKind?, refId? }
+		if (id && action === "messages" && request.method === "POST") {
+			const payload = await readJson<{
+				body?: string;
+				refKind?: string;
+				refId?: string;
+			}>(request);
+			const thread = await chat.getThread(id);
+			if (!thread) return json({ error: "Not found" }, 404);
+			const participantIds = await chat.participantsOf(id);
+			const may = canPostToThread(
+				caller,
+				{
+					id: thread.id,
+					kind: thread.kind,
+					teamId: thread.team_id,
+					participantIds,
+				},
+				payload?.body ?? "",
+			);
+			if (!may.allowed) return refuse(may.reason);
+
+			// A reference is an id and nothing else. Following it goes through
+			// the ordinary scoped routes, so a reader who should not see the
+			// record still cannot.
+			const rawRefKind = payload?.refKind;
+			if (rawRefKind !== undefined && !isRefKind(rawRefKind)) {
+				return json({ error: "refKind is not one this platform knows" }, 400);
+			}
+			const message = await chat.post({
+				threadId: id,
+				authorId: caller.id,
+				body: payload?.body ?? "",
+				refKind: rawRefKind ?? null,
+				refId: payload?.refId ?? null,
+			});
+			return json({ message }, 201);
+		}
+
+		// POST /api/chat/:threadId/read
+		if (id && action === "read" && request.method === "POST") {
+			const thread = await chat.getThread(id);
+			if (!thread) return json({ error: "Not found" }, 404);
+			const participantIds = await chat.participantsOf(id);
+			const may = canReadThread(caller, {
+				id: thread.id,
+				kind: thread.kind,
+				teamId: thread.team_id,
+				participantIds,
+			});
+			if (!may.allowed) return refuse(may.reason);
+			await chat.markRead(id, caller.id);
+			return json({ ok: true });
+		}
 	}
 
 	/* -------------------------------------------------------------- contacts */
