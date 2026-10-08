@@ -1,7 +1,7 @@
 # Identity and access — ABC Cargo Engage
 
-**Status:** Authorisation built and tested. Authentication awaiting a decision
-in §3. Nothing is enforced at runtime yet — see §6.
+**Status:** Built, wired and enforced. Option A approved by the Head of IT on
+8 October 2026. Awaiting Access configuration on the account — see §6.
 **Prepared by:** ABC Cargo IT Department
 **Date:** 8 October 2026
 
@@ -34,7 +34,7 @@ holding customer conversations does not need its own password database, its own
 reset flow, its own lockout policy and its own breach exposure, when the company
 already has Entra and the Worker already sits behind Cloudflare Access.
 
-That is a recommendation, not a decision taken. See §3.
+**Approved by the Head of IT on 8 October 2026.** Option A is what is built.
 
 ## 3. The decision needed
 
@@ -102,32 +102,93 @@ system and scheduled sweeps. It has no region and no person behind it, and
 explicitly **cannot administer**: a machine credential must not be able to add
 users or rotate keys.
 
-## 6. What is NOT built, and why
+## 6. What is built and enforced
 
-**Nothing is enforced at runtime yet.** `/api/*` still checks only the shared
-bearer key. The policy module exists and is tested, but it is not wired in.
+`/api/*` no longer accepts a single shared key for everything. Two kinds of
+caller, deliberately not the same thing:
 
-That is deliberate. Wiring it requires knowing how a request proves who it is,
-and that is the §3 decision. Building authentication one way and then the other
-would mean two attempts at the one part of this system where a mistake is
-worth something to an attacker.
+| Caller      | Proves itself with                                | Reach                                      |
+| ----------- | ------------------------------------------------- | ------------------------------------------ |
+| **Person**  | A Cloudflare Access assertion, signature verified | Their teams' regions, and the policy in §4 |
+| **Service** | The shared bearer key                             | All regions, but **cannot administer**     |
 
-Also not built: the login screen, the dashboard, team chat, broadcasts, the
-contact directory and the bot editor. All are in the design package and none
-can be done properly before this.
+### 6.1 The header that must never be trusted
 
-## 7. Next, once §3 is decided
+Access sets two headers. `Cf-Access-Authenticated-User-Email` is the tempting
+one and reading it would be a hole: this Worker answers on a public hostname,
+so anyone who knows the address can set that header themselves and become
+whoever they like.
 
-1. Resolve the caller from the Access assertion — and **verify the JWT**, not
-   just read the email header. The Worker is reachable directly at its
-   hostname, so an unverified header is a forged header.
-2. Wire `resolveRegionFilter` into every listing, and the `canRead*` functions
-   into every fetch by id.
-3. Record each decision in `access_log`.
-4. Seed the first `master_admin`, which is a live change with its own note.
+Only `Cf-Access-Jwt-Assertion` is read, and only after its signature has been
+verified against the account's own published keys. A test asserts that
+`access.ts` never reads the email header, so the mistake cannot be made later
+by someone who did not know.
+
+### 6.2 What the verifier checks
+
+Sixteen tests, against real RSA keys and real signatures rather than fixtures:
+
+- `alg` must be RS256. `none` and `HS256` are refused by name — the two
+  classic ways into a JWT verifier.
+- The signing key must be one the account published, by `kid`.
+- The signature must match, so a tampered payload fails.
+- The issuer must be this account's, and the **audience must be this
+  application's** — a token minted for another Access application is signed by
+  the same key and must not open this one.
+- Expiry, with sixty seconds of clock skew allowed in each direction.
+- An email and a subject must both be present.
+- Unconfigured, unreachable keys, or no usable keys: refuse.
+
+### 6.3 Being signed in is not enough
+
+A verified identity is then looked up here. They must exist, be active, and be
+in at least one team. Three distinct refusal reasons are recorded — never set
+up, suspended, in no team — because an auditor wants to tell them apart, while
+the caller gets the same bare `403` either way: a signed-in stranger learns
+nothing about who else exists.
+
+### 6.4 Enforced on the conversation routes
+
+- **Listing** intersects the requested region with the caller's scope, then
+  filters each row through the same `canReadConversation` used for a direct
+  fetch, so a list and a fetch can never disagree.
+- **Fetch by id** refuses with the policy's own reason.
+- **Reply** additionally refuses posting as somebody else: the reply is
+  attributed to whoever is signed in, not to whoever the body names.
+- **Assign** records the signed-in person as the actor rather than trusting
+  the body.
+
+Verified against a running Worker: no credential, a forged email header, a
+garbage assertion and a wrong bearer key are all refused `401`, while `/health`
+and the demonstration stay public.
+
+### 6.5 Still to do
+
+The commercial routes — leads, quotations, bookings, tickets, calls — are not
+yet scoped. They are regional rather than personal, so `canReadRegionalRecord`
+applies to each, and that is mechanical rather than a design question.
+
+Not built: the login screen (Access provides it), dashboard, team chat,
+broadcasts, contact directory, bot editor.
+
+## 7. Before this can be switched on
+
+1. Create the Access application for `engage.abccargosupport.com` in Zero
+   Trust, with Entra as the identity provider.
+2. Set `ACCESS_TEAM_DOMAIN` and `ACCESS_AUD`. **With either unset every
+   console request is refused** — a platform that cannot tell who is asking
+   must not guess.
+3. Seed the first `master_admin` and one team per region. This is a live change
+   and needs its own note.
+4. Scope the commercial routes, per §6.5.
 
 ## 8. Approval
 
-Nothing here needs approval: no account was touched, no permission granted, no
-code path enabled. §3 is a design decision for the Head of IT, and §7 step 4 is
-the first part of this that will need `APPROVE LIVE CHANGE`.
+The design decision in §3 is approved. Nothing in the Cloudflare or Entra
+account has been touched: no Access application created, no variable set, no
+user seeded.
+
+Steps 1 to 3 of §7 are live changes and each needs `APPROVE LIVE CHANGE` with
+its own note. Step 3 in particular — seeding the first administrator — decides
+who can subsequently grant everyone else, and should name that person
+explicitly rather than being done in passing.

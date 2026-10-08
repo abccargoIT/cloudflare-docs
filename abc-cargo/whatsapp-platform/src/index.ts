@@ -7,6 +7,19 @@ import {
 import { handleWebhookBatch } from "./queue/consumer.ts";
 import { verifyMetaSignature, timingSafeEqual } from "./whatsapp/signature.ts";
 import {
+	AccessRejected,
+	accessTokenFrom,
+	verifyAccessToken,
+} from "./auth/access.ts";
+import { Directory } from "./auth/directory.ts";
+import {
+	canAssignConversation,
+	canReadConversation,
+	canReplyToConversation,
+	resolveRegionFilter,
+	type Caller,
+} from "./auth/policy.ts";
+import {
 	NotificationRejected,
 	parseNotificationBatch,
 	validationTokenFrom,
@@ -71,9 +84,9 @@ export default {
 			}
 
 			if (url.pathname.startsWith("/api/")) {
-				const denied = requireInternalAuth(request, env);
-				if (denied) return denied;
-				return await handleApi(request, url, env);
+				const resolved = await resolveCaller(request, env, url);
+				if ("response" in resolved) return resolved.response;
+				return await handleApi(request, url, env, resolved.caller);
 			}
 
 			return json({ error: "Not found" }, 404);
@@ -256,27 +269,100 @@ async function handleWebhookDelivery(
 // ----------------------------------------------------------------- internal
 
 /**
- * The /api/* routes are for the agent console and internal systems only.
- * Put Cloudflare Access in front of this hostname as well; the bearer key is
- * a second factor, not the only control.
+ * Establishes who is making a console request.
+ *
+ * Two kinds of caller, and they are deliberately not the same thing.
+ *
+ * A **person** arrives through Cloudflare Access, and is believed only after
+ * their assertion's signature has been verified against the account's own
+ * keys. Being signed in is not enough on its own: they also have to be a
+ * known, active user here, in at least one team. Access knows who someone is;
+ * only this platform knows what they may see.
+ *
+ * A **service** presents the shared key. It is for the shipment system and
+ * scheduled sweeps, carries no region and no person, and cannot administer.
+ *
+ * Every outcome is written to the access log, denials included.
  */
-function requireInternalAuth(request: Request, env: Env): Response | null {
+async function resolveCaller(
+	request: Request,
+	env: Env,
+	url: URL,
+): Promise<{ caller: Caller } | { response: Response }> {
+	const directory = new Directory(env.DB);
+	const log = (
+		outcome: "granted" | "denied",
+		reason: string,
+		who: { userId?: string | null; email?: string | null } = {},
+	) =>
+		directory
+			.record({
+				...who,
+				method: request.method,
+				path: url.pathname,
+				outcome,
+				reason,
+			})
+			// A logging failure must not become an authorisation failure, but it
+			// must not pass silently either.
+			.catch((error) => console.error("access log write failed", error));
+
+	// Machine callers first: a service key is unambiguous and cheap to check.
 	const header = request.headers.get("Authorization") ?? "";
 	const presented = header.startsWith("Bearer ") ? header.slice(7) : "";
-	if (
-		!env.INTERNAL_API_KEY ||
-		!presented ||
-		!timingSafeEqual(presented, env.INTERNAL_API_KEY)
-	) {
-		return json({ error: "Unauthorized" }, 401);
+	if (presented) {
+		if (
+			env.INTERNAL_API_KEY &&
+			timingSafeEqual(presented, env.INTERNAL_API_KEY)
+		) {
+			await log("granted", "ok", { email: "service" });
+			return { caller: { kind: "service", name: "internal" } };
+		}
+		await log("denied", "no_identity");
+		return { response: json({ error: "Unauthorized" }, 401) };
 	}
-	return null;
+
+	const token = accessTokenFrom(request);
+	if (!token) {
+		await log("denied", "no_identity");
+		return { response: json({ error: "Unauthorized" }, 401) };
+	}
+
+	let email: string;
+	try {
+		const identity = await verifyAccessToken(token, {
+			teamDomain: env.ACCESS_TEAM_DOMAIN ?? "",
+			audience: env.ACCESS_AUD ?? "",
+		});
+		email = identity.email;
+	} catch (error) {
+		const code = error instanceof AccessRejected ? error.code : "invalid";
+		await log("denied", code);
+		return { response: json({ error: "Unauthorized" }, 401) };
+	}
+
+	const result = await directory.callerForEmail(email);
+	if (!result.ok) {
+		await log("denied", result.reason, { email });
+		// Deliberately the same body as every other refusal: a signed-in
+		// stranger learns whether they exist here from nothing but the log.
+		return { response: json({ error: "Forbidden" }, 403) };
+	}
+
+	await log("granted", "ok", { userId: result.caller.id, email });
+	return { caller: result.caller };
+}
+
+/** The refusal a policy decision turns into. */
+function refuse(reason: string): Response {
+	return json({ error: "Forbidden", reason }, 403);
 }
 
 async function handleApi(
 	request: Request,
 	url: URL,
 	env: Env,
+	caller: Caller,
 ): Promise<Response> {
 	const repo = new Repository(env.DB);
 	const segments = url.pathname.split("/").filter(Boolean); // ["api", ...]
@@ -285,14 +371,48 @@ async function handleApi(
 
 	// GET /api/conversations?region=&status=&agent=&limit=
 	if (resource === "conversations" && !id && request.method === "GET") {
-		const rows = await repo.listConversations({
-			regionId: url.searchParams.get("region") ?? undefined,
-			status:
-				(url.searchParams.get("status") as ConversationStatus) ?? undefined,
-			agentId: url.searchParams.get("agent") ?? undefined,
-			limit: Number(url.searchParams.get("limit") ?? "50"),
-		});
-		return json({ conversations: rows });
+		// The caller is free to ask for any region. What comes back is the
+		// intersection with the regions they may actually see: ask for
+		// everything and you get your own, ask for someone else's and you get
+		// nothing.
+		const regions = resolveRegionFilter(caller, url.searchParams.get("region"));
+		if (regions !== null && regions.length === 0) {
+			return json({ conversations: [] });
+		}
+
+		const status =
+			(url.searchParams.get("status") as ConversationStatus) ?? undefined;
+		const limit = Number(url.searchParams.get("limit") ?? "50");
+		const agentId = url.searchParams.get("agent") ?? undefined;
+
+		const rows =
+			regions === null
+				? await repo.listConversations({
+						regionId: undefined,
+						status,
+						agentId,
+						limit,
+					})
+				: (
+						await Promise.all(
+							regions.map((regionId) =>
+								repo.listConversations({ regionId, status, agentId, limit }),
+							),
+						)
+					).flat();
+
+		// An agent sees their own conversations and the unclaimed queue, never
+		// another agent's open case. The filter is applied here rather than in
+		// SQL so one rule governs both the list and the fetch.
+		const visible = rows.filter(
+			(row) =>
+				canReadConversation(caller, {
+					id: row.id,
+					regionId: row.region_id,
+					assignedAgentId: row.assigned_agent_id,
+				}).allowed,
+		);
+		return json({ conversations: visible.slice(0, limit) });
 	}
 
 	// GET /api/conversations/:id
@@ -304,6 +424,12 @@ async function handleApi(
 	) {
 		const conversation = await repo.getConversation(id);
 		if (!conversation) return json({ error: "Not found" }, 404);
+		const allowed = canReadConversation(caller, {
+			id: conversation.id,
+			regionId: conversation.region_id,
+			assignedAgentId: conversation.assigned_agent_id,
+		});
+		if (!allowed.allowed) return refuse(allowed.reason);
 		const stub = env.CONVERSATION.get(env.CONVERSATION.idFromName(id));
 		const [state, messages] = await Promise.all([
 			stub.getState(),
@@ -322,6 +448,22 @@ async function handleApi(
 		const body = await readJson<{ agentId?: string; text?: string }>(request);
 		if (!body?.agentId || !body.text?.trim()) {
 			return json({ error: "agentId and text are required" }, 400);
+		}
+		const conversation = await repo.getConversation(id);
+		if (!conversation) return json({ error: "Not found" }, 404);
+		// Replying is stricter than reading: an unclaimed conversation can be
+		// read by anyone in the region, but answering one you have not taken
+		// is how two agents end up telling one customer different things.
+		const mayReply = canReplyToConversation(caller, {
+			id: conversation.id,
+			regionId: conversation.region_id,
+			assignedAgentId: conversation.assigned_agent_id,
+		});
+		if (!mayReply.allowed) return refuse(mayReply.reason);
+		// The reply is attributed to whoever is signed in. A person must not
+		// be able to post as a colleague by naming them in the body.
+		if (caller.kind === "user" && body.agentId !== caller.id) {
+			return refuse("insufficient_role");
 		}
 		const stub = env.CONVERSATION.get(env.CONVERSATION.idFromName(id));
 		const result = await stub.reply({
@@ -344,8 +486,24 @@ async function handleApi(
 		if (!body || body.agentId === undefined) {
 			return json({ error: "agentId is required (null to unassign)" }, 400);
 		}
+		const conversation = await repo.getConversation(id);
+		if (!conversation) return json({ error: "Not found" }, 404);
+		// An agent may take an unclaimed conversation and release their own.
+		// Moving one from another agent is a supervisor's decision, because it
+		// is how work gets taken away from someone.
+		const mayAssign = canAssignConversation(
+			caller,
+			{
+				id: conversation.id,
+				regionId: conversation.region_id,
+				assignedAgentId: conversation.assigned_agent_id,
+			},
+			body.agentId ?? null,
+		);
+		if (!mayAssign.allowed) return refuse(mayAssign.reason);
 		const stub = env.CONVERSATION.get(env.CONVERSATION.idFromName(id));
-		await stub.assign(body.agentId, body.actor ?? "api");
+		const actor = caller.kind === "user" ? caller.id : (body.actor ?? "api");
+		await stub.assign(body.agentId, actor);
 		return json({ ok: true });
 	}
 

@@ -40,7 +40,10 @@ export interface ServicePrincipal {
 	name: string;
 }
 
-export type Caller = ({ kind: "user" } & Principal) | ServicePrincipal;
+/** A person, once identified. */
+export type UserCaller = { kind: "user" } & Principal;
+
+export type Caller = UserCaller | ServicePrincipal;
 
 export function isService(caller: Caller): caller is ServicePrincipal {
 	return caller.kind === "service";

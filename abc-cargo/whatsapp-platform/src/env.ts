@@ -33,4 +33,13 @@ export interface Env {
 	 * unset, the endpoint rejects everything.
 	 */
 	GRAPH_CLIENT_STATE?: string;
+	/**
+	 * Cloudflare Access, which authenticates the people using the console.
+	 * ACCESS_TEAM_DOMAIN is the name in <team>.cloudflareaccess.com;
+	 * ACCESS_AUD is the Application Audience tag of the Access application.
+	 * With either unset, every console request is refused: a platform that
+	 * cannot tell who is asking must not guess.
+	 */
+	ACCESS_TEAM_DOMAIN?: string;
+	ACCESS_AUD?: string;
 }
