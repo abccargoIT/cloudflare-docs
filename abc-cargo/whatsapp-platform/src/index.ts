@@ -41,7 +41,13 @@ import {
 } from "./whatsapp/webhook.ts";
 import type { TemplateSendRequest } from "./whatsapp/types.ts";
 import { findRegionById, parseRegionConfig } from "./regions.ts";
-import { conversationIdFor, WindowClosedError } from "./conversation.ts";
+import {
+	ConversationNotStartedError,
+	conversationIdFor,
+	WindowClosedError,
+} from "./conversation.ts";
+import { checkLocation, checkMedia } from "./composer/media.ts";
+import { canEditNote, checkNoteBody, Notes } from "./composer/notes.ts";
 import { CrmService } from "./crm/service.ts";
 import { Reports, parseWindow } from "./crm/reports.ts";
 import { Contacts, isCustomerStage } from "./crm/contacts.ts";
@@ -139,11 +145,31 @@ export default {
 
 			return json({ error: "Not found" }, 404);
 		} catch (error) {
-			if (error instanceof WindowClosedError) {
-				return json({ error: error.message }, 409);
+			// Matched by name, not by `instanceof`.
+			//
+			// These errors are thrown inside the Durable Object and cross an
+			// RPC boundary to get here, which rebuilds them as plain errors
+			// carrying the name and message but not the class. `instanceof`
+			// therefore never matches, and the careful 409 for a closed service
+			// window was being delivered to agents as "Internal error" — the
+			// one message that tells them nothing and sends them to IT.
+			if (isNamed(error, WindowClosedError.name)) {
+				return json(
+					{ error: errorMessage(error), reason: "window_closed" },
+					409,
+				);
 			}
-			if (error instanceof InvalidTransitionError) {
-				return json({ error: error.message }, 409);
+			// A conversation with no history is not a fault. Mapped here rather
+			// than at each route so every path that can reach it answers the
+			// same way.
+			if (isNamed(error, ConversationNotStartedError.name)) {
+				return json({ error: errorMessage(error), reason: "not_started" }, 404);
+			}
+			if (isNamed(error, InvalidTransitionError.name)) {
+				return json(
+					{ error: errorMessage(error), reason: "bad_transition" },
+					409,
+				);
 			}
 			console.error("unhandled error", {
 				path: url.pathname,
@@ -507,6 +533,28 @@ function validateCampaign(
 	return problems;
 }
 
+/**
+ * Whether an error is the named one, whichever side of an RPC boundary it was
+ * thrown on.
+ *
+ * A Durable Object method's error arrives here rebuilt as a plain error: the
+ * name and message survive, the class does not. So the name is the only thing
+ * that can be matched on, and matching on the message would break the first
+ * time somebody reworded it.
+ */
+function isNamed(error: unknown, name: string): boolean {
+	return (
+		typeof error === "object" &&
+		error !== null &&
+		"name" in error &&
+		(error as { name?: unknown }).name === name
+	);
+}
+
+function errorMessage(error: unknown): string {
+	return error instanceof Error ? error.message : String(error);
+}
+
 async function handleApi(
 	request: Request,
 	url: URL,
@@ -620,6 +668,242 @@ async function handleApi(
 			text: body.text.trim(),
 		});
 		return json(result);
+	}
+
+	// POST /api/conversations/:id/notes   { body, pinned? }
+	//
+	// An internal note. This never reaches the customer: notes are a separate
+	// table and the WhatsApp send path does not read it. Writing one needs only
+	// the right to read the conversation, because a note is a reading aid for
+	// the next person rather than an act towards the customer.
+	if (
+		resource === "conversations" &&
+		id &&
+		action === "notes" &&
+		request.method === "POST"
+	) {
+		if (caller.kind !== "user") return refuse("service_caller");
+		const body = await readJson<{ body?: string; pinned?: boolean }>(request);
+		const check = checkNoteBody(body?.body);
+		if (!check.ok) {
+			return json({ error: check.message, reason: check.reason }, 400);
+		}
+		const conversation = await repo.getConversation(id);
+		if (!conversation) return json({ error: "Not found" }, 404);
+		const mayRead = canReadConversation(caller, {
+			id: conversation.id,
+			regionId: conversation.region_id,
+			assignedAgentId: conversation.assigned_agent_id,
+		});
+		if (!mayRead.allowed) return refuse(mayRead.reason);
+
+		const notes = new Notes(env.DB);
+		return json(
+			{
+				note: await notes.add({
+					conversationId: conversation.id,
+					regionId: conversation.region_id,
+					// Attributed to whoever is signed in, never to a name in the
+					// body. The same rule as a reply.
+					authorId: caller.id,
+					body: body?.body ?? "",
+					pinned: body?.pinned === true,
+				}),
+			},
+			201,
+		);
+	}
+
+	// GET /api/conversations/:id/notes
+	if (
+		resource === "conversations" &&
+		id &&
+		action === "notes" &&
+		request.method === "GET"
+	) {
+		const conversation = await repo.getConversation(id);
+		if (!conversation) return json({ error: "Not found" }, 404);
+		const mayRead = canReadConversation(caller, {
+			id: conversation.id,
+			regionId: conversation.region_id,
+			assignedAgentId: conversation.assigned_agent_id,
+		});
+		if (!mayRead.allowed) return refuse(mayRead.reason);
+		const noteLimit = Number(url.searchParams.get("limit") ?? "100");
+		return json({
+			notes: await new Notes(env.DB).forConversation(id, noteLimit),
+		});
+	}
+
+	// PATCH /api/conversations/:id/notes/:noteId   { body?, pinned? }
+	if (
+		resource === "conversations" &&
+		id &&
+		action === "notes" &&
+		request.method === "PATCH"
+	) {
+		if (caller.kind !== "user") return refuse("service_caller");
+		const noteId = segments[4];
+		if (!noteId) return json({ error: "a note id is required" }, 400);
+		const notes = new Notes(env.DB);
+		const note = await notes.get(noteId);
+		if (!note || note.conversation_id !== id) {
+			return json({ error: "Not found" }, 404);
+		}
+		const mayRead = canReadConversation(caller, {
+			id,
+			regionId: note.region_id,
+			assignedAgentId: null,
+		});
+		if (!mayRead.allowed) return refuse(mayRead.reason);
+
+		const body = await readJson<{ body?: string; pinned?: boolean }>(request);
+		if (body?.body !== undefined) {
+			// Only the author rewrites their own words. A supervisor who
+			// disagrees adds their own note, which leaves both on the record.
+			const mayEdit = canEditNote(caller.id, note);
+			if (!mayEdit.ok) {
+				return json({ error: mayEdit.message, reason: mayEdit.reason }, 403);
+			}
+			const check = checkNoteBody(body.body);
+			if (!check.ok) {
+				return json({ error: check.message, reason: check.reason }, 400);
+			}
+			await notes.edit({ id: noteId, body: body.body });
+		}
+		// Pinning is not editing: anyone who can read the conversation may
+		// raise the note the next agent has to see.
+		if (body?.pinned !== undefined) {
+			await notes.setPinned(noteId, body.pinned === true);
+		}
+		return json({ note: await notes.get(noteId) });
+	}
+
+	// POST /api/conversations/:id/media
+	//
+	// An attachment, sent as multipart so the file is not base64 in JSON.
+	// Free-form, so the 24-hour service window applies exactly as it does to a
+	// text reply.
+	if (
+		resource === "conversations" &&
+		id &&
+		action === "media" &&
+		request.method === "POST"
+	) {
+		const conversation = await repo.getConversation(id);
+		if (!conversation) return json({ error: "Not found" }, 404);
+		const mayReply = canReplyToConversation(caller, {
+			id: conversation.id,
+			regionId: conversation.region_id,
+			assignedAgentId: conversation.assigned_agent_id,
+		});
+		if (!mayReply.allowed) return refuse(mayReply.reason);
+
+		let form: FormData;
+		try {
+			form = await request.formData();
+		} catch {
+			return json({ error: "send the file as multipart/form-data" }, 400);
+		}
+		const file = form.get("file");
+		if (!(file instanceof File)) {
+			return json({ error: "a file is required" }, 400);
+		}
+		const kind = String(form.get("kind") ?? "");
+		const caption = form.get("caption");
+		const filename =
+			typeof form.get("filename") === "string"
+				? String(form.get("filename"))
+				: file.name;
+
+		// Checked before the upload. Meta would reject a bad attachment too,
+		// but only after it had been sent to them, which on a large file is a
+		// minute of waiting for an error that reads like a server fault.
+		const check = checkMedia({
+			kind,
+			mimeType: file.type,
+			sizeBytes: file.size,
+			filename,
+		});
+		if (!check.ok) {
+			return json({ error: check.message, reason: check.reason }, 400);
+		}
+
+		const stub = env.CONVERSATION.get(env.CONVERSATION.idFromName(id));
+		const actorId = caller.kind === "user" ? caller.id : "service";
+		try {
+			const result = await stub.sendMedia({
+				agentId: actorId,
+				kind: check.kind,
+				bytes: await file.arrayBuffer(),
+				mimeType: check.mimeType,
+				filename: check.filename ?? filename,
+				caption: typeof caption === "string" ? caption : undefined,
+			});
+			return json({
+				...result,
+				// Said plainly, because an agent who records a voice note and
+				// sees it arrive as "audio.m4a" concludes the feature is broken.
+				voiceNote: check.voiceNote,
+				warnings: check.warnings,
+			});
+		} catch (error) {
+			if (error instanceof WindowClosedError) {
+				return json({ error: error.message, reason: "window_closed" }, 409);
+			}
+			throw error;
+		}
+	}
+
+	// POST /api/conversations/:id/location   { latitude, longitude, name?, address? }
+	if (
+		resource === "conversations" &&
+		id &&
+		action === "location" &&
+		request.method === "POST"
+	) {
+		const conversation = await repo.getConversation(id);
+		if (!conversation) return json({ error: "Not found" }, 404);
+		const mayReply = canReplyToConversation(caller, {
+			id: conversation.id,
+			regionId: conversation.region_id,
+			assignedAgentId: conversation.assigned_agent_id,
+		});
+		if (!mayReply.allowed) return refuse(mayReply.reason);
+
+		const body = await readJson<{
+			latitude?: unknown;
+			longitude?: unknown;
+			name?: string;
+			address?: string;
+		}>(request);
+		const check = checkLocation({
+			latitude: body?.latitude,
+			longitude: body?.longitude,
+			name: body?.name,
+			address: body?.address,
+		});
+		if (!check.ok) {
+			return json({ error: check.message, reason: check.reason }, 400);
+		}
+
+		const stub = env.CONVERSATION.get(env.CONVERSATION.idFromName(id));
+		try {
+			return json(
+				await stub.sendLocation({
+					agentId: caller.kind === "user" ? caller.id : "service",
+					latitude: check.latitude,
+					longitude: check.longitude,
+					name: check.name,
+					address: check.address,
+				}),
+			);
+		} catch (error) {
+			if (error instanceof WindowClosedError) {
+				return json({ error: error.message, reason: "window_closed" }, 409);
+			}
+			throw error;
+		}
 	}
 
 	// POST /api/conversations/:id/assign   { agentId | null, actor }

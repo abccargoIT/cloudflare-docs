@@ -99,6 +99,129 @@ export class WhatsAppClient {
 		});
 	}
 
+	/**
+	 * Uploads a file to Meta and returns the media id to send it with.
+	 *
+	 * Uploading rather than sending a link, because a link has to be publicly
+	 * reachable — which would mean exposing a customer's commercial invoice on
+	 * a URL anybody could guess. The id is private to the WABA and expires,
+	 * which is why the platform also keeps its own copy in R2.
+	 *
+	 * This is a multipart form post, not JSON, so it does not go through
+	 * `request`.
+	 */
+	async uploadMedia(input: {
+		phoneNumberId: string;
+		bytes: ArrayBuffer;
+		mimeType: string;
+		filename: string;
+	}): Promise<{ id: string }> {
+		const form = new FormData();
+		form.append("messaging_product", "whatsapp");
+		form.append("type", input.mimeType);
+		form.append(
+			"file",
+			new Blob([input.bytes], { type: input.mimeType }),
+			input.filename,
+		);
+
+		const response = await this.fetchImpl(
+			`${this.base}/${input.phoneNumberId}/media`,
+			{
+				method: "POST",
+				// No Content-Type: the boundary has to be set by FormData.
+				headers: { Authorization: `Bearer ${this.token}` },
+				body: form,
+			},
+		);
+
+		const text = await response.text();
+		let parsed: unknown = undefined;
+		try {
+			parsed = text ? JSON.parse(text) : undefined;
+		} catch {
+			parsed = undefined;
+		}
+
+		if (!response.ok) {
+			const error = (parsed as { error?: { message?: string; code?: number } })
+				?.error;
+			throw new WhatsAppApiError(
+				`Graph API media upload failed: HTTP ${response.status}${
+					error?.message ? ` - ${error.message}` : ""
+				}`,
+				response.status,
+				error?.code,
+				response.status >= 500 || response.status === 429,
+			);
+		}
+
+		const id = (parsed as { id?: string })?.id;
+		if (!id) {
+			throw new WhatsAppApiError(
+				"Graph API media upload returned no id",
+				response.status,
+				undefined,
+				false,
+			);
+		}
+		return { id };
+	}
+
+	/**
+	 * Sends an already-uploaded attachment.
+	 *
+	 * `caption` is accepted by image, document and video only; Meta ignores or
+	 * rejects it on audio and stickers, so the caller's caption is dropped for
+	 * those rather than sent and silently lost.
+	 */
+	sendMedia(input: {
+		phoneNumberId: string;
+		to: string;
+		kind: "image" | "document" | "audio" | "video" | "sticker";
+		mediaId: string;
+		caption?: string;
+		filename?: string;
+	}): Promise<SendMessageResponse> {
+		const captionable =
+			input.kind === "image" ||
+			input.kind === "document" ||
+			input.kind === "video";
+		const body: Record<string, unknown> = { id: input.mediaId };
+		if (captionable && input.caption) body["caption"] = input.caption;
+		// The filename is what the customer sees in the chat, and it only
+		// applies to a document.
+		if (input.kind === "document" && input.filename) {
+			body["filename"] = input.filename;
+		}
+
+		return this.postMessage(input.phoneNumberId, {
+			to: input.to,
+			type: input.kind,
+			[input.kind]: body,
+		});
+	}
+
+	sendLocation(input: {
+		phoneNumberId: string;
+		to: string;
+		latitude: number;
+		longitude: number;
+		name?: string;
+		address?: string;
+	}): Promise<SendMessageResponse> {
+		return this.postMessage(input.phoneNumberId, {
+			to: input.to,
+			type: "location",
+			location: {
+				latitude: input.latitude,
+				longitude: input.longitude,
+				...(input.name ? { name: input.name } : {}),
+				...(input.address ? { address: input.address } : {}),
+			},
+		});
+	}
+
 	async markAsRead(phoneNumberId: string, messageId: string): Promise<void> {
 		await this.request(`/${phoneNumberId}/messages`, {
 			method: "POST",

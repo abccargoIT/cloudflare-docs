@@ -66,10 +66,13 @@ rollback. The second is what is true, and it is what the roadmap is built on.
 `+966548454866` and `+447388800000`. Harmless in a wireframe, misleading in a
 management slide.
 
-## 4. What the package has that the build does not
+## 4. The package's modules, and where the build has got to
 
-This is the useful half, and it is substantial. The "build today" column is
-kept current as modules land; it was written when none of this existed.
+This section was written as "what the package has that the build does not",
+when that was true of all of it. It is now a build-status table, and the
+heading has been corrected to say so rather than left to mislead whoever reads
+it next. The design package remains the UI and roadmap specification; the
+"build today" column is kept current as modules land.
 
 | Module                 | Design intent                                                                                    | Build today                                                                                                      |
 | ---------------------- | ------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
@@ -81,7 +84,7 @@ kept current as modules land; it was written when none of this existed.
 | **Reports**            | Charts plus a report library                                                                     | Regional summary API built; no charts and no report library                                                      |
 | **Broadcasts**         | Template broadcasts with audience, delivered, read, replied                                      | Built, and switched off by default. Frozen audience, two-person approval, paced sending. See `broadcasts.md`     |
 | **Contacts directory** | Searchable list, 360 view, notes                                                                 | Built. Directory and lifecycle board in `src/crm/contacts.ts`; no UI yet                                         |
-| **Composer**           | Internal note, voice note, file, location                                                        | Text and template only                                                                                           |
+| **Composer**           | Internal note, voice note, file, location                                                        | Built. `src/composer/` — notes in their own table so the send path cannot reach them. See `composer.md`          |
 | **Email and phone**    | Named as channels alongside WhatsApp                                                             | WhatsApp only; telephony read-only via Graph                                                                     |
 | **ERP lookup**         | Bot queries shipment status from the ERP                                                         | Open decision — shipment system API availability                                                                 |
 | **Personalisation**    | Light/dark theme, accent colour                                                                  | Demo follows the system theme                                                                                    |

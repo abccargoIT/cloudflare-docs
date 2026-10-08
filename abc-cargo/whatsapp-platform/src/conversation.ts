@@ -53,6 +53,22 @@ export interface ConversationInit {
 	waId: string;
 }
 
+/**
+ * A conversation row exists but the thread has never carried a message.
+ *
+ * Distinguished from a genuine fault because it is not one: it happens
+ * whenever something addresses a conversation that was created by an import or
+ * a seed and has had no traffic. Answered as a 404 rather than a 500, which is
+ * what an agent needs to see — "Internal error" sends them to IT for a
+ * conversation that simply has no history yet.
+ */
+export class ConversationNotStartedError extends Error {
+	constructor() {
+		super("This conversation has no messages yet.");
+		this.name = "ConversationNotStartedError";
+	}
+}
+
 export class WindowClosedError extends Error {
 	constructor() {
 		super(
@@ -240,6 +256,141 @@ export class Conversation extends DurableObject<Env> {
 			state,
 			input.text,
 			input.agentId,
+		);
+		await this.repo.clearUnread(state.id);
+		return { messageId };
+	}
+
+	/**
+	 * Sends an attachment: a document, an image, a voice note, a video.
+	 *
+	 * Free-form, so the 24-hour service window applies exactly as it does to a
+	 * text reply. Outside it, Meta accepts only templates, and a template
+	 * cannot carry an arbitrary attachment — so the honest answer is to refuse
+	 * here rather than to send something that will be rejected.
+	 *
+	 * The file is uploaded to Meta to get a media id, then sent. It is also
+	 * kept in R2, because Meta's media ids expire: without our own copy, a
+	 * conversation from three months ago shows "[a document]" with no way to
+	 * see which document, which is useless in a dispute about what was sent.
+	 */
+	async sendMedia(input: {
+		agentId: string;
+		kind: "image" | "document" | "audio" | "video" | "sticker";
+		bytes: ArrayBuffer;
+		mimeType: string;
+		filename?: string;
+		caption?: string;
+	}): Promise<{ messageId: string; mediaKey: string }> {
+		const state = await this.requireState();
+		if (!this.windowOpen(state)) throw new WindowClosedError();
+
+		const nowIso = new Date().toISOString();
+		const uploadName =
+			input.filename ?? defaultFilename(input.kind, input.mimeType);
+
+		const uploaded = await this.client.uploadMedia({
+			phoneNumberId: state.phoneNumberId,
+			bytes: input.bytes,
+			mimeType: input.mimeType,
+			filename: uploadName,
+		});
+
+		// Stored before sending. If the send fails we have kept a file nobody
+		// received, which is harmless; the other order risks a message the
+		// customer has and we cannot show.
+		const mediaKey = `conversations/${state.id}/out/${crypto.randomUUID()}`;
+		await this.env.MEDIA.put(mediaKey, input.bytes, {
+			httpMetadata: { contentType: input.mimeType },
+			customMetadata: {
+				filename: uploadName,
+				sentBy: input.agentId,
+				waMediaId: uploaded.id,
+			},
+		});
+
+		const response = await this.client.sendMedia({
+			phoneNumberId: state.phoneNumberId,
+			to: state.waId,
+			kind: input.kind,
+			mediaId: uploaded.id,
+			caption: input.caption,
+			filename: input.kind === "document" ? uploadName : undefined,
+		});
+		const messageId = response.messages[0]?.id ?? "";
+
+		await this.repo.insertMessage(
+			{
+				id: messageId,
+				conversationId: state.id,
+				direction: "out",
+				type: input.kind,
+				body: input.caption ?? `[${input.kind}] ${uploadName}`,
+				mediaKey,
+				mediaMime: input.mimeType,
+				mediaFilename: uploadName,
+				status: "accepted",
+				sentBy: input.agentId,
+				waTimestamp: nowIso,
+			},
+			nowIso,
+		);
+		await this.repo.touchConversationOnOutbound(
+			state.id,
+			nowIso,
+			input.caption?.slice(0, 120) ?? `[${input.kind}] ${uploadName}`,
+		);
+		await this.repo.clearUnread(state.id);
+		return { messageId, mediaKey };
+	}
+
+	/**
+	 * Sends a location — a warehouse, a collection point, a customs office.
+	 *
+	 * Free-form, so the service window applies. Validated by the composer
+	 * before it reaches here.
+	 */
+	async sendLocation(input: {
+		agentId: string;
+		latitude: number;
+		longitude: number;
+		name?: string;
+		address?: string;
+	}): Promise<{ messageId: string }> {
+		const state = await this.requireState();
+		if (!this.windowOpen(state)) throw new WindowClosedError();
+
+		const nowIso = new Date().toISOString();
+		const response = await this.client.sendLocation({
+			phoneNumberId: state.phoneNumberId,
+			to: state.waId,
+			latitude: input.latitude,
+			longitude: input.longitude,
+			name: input.name,
+			address: input.address,
+		});
+		const messageId = response.messages[0]?.id ?? "";
+
+		const label = input.name ?? input.address ?? "a location";
+		await this.repo.insertMessage(
+			{
+				id: messageId,
+				conversationId: state.id,
+				direction: "out",
+				type: "location",
+				body: `[location] ${label}`,
+				latitude: input.latitude,
+				longitude: input.longitude,
+				status: "accepted",
+				sentBy: input.agentId,
+				waTimestamp: nowIso,
+			},
+			nowIso,
+		);
+		await this.repo.touchConversationOnOutbound(
+			state.id,
+			nowIso,
+			`[location] ${label}`,
 		);
 		await this.repo.clearUnread(state.id);
 		return { messageId };
@@ -466,7 +617,7 @@ export class Conversation extends DurableObject<Env> {
 
 	private async requireState(): Promise<ConversationState> {
 		const state = await this.loadState();
-		if (!state) throw new Error("Conversation has not been initialised");
+		if (!state) throw new ConversationNotStartedError();
 		return state;
 	}
 
@@ -525,4 +676,18 @@ function describeError(error: unknown): string {
 	return error instanceof Error
 		? `${error.name}: ${error.message}`
 		: String(error);
+}
+
+/**
+ * A filename for an attachment that arrives without one.
+ *
+ * Only documents show their filename to the customer, and those are required
+ * to have one by the composer. This is for the upload itself, which Meta wants
+ * a name for regardless.
+ */
+function defaultFilename(kind: string, mimeType: string): string {
+	const extension = (mimeType.split("/")[1] ?? "bin")
+		.split(";")[0]
+		?.replace(/[^a-z0-9]/gi, "");
+	return `${kind}.${extension || "bin"}`;
 }

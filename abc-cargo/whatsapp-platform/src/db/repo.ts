@@ -55,6 +55,11 @@ export interface NewMessage {
 	body?: string | null;
 	mediaKey?: string | null;
 	mediaMime?: string | null;
+	/** What the customer sees in the chat, for a document. */
+	mediaFilename?: string | null;
+	/** Set for a location message, so the history is readable without the raw payload. */
+	latitude?: number | null;
+	longitude?: number | null;
 	status?: string | null;
 	sentBy?: string | null;
 	waTimestamp: string;
@@ -166,8 +171,9 @@ export class Repository {
 			.prepare(
 				`INSERT OR IGNORE INTO messages
 				   (id, conversation_id, direction, type, body, media_key, media_mime,
+				    media_filename, location_latitude, location_longitude,
 				    status, sent_by, wa_timestamp, raw_json, created_at)
-				 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)`,
+				 VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)`,
 			)
 			.bind(
 				m.id,
@@ -177,6 +183,9 @@ export class Repository {
 				m.body ?? null,
 				m.mediaKey ?? null,
 				m.mediaMime ?? null,
+				m.mediaFilename ?? null,
+				m.latitude ?? null,
+				m.longitude ?? null,
 				m.status ?? null,
 				m.sentBy ?? null,
 				m.waTimestamp,
