@@ -102,13 +102,13 @@ Worth stating so it is not lost when the design is used as the specification.
 
 ## 6. Conflicts to settle
 
-| #   | Conflict                                                                                                                          | Why it matters                                                                                   |
-| --- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| 1   | **Lifecycle stages.** Package: New Lead → Hot Lead → Payment → Customer. Build: new → qualified → quoted → negotiating → won/lost | Two different models of the same thing. One has to win, and the transition rules follow from it  |
-| 2   | **"Payment" as a lifecycle stage** versus "the CRM has no finance part"                                                           | A payment stage implies finance data. Which is it?                                               |
-| 3   | **Agents see only their own conversations**                                                                                       | A visibility rule, not a screen. It has to be enforced in the API, and nothing enforces it today |
-| 4   | **Bots as a module inside Engage**                                                                                                | The three existing bot flows are in Freshworks. Rebuild from export, or redesign?                |
-| 5   | **Email and phone as channels**                                                                                                   | Widens the platform well beyond WhatsApp. Phase, or scope?                                       |
+| #   | Conflict                                                                                                 | Why it matters                                                                    |
+| --- | -------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| 1   | ~~Lifecycle stages~~ **Resolved, §9.** They are not two models of one thing                              | —                                                                                 |
+| 2   | ~~"Payment" as a lifecycle stage~~ **Resolved, §9.3**                                                    | —                                                                                 |
+| 3   | ~~Agents see only their own conversations~~ **Built and enforced** — see `identity-and-access-design.md` | —                                                                                 |
+| 4   | **Bots as a module inside Engage**                                                                       | The three existing bot flows are in Freshworks. Rebuild from export, or redesign? |
+| 5   | **Email and phone as channels**                                                                          | Widens the platform well beyond WhatsApp. Phase, or scope?                        |
 
 ## 7. Recommendation
 
@@ -128,3 +128,78 @@ Worth stating so it is not lost when the design is used as the specification.
 No code, schema or screen was changed on the strength of this package. The
 conflicts in §6 are decisions for the Head of IT, and taking them silently in
 code would bury them.
+
+---
+
+## 9. Lifecycle — resolved, 8 October 2026
+
+Asked to take the most advanced design rather than choose between the two.
+
+### 9.1 They are not two answers to one question
+
+That was the assumption worth discarding. Picking a winner was the obvious move
+and the wrong one.
+
+|                         | **Pipeline**     | **Lifecycle**                       |
+| ----------------------- | ---------------- | ----------------------------------- |
+| Describes               | a _deal_         | a _relationship_                    |
+| How many per customer   | several at once  | exactly one                         |
+| Does it end?            | yes, won or lost | no                                  |
+| Who means it by "stage" | a sales board    | a contact list, a segment, a report |
+
+A long-standing trade account with a fresh enquiry is a Customer **and** has a
+new lead. One field cannot say both, and forcing it to loses information the
+business actually uses.
+
+So both exist. The pipeline is unchanged — `new → qualified → quoted →
+negotiating → won/lost`, with its transition guards.
+
+### 9.2 The lifecycle is derived, not stored
+
+| Stage             | Means                            | Covers the package's |
+| ----------------- | -------------------------------- | -------------------- |
+| `prospect`        | known, no interest shown         | —                    |
+| `lead`            | an open enquiry, untouched       | New Lead             |
+| `engaged`         | an enquiry actively being worked | **Hot Lead**         |
+| `committed`       | won on paper, nothing shipped    | Payment              |
+| `customer`        | one shipment booked              | Customer             |
+| `repeat_customer` | more than one                    | —                    |
+| `dormant`         | was a customer, has gone quiet   | —                    |
+| `lapsed`          | only ever enquired, and lost     | —                    |
+
+Nothing here is set by hand. Every value is computed from leads, quotations,
+bookings and last contact — facts the platform already records — so it cannot
+go stale, and a wrong answer is a wrong rule rather than somebody's forgotten
+click. The one thing reliably true of a hand-maintained relationship stage is
+that it is out of date.
+
+**"Hot Lead" becomes observed rather than declared.** Alongside the stage there
+is a temperature from 0 to 100, computed from how far the enquiry has
+travelled, whether a quotation is in the customer's hands, how recently anyone
+touched it, and whether they have shipped before. It ranks a queue; it is not a
+forecast, and the code says so.
+
+### 9.3 Why "Payment" is not a stage
+
+A payment stage implies finance data, and the CRM has no finance part. Rather
+than drop the idea, what it was reaching for is kept: `committed` is _won on
+paper, nothing shipped yet_ — the list somebody should be chasing. Neither
+"lead" nor "customer" describes it, and conflating it with either hides the
+chase.
+
+If a finance system is connected later, a settled or unsettled reading can sit
+on top of `committed` without the stage list changing.
+
+### 9.4 Two additions the package did not ask for
+
+`repeat_customer` and `dormant`. The first is the difference between a sale and
+a relationship. The second is how a quiet account surfaces before somebody
+notices a year later. Both are free, because they are derived.
+
+### 9.5 Built
+
+`src/crm/customer-lifecycle.ts`, with 15 tests covering the awkward cases:
+shipping outranks an open enquiry, an open enquiry keeps a quiet customer out
+of dormancy, never-enquired differs from enquired-and-lost, and an unparseable
+date neither throws nor flatters. `GET /api/customers/:id` now returns the
+stage, its label and the temperature alongside the record.

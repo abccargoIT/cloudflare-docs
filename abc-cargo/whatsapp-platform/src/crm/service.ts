@@ -17,6 +17,7 @@ import {
 	leadStageForQuotation,
 	templateForMilestone,
 } from "./lifecycle.ts";
+import { lifecycleFor } from "./customer-lifecycle.ts";
 import { ticketDueDates } from "./sla.ts";
 import { classifyIntent, outcomeFor, ticketTypeFor } from "./intent.ts";
 import type {
@@ -654,7 +655,11 @@ export class CrmService {
 	/* -------------------------------------------------------- customer view */
 
 	/** Everything Customer 360 needs, in one call. */
-	async customerView(customerId: string, activityLimit = 100) {
+	async customerView(
+		customerId: string,
+		activityLimit = 100,
+		now: Date = new Date(),
+	) {
 		const customer = await this.repo.getCustomer(customerId);
 		if (!customer) return null;
 		const [activities, leads, quotations, bookings, tickets, calls] =
@@ -666,8 +671,30 @@ export class CrmService {
 				this.repo.listTickets({ customerId, limit: 50 }),
 				this.repo.listCalls({ customerId, limit: 50 }),
 			]);
+		// Derived here rather than stored on the customer, so a contact record,
+		// a list and a report cannot disagree about where someone stands.
+		const lifecycle = lifecycleFor(
+			{
+				leads: leads.map((lead) => ({
+					stage: lead.stage,
+					updatedAt: lead.updated_at,
+				})),
+				quotations: quotations.map((quotation) => ({
+					status: quotation.status,
+					updatedAt: quotation.updated_at,
+				})),
+				bookings: bookings.map((booking) => ({
+					milestone: booking.milestone,
+					createdAt: booking.created_at,
+				})),
+				lastInboundAt: customer.updated_at,
+			},
+			now,
+		);
+
 		return {
 			customer,
+			lifecycle,
 			activities,
 			leads,
 			quotations,
