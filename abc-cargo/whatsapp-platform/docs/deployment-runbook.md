@@ -1,7 +1,9 @@
 # Deployment runbook — ABC Cargo Engage
 
-**Status:** **Stage A approved by the Head of IT, 7 October 2026**
-("UK DEMO APPROVE LIVE CHANGE"). Not yet executed — see §9.
+**Status:** **ON HOLD. Do not execute.** The Head of IT instructed on
+8 October 2026: "dont change any live". Stage A is not to be run, and the
+earlier approval of 7 October is suspended until the Head of IT lifts the hold
+in writing. See §11.
 Stage B remains unapproved and has no change note.
 **Prepared by:** ABC Cargo IT Department
 **Date:** 7 October 2026
@@ -267,3 +269,43 @@ change note §4.5. It runs on a machine signed in to the ABC Cargo account,
 following §4.
 
 Before §4.2, R2 must be enabled once on the account. It is not enabled today.
+
+---
+
+## 11. Standing hold — 8 October 2026
+
+**Instruction from the Head of IT: "dont change any live".**
+
+Taken at its widest, not its narrowest. Nothing is to be created, changed,
+deployed or connected anywhere outside this repository until the hold is
+lifted. That includes things previously approved.
+
+### 11.1 Paused
+
+| Item                                            | Was                     |
+| ----------------------------------------------- | ----------------------- |
+| Provisioning D1, R2 and the queues (§4.2)       | Approved 7 October      |
+| Deploying the Worker (§4.3)                     | Approved 7 October      |
+| Creating the Cloudflare Access application      | Decision taken, not run |
+| Setting `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD`     | Not run                 |
+| Seeding the first `master_admin`                | Awaiting a name         |
+| Granting any Microsoft Graph tenant permission  | Never approved          |
+| Anything touching Meta, the WABA, or Freshworks | Never approved          |
+
+The 7 October approval covered Stage A. It is suspended rather than withdrawn:
+if the hold is lifted, Stage A does not need re-approving unless the Head of IT
+says otherwise, but it does need a fresh instruction to proceed.
+
+### 11.2 Unaffected
+
+The DNS placeholder created on 7 October stays as it is. Removing it would
+itself be a live change.
+
+Work inside this repository continues: code, tests, documentation and the
+offline demonstration. None of it reaches any system.
+
+### 11.3 Live service is untouched and stays that way
+
+`+971800916`, `+966548454866` and `+447388800000` remain on Freshworks. The
+Meta callback URL has never been altered. Nothing in this project has ever
+carried a customer message.
