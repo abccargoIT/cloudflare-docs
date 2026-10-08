@@ -17,6 +17,10 @@ import {
 	canReadConversation,
 	canAdminister,
 	canReadRegionalRecord,
+	canSeeAgentWorkload,
+	canSeeOwnQueue,
+	canViewDashboard,
+	seesEveryConversationInRegion,
 	canReplyToConversation,
 	canViewReports,
 	isRole,
@@ -44,6 +48,7 @@ import { Contacts, isCustomerStage } from "./crm/contacts.ts";
 import { ChatService, isRefKind } from "./chat/service.ts";
 import { AdminService } from "./admin/service.ts";
 import { BotService } from "./bots/service.ts";
+import { DashboardService } from "./dashboard/service.ts";
 import { buildStarterFlow } from "./bots/templates.ts";
 import { previewFlow, type PreviewMessage } from "./bots/preview.ts";
 import { parseSteps } from "./bots/parse.ts";
@@ -619,6 +624,14 @@ async function handleApi(
 		if (!body?.status || !["online", "away", "offline"].includes(body.status)) {
 			return json({ error: "status must be online, away or offline" }, 400);
 		}
+		// Presence decides whether a customer is told "all our agents are
+		// currently assisting other customers", so setting somebody else's is
+		// not a harmless act. A person sets their own; a supervisor may mark a
+		// colleague away when they have plainly gone home.
+		if (caller.kind === "user" && caller.id !== id) {
+			const mayAdjustOthers = canSeeAgentWorkload(caller);
+			if (!mayAdjustOthers.allowed) return refuse(mayAdjustOthers.reason);
+		}
 		await repo.setAgentPresence(id, body.status, new Date().toISOString());
 		return json({ ok: true });
 	}
@@ -1193,6 +1206,42 @@ async function handleOperationsApi(
 				}),
 			});
 		}
+	}
+
+	/* ------------------------------------------------------------- dashboard */
+
+	// GET /api/dashboard?region=&attention=
+	//
+	// Open to agents, unlike reports. A dashboard answers "what needs doing
+	// now"; reports answer "how did we do", and the design puts the second
+	// behind a supervisor. An agent's attention list is narrowed again to the
+	// conversations they may actually read.
+	if (resource === "dashboard" && !id && request.method === "GET") {
+		const may = canViewDashboard(caller);
+		if (!may.allowed) return refuse(may.reason);
+
+		const allRegions = parseRegionConfig(env.REGION_NUMBERS);
+		const scoped = resolveRegionFilter(caller, url.searchParams.get("region"));
+		const regions =
+			scoped === null
+				? allRegions
+				: allRegions.filter((region) => scoped.includes(region.id));
+
+		const workload = canSeeAgentWorkload(caller);
+		const dashboard = new DashboardService(env.DB);
+		return json(
+			await dashboard.build({
+				regions,
+				displayName: caller.kind === "user" ? caller.displayName : null,
+				userId:
+					canSeeOwnQueue(caller) && caller.kind === "user" ? caller.id : null,
+				includeWorkload: workload.allowed,
+				// A team lead reads every conversation in their regions; an
+				// agent reads their own and the unclaimed ones.
+				seesEveryConversation: seesEveryConversationInRegion(caller),
+				attentionLimit: Number(url.searchParams.get("attention") ?? "12"),
+			}),
+		);
 	}
 
 	/* ------------------------------------------------------------------ bots */

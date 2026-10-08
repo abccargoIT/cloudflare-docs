@@ -226,6 +226,58 @@ export function canViewReports(caller: Caller): Decision {
 	return ALLOW;
 }
 
+/**
+ * The dashboard. Everyone with a desk, including agents.
+ *
+ * Deliberately not the same test as reports. A dashboard answers "what needs
+ * doing now" — how many conversations are waiting, whether anyone is online,
+ * whether the office is open. An agent has to see that; it is their work.
+ * Reports answer "how did we do", which the design puts behind supervisors,
+ * and the division between the two modules is drawn on exactly this line.
+ *
+ * A service caller is allowed through so an office wallboard can poll it. It
+ * has no desk, so it gets no greeting and no personal queue — see
+ * `canSeeOwnQueue`.
+ */
+export function canViewDashboard(caller: Caller): Decision {
+	if (isService(caller)) return ALLOW;
+	if (caller.status !== "active") return deny("suspended");
+	return ALLOW;
+}
+
+/** A personal queue needs a person to belong to. */
+export function canSeeOwnQueue(caller: Caller): boolean {
+	return caller.kind === "user" && caller.status === "active";
+}
+
+/**
+ * Whether the caller reads every conversation in their regions, or only their
+ * own and the unclaimed ones.
+ *
+ * The same rule `canReadConversation` applies, stated once so a listing can
+ * narrow itself the same way without asking about one conversation at a time.
+ * Kept separate from `canSeeAgentWorkload` deliberately: they happen to agree
+ * on who today, and tying one to the other would mean a change to what a
+ * supervisor may measure silently changing what an agent may read.
+ */
+export function seesEveryConversationInRegion(caller: Caller): boolean {
+	if (isService(caller)) return true;
+	if (caller.status !== "active") return false;
+	return caller.role !== "agent";
+}
+
+/**
+ * Whether the caller may see the dashboard broken down by colleague.
+ *
+ * Presence is not restricted — who is online is visible in team chat anyway,
+ * and an agent needs to know whether anyone else is about. How much work each
+ * named colleague is carrying is a different thing: it is the beginning of a
+ * performance comparison, so it sits with reports rather than with the queue.
+ */
+export function canSeeAgentWorkload(caller: Caller): Decision {
+	return canViewReports(caller);
+}
+
 /** Which regions a report may cover for this caller. */
 export function reportableRegions(caller: Caller): string[] | null {
 	return canViewReports(caller).allowed ? regionScope(caller) : [];

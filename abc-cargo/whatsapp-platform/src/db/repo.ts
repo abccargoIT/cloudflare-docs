@@ -1,7 +1,14 @@
 /**
- * Thin data-access layer over D1. All SQL lives here so the Durable Object
- * and HTTP handlers stay readable and the schema can evolve in one place.
+ * Thin data-access layer over D1 for the conversation side of the platform, so
+ * the Durable Object and HTTP handlers stay readable.
+ *
+ * The later modules — CRM, chat, admin, bots, presence — each own their own
+ * queries, because a single repository for the whole platform stopped being
+ * readable long before it stopped growing. This file is the conversation and
+ * message layer, not a rule that all SQL lives in one place.
  */
+
+import { Presence } from "../dashboard/presence.ts";
 
 export type ConversationStatus = "open" | "pending" | "resolved";
 export type MessageDirection = "in" | "out";
@@ -297,17 +304,22 @@ export class Repository {
 			.run();
 	}
 
-	async countOnlineAgents(regionId: string): Promise<number> {
-		const row = await this.db
-			.prepare(
-				`SELECT COUNT(*) AS n
-				 FROM agents a JOIN agent_presence p ON p.agent_id = a.id
-				 WHERE a.active = 1 AND p.status = 'online'
-				   AND (a.region_id IS NULL OR a.region_id = ?1)`,
-			)
-			.bind(regionId)
-			.first<{ n: number }>();
-		return row?.n ?? 0;
+	/**
+	 * How many people are online for a region.
+	 *
+	 * Delegates to `Presence`, which is the single source of truth, so the
+	 * automated reply and the dashboard cannot come to different conclusions
+	 * about whether anybody is there. This used to join the `agents` table
+	 * alone, which would have found nothing once the console started posting
+	 * presence under a signed-in person's `users.id` — and a platform that
+	 * believes the office is always empty sends "all our agents are currently
+	 * assisting other customers" to every message that arrives in hours.
+	 */
+	async countOnlineAgents(
+		regionId: string,
+		now: Date = new Date(),
+	): Promise<number> {
+		return new Presence(this.db).countIn(regionId, now);
 	}
 
 	async setAgentPresence(
