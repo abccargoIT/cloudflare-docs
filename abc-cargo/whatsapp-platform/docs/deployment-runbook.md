@@ -1,0 +1,312 @@
+# Deployment runbook — ABC Cargo Engage
+
+**Status:** **ON HOLD. Do not execute.** The Head of IT instructed on
+8 October 2026: "dont change any live". Stage A is not to be run, and the
+earlier approval of 7 October is suspended until the Head of IT lifts the hold
+in writing. See §11.
+Stage B remains unapproved and has no change note.
+**Prepared by:** ABC Cargo IT Department
+**Date:** 7 October 2026
+
+---
+
+## 1. Executive summary
+
+`engage.abccargosupport.com` resolves through Cloudflare and returns an error
+page, because nothing is deployed behind it. This runbook takes it from there to
+a Worker answering on that hostname.
+
+The work splits into two stages, and the split is the point of this document.
+
+**Stage A touches nothing live.** It creates four empty resources in a new,
+empty Cloudflare account and deploys a Worker that no customer can reach,
+because Meta still points at Freshworks and will continue to. At the end of
+Stage A the hostname answers, TLS is valid and the Custom Domain is attached.
+Nothing about ABC Cargo's live WhatsApp service changes.
+
+**Stage B is the cutover**, and it is the step that moves live customer
+traffic. It is out of scope here and needs its own approval, its own window and
+its own rollback rehearsal.
+
+Running Stage A does not commit ABC Cargo to Stage B. If the platform is never
+deployed further, deleting four resources removes every trace.
+
+## 2. Scope
+
+| In scope (Stage A)                               | Out of scope (Stage B)                      |
+| ------------------------------------------------ | ------------------------------------------- |
+| Create D1 database `abc-whatsapp`                | Changing the Meta callback URL              |
+| Create R2 bucket `abc-whatsapp-media`            | Moving any number off Freshworks            |
+| Create queues `abc-whatsapp-webhooks` and `-dlq` | Granting Microsoft Graph tenant permissions |
+| Apply the database schema                        | Any CRM connection                          |
+| Record the database id in `wrangler.jsonc`       | Agent console exposure                      |
+| Deploy the Worker and attach the Custom Domain   | Workers Paid upgrade                        |
+
+## 3. Prerequisites
+
+1. A machine signed in to the ABC Cargo Cloudflare account — `wrangler login`,
+   then `npx wrangler whoami` showing `abc-cargo-whatsapp-platform`.
+2. Node.js 22 or newer.
+3. **R2 enabled on the account.** It is not enabled today. It is switched on
+   once, in the dashboard under R2, and the script stops with a clear message
+   if it is still off.
+4. Written approval for Stage A.
+
+Not required for Stage A, and deliberately so: the Meta phone number IDs, the
+Meta secrets, and any decision about the CRM. The Worker deploys and answers
+without them.
+
+## 4. Stage A — procedure
+
+### 4.1 Dry run
+
+```powershell
+.\tools\provision-cloudflare.ps1 -WhatIf
+```
+
+Changes nothing. It prints the signed-in account and stops. **Read that
+account name.** If it is not `abc-cargo-whatsapp-platform`, stop here.
+
+### 4.2 Provision
+
+```powershell
+.\tools\provision-cloudflare.ps1
+```
+
+Creates the database, bucket and both queues, writes the new database id into
+`wrangler.jsonc` keeping a `.bak`, applies the schema, then re-reads everything
+and prints a present/missing table. It is safe to run more than once: each step
+checks first and skips rather than failing, so an interrupted run is simply
+repeated.
+
+Commit the `wrangler.jsonc` change. The database id is configuration, not a
+secret.
+
+### 4.3 Deploy
+
+```powershell
+npx wrangler deploy --dry-run
+npx wrangler deploy
+```
+
+The dry run must pass first. The real deploy creates the Worker and, because
+`wrangler.jsonc` carries the `routes` block, attaches
+`engage.abccargosupport.com` as its Custom Domain. Cloudflare takes over the
+DNS record and issues the certificate.
+
+### 4.4 Verify
+
+```powershell
+curl.exe -s https://engage.abccargosupport.com/health
+```
+
+Expect `{"ok":true}`.
+
+```powershell
+curl.exe -s -o NUL -w "%{http_code}`n" -X POST -H "content-type: application/json" -d "{}" https://engage.abccargosupport.com/webhooks/whatsapp
+```
+
+Expect **401**, `{"error":"Invalid signature"}`. That is the signature check
+refusing an unsigned request, and it is the single most important result in
+this runbook: it proves the endpoint is live _and_ that it rejects anything
+Meta has not signed.
+
+An earlier draft of this document said 403, and used a GET. Both were wrong. A
+GET on that path is the Meta verification handshake, which answers 403 for an
+entirely different reason — it would have looked like the right answer for the
+wrong reason. The codes above come from a run against the Worker rather than
+from reading the source.
+
+```powershell
+curl.exe -s -o NUL -w "%{http_code} %{content_type}`n" https://engage.abccargosupport.com/
+```
+
+Expect **200** and `text/html`: the demonstration, served by the Worker (§4.5).
+
+### 4.5 The demonstration on the hostname
+
+With `SERVE_DEMO` set to `"true"` — its current value — the Worker serves the
+offline demonstration at `/`. The hostname is therefore useful the moment it is
+deployed, with no Meta credential, no phone number and no secret: open
+`https://engage.abccargosupport.com/` in a browser and the product is there.
+That is what makes the subdomain testable before the cutover work begins.
+
+Two consequences, both more important than they look.
+
+**It is world-readable.** Anyone who knows the hostname can open it. The page
+holds invented data and reaches nothing, but it carries ABC Cargo's name. Put
+Cloudflare Access in front of the hostname before the link is shared outside
+the department; the account already offers this under Zero Trust.
+
+**Set `SERVE_DEMO` to `"false"` before the first live number is cut over.** A
+demonstration carrying invented customer records has no place on a production
+webhook endpoint.
+
+Then confirm, in the dashboard: the certificate is issued and valid; the
+placeholder A record has been replaced by the Custom Domain; and the three
+pre-existing records on `abccargosupport.com` are untouched.
+
+## 5. What is deliberately deferred
+
+| Item                               | Why it waits                                                                                                                                                                                                                                                                       |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The four secrets                   | Not needed to prove the hostname. Set them when the cutover is scheduled                                                                                                                                                                                                           |
+| Real phone number IDs              | Still outstanding from Meta WhatsApp Manager                                                                                                                                                                                                                                       |
+| Meta callback URL                  | Stage B. This is the step that moves customer traffic                                                                                                                                                                                                                              |
+| Workers Paid upgrade               | Nothing to pay for until traffic exists. Settle before cutover, because the Free plan's 24-hour queue retention cannot be raised                                                                                                                                                   |
+| Access exemption for `/webhooks/*` | Stage B. Meta and Microsoft Graph cannot sign in to Cloudflare Access, so the webhook paths must be exempted on the day a number is cut over — not before, because the demonstration Worker has no webhook route to exempt. Prepared procedure: `docs/access-webhook-exemption.md` |
+
+A Worker deployed without secrets and with placeholder phone numbers answers
+`/health`, rejects unsigned webhooks, and does nothing else. That is exactly
+what Stage A is for.
+
+## 6. Risk
+
+| Risk                                          | Severity | Mitigation                                          |
+| --------------------------------------------- | -------- | --------------------------------------------------- |
+| Provisioned into the wrong Cloudflare account | High     | §4.1 prints the account and stops                   |
+| Live WhatsApp service interrupted             | **None** | Meta still points at Freshworks throughout          |
+| Existing DNS records on the zone disturbed    | Low      | Only the `engage` hostname is touched               |
+| Schema applied to the wrong database          | Low      | The script applies it by name to the one it created |
+| Cost                                          | Low      | Free plan; the resources are empty                  |
+
+## 7. Rollback
+
+Reversible at every point, and nothing depends on the order.
+
+| To undo                   | Action                                                             |
+| ------------------------- | ------------------------------------------------------------------ |
+| The deployment            | `npx wrangler delete`, or remove the Custom Domain from the Worker |
+| The hostname              | Removing the Custom Domain removes the DNS record with it          |
+| The configuration         | Restore `wrangler.jsonc` from the `.bak` the script wrote          |
+| The resources             | Delete the database, bucket and queues in the dashboard            |
+| **Live WhatsApp service** | **Nothing to undo. It was never changed.**                         |
+
+## 8. Approval
+
+Stage A changes the ABC Cargo Cloudflare account and therefore needs
+`APPROVE LIVE CHANGE` from the Head of IT before §4.2 is run.
+
+Stage B — the Meta callback URL, and the per-region cutover behind it — is a
+separate change with its own note, its own approval and its own window. It is
+not authorised by approving this one.
+
+---
+
+## 9. Approval record and scope — 7 October 2026
+
+The Head of IT gave `APPROVE LIVE CHANGE`, prefixed "UK DEMO".
+
+### 9.1 What this is taken to authorise
+
+**Stage A, in full**, as set out in §2 and §4: creating the D1 database, the R2
+bucket and the two queues in the `abc-cargo-whatsapp-platform` account,
+applying the schema, recording the database id, deploying the Worker, and
+attaching `engage.abccargosupport.com` as its Custom Domain.
+
+### 9.2 What it is NOT taken to authorise
+
+**Changing the Meta callback URL, for the UK number or any other.** That is
+Stage B. It is the step that moves live customer traffic, and it has no change
+note yet — so there is nothing describing its risk, rollback or verification
+for an approval to attach to. ABC Cargo's own rule is that the change note
+comes before the approval, not after.
+
+The UK number `+447388800000` is live in Freshchat today and stays there.
+
+This reading is deliberately the narrow one. "UK DEMO" reads as _deploy so the
+UK can be demonstrated_, not _cut the live UK number over_, and the difference
+between those two is an interruption to UK customer service. If the intent was
+the wider one, it needs a Stage B note first; approving this one does not
+reach it.
+
+### 9.2a Confirmed by the Head of IT
+
+Asked to confirm the narrow reading, the Head of IT replied: **"only demo no
+live or no live numbers"**.
+
+So it is settled rather than inferred. No live number moves. `+971800916`,
+`+966548454866` and `+447388800000` all stay on Freshworks, and the Meta
+callback URL is not touched. Nothing in this project may change that without a
+Stage B change note and a fresh approval naming it.
+
+### 9.3 A demonstration does not need the live number
+
+Worth settling before anyone assumes otherwise. There are three ways to show
+the UK working, in increasing order of risk:
+
+| Option                                                   | Touches live service | What it proves                                  |
+| -------------------------------------------------------- | -------------------- | ----------------------------------------------- |
+| `demo/app.html`                                          | No                   | The whole product, offline, on any laptop       |
+| Stage A deployment + a **test** number added to the WABA | No                   | The real Worker, real Meta delivery, end to end |
+| Moving `+447388800000`                                   | **Yes**              | Nothing the test number has not already proven  |
+
+The middle option is the one to use for a live demonstration. A test number
+added to the WABA receives real WhatsApp messages through the real pipeline,
+while the three business numbers stay on Freshworks untouched. It proves
+everything the cutover would, and costs nothing if it fails.
+
+Recommendation: do not move `+447388800000` to demonstrate it. Move it when the
+bot conversation flows have been exported and the cutover has been rehearsed —
+not to satisfy a demonstration.
+
+### 9.3a What to use for the Management demonstration
+
+**Open `demo/app.html`.** Nothing to deploy, nothing to install, no numbers of
+any kind, no internet connection. It is the whole product and it runs the
+platform's own compiled code, so what Management sees is what the platform
+decides.
+
+Stage A stays approved and is safe to run whenever convenient — it touches no
+number and no live service — but it is **not required for the demonstration**.
+It proves the hostname and the deployment pipeline, which is a separate
+milestone from showing the product.
+
+### 9.4 Execution
+
+Stage A cannot be run from the preparation environment: there is no Cloudflare
+credential here and no deployment capability, as recorded in the subdomain
+change note §4.5. It runs on a machine signed in to the ABC Cargo account,
+following §4.
+
+Before §4.2, R2 must be enabled once on the account. It is not enabled today.
+
+---
+
+## 11. Standing hold — 8 October 2026
+
+**Instruction from the Head of IT: "dont change any live".**
+
+Taken at its widest, not its narrowest. Nothing is to be created, changed,
+deployed or connected anywhere outside this repository until the hold is
+lifted. That includes things previously approved.
+
+### 11.1 Paused
+
+| Item                                            | Was                     |
+| ----------------------------------------------- | ----------------------- |
+| Provisioning D1, R2 and the queues (§4.2)       | Approved 7 October      |
+| Deploying the Worker (§4.3)                     | Approved 7 October      |
+| Creating the Cloudflare Access application      | Decision taken, not run |
+| Setting `ACCESS_TEAM_DOMAIN` / `ACCESS_AUD`     | Not run                 |
+| Seeding the first `master_admin`                | Awaiting a name         |
+| Granting any Microsoft Graph tenant permission  | Never approved          |
+| Anything touching Meta, the WABA, or Freshworks | Never approved          |
+
+The 7 October approval covered Stage A. It is suspended rather than withdrawn:
+if the hold is lifted, Stage A does not need re-approving unless the Head of IT
+says otherwise, but it does need a fresh instruction to proceed.
+
+### 11.2 Unaffected
+
+The DNS placeholder created on 7 October stays as it is. Removing it would
+itself be a live change.
+
+Work inside this repository continues: code, tests, documentation and the
+offline demonstration. None of it reaches any system.
+
+### 11.3 Live service is untouched and stays that way
+
+`+971800916`, `+966548454866` and `+447388800000` remain on Freshworks. The
+Meta callback URL has never been altered. Nothing in this project has ever
+carried a customer message.

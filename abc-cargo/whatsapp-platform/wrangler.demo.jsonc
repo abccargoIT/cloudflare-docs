@@ -1,0 +1,36 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+
+	// The demonstration deployment, and only the demonstration.
+	//
+	// A separate Worker from `abc-cargo-whatsapp` on purpose. The approval
+	// given was for the demonstration, and the safest way to honour that is to
+	// deploy something incapable of anything else: this configuration declares
+	// no database, no bucket, no queue, no Durable Object and no secret. There
+	// is nothing here that could reach Meta, a customer or any ABC Cargo
+	// system, because none of it is deployed.
+	//
+	// Deploy with:  npx wrangler deploy -c wrangler.demo.jsonc
+	// Remove with:  npx wrangler delete -c wrangler.demo.jsonc
+	"name": "abc-cargo-engage-demo",
+	"main": "src/demo-only.ts",
+	"compatibility_date": "2026-07-29",
+
+	// The built demonstration page is bundled as text. The glob is resolved
+	// against the module's own location, so it is written the same way as the
+	// main configuration rather than scoped to one path.
+	"rules": [{ "type": "Text", "globs": ["**/*.html"], "fallthrough": false }],
+
+	"routes": [
+		{
+			"pattern": "engage.abccargosupport.com",
+			"custom_domain": true,
+		},
+	],
+
+	"observability": { "enabled": true },
+
+	"vars": {
+		"DEPLOY_NOTE": "demonstration only - no live systems, no Meta credentials",
+	},
+}

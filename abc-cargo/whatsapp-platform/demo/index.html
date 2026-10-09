@@ -1,0 +1,2437 @@
+<title>ABC Cargo WhatsApp Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+	rel="stylesheet"
+	href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;600&display=swap"
+/>
+<style>
+	:root {
+		--ground: #faf8f7;
+		--surface: #ffffff;
+		--surface-2: #f3efed;
+		--ink: #191210;
+		--ink-2: #4a403d;
+		--muted: #7b706c;
+		--line: #e4dcd9;
+		--line-strong: #cdc2be;
+		--accent: #c8102e;
+		--accent-ink: #ffffff;
+		--accent-soft: #fae9eb;
+		--ok: #1e7a4c;
+		--ok-soft: #e4f3ea;
+		--warn: #9c6100;
+		--warn-soft: #faf0de;
+		--wa: #0f7a5a;
+		--wa-canvas: #eae0d6;
+		--wa-in: #ffffff;
+		--wa-out: #dcf6c6;
+		--wa-bubble-ink: #191210;
+		--shadow:
+			0 1px 2px rgba(25, 18, 16, 0.06), 0 8px 24px -16px rgba(25, 18, 16, 0.28);
+	}
+	@media (prefers-color-scheme: dark) {
+		:root:not([data-theme="light"]) {
+			--ground: #141010;
+			--surface: #1e1817;
+			--surface-2: #2a2220;
+			--ink: #f5efed;
+			--ink-2: #cabfbb;
+			--muted: #968a86;
+			--line: #332b29;
+			--line-strong: #493e3b;
+			--accent: #ff5a6e;
+			--accent-ink: #1a0508;
+			--accent-soft: #3a1a1f;
+			--ok: #54c58c;
+			--ok-soft: #163024;
+			--warn: #e3a755;
+			--warn-soft: #332610;
+			--wa: #2cb187;
+			--wa-canvas: #0c0a09;
+			--wa-in: #241e1d;
+			--wa-out: #124a33;
+			--wa-bubble-ink: #f5efed;
+			--shadow:
+				0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 28px -18px rgba(0, 0, 0, 0.9);
+		}
+	}
+	:root[data-theme="dark"] {
+		--ground: #141010;
+		--surface: #1e1817;
+		--surface-2: #2a2220;
+		--ink: #f5efed;
+		--ink-2: #cabfbb;
+		--muted: #968a86;
+		--line: #332b29;
+		--line-strong: #493e3b;
+		--accent: #ff5a6e;
+		--accent-ink: #1a0508;
+		--accent-soft: #3a1a1f;
+		--ok: #54c58c;
+		--ok-soft: #163024;
+		--warn: #e3a755;
+		--warn-soft: #332610;
+		--wa: #2cb187;
+		--wa-canvas: #0c0a09;
+		--wa-in: #241e1d;
+		--wa-out: #124a33;
+		--wa-bubble-ink: #f5efed;
+		--shadow:
+			0 1px 2px rgba(0, 0, 0, 0.5), 0 10px 28px -18px rgba(0, 0, 0, 0.9);
+	}
+
+	* {
+		box-sizing: border-box;
+	}
+	body {
+		background: var(--ground);
+		color: var(--ink);
+		font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+		font-size: 15px;
+		line-height: 1.5;
+		-webkit-font-smoothing: antialiased;
+	}
+	h1,
+	h2,
+	h3,
+	.ui {
+		font-family: Archivo, "Arial Narrow", system-ui, sans-serif;
+		letter-spacing: -0.01em;
+	}
+	code,
+	.mono,
+	.num {
+		font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+		font-variant-numeric: tabular-nums;
+	}
+	h1,
+	h2,
+	h3,
+	p,
+	ul,
+	ol {
+		margin: 0;
+	}
+	button {
+		font: inherit;
+		color: inherit;
+	}
+	:where(button, input, textarea, select, [tabindex]):focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+		border-radius: 3px;
+	}
+
+	.wrap {
+		max-width: 1440px;
+		margin: 0 auto;
+		padding: 22px 20px 64px;
+		display: flex;
+		flex-direction: column;
+		gap: 22px;
+	}
+
+	/* ---------- masthead ---------- */
+	.mast {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 16px 24px;
+		align-items: flex-end;
+		justify-content: space-between;
+		border-bottom: 2px solid var(--ink);
+		padding-bottom: 14px;
+	}
+	.mast h1 {
+		font-size: 26px;
+		font-weight: 700;
+		line-height: 1.1;
+	}
+	.mast .sub {
+		color: var(--ink-2);
+		max-width: 62ch;
+		margin-top: 5px;
+	}
+	.stamp {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		padding: 5px 10px;
+		border: 1px solid var(--accent);
+		color: var(--accent);
+		background: var(--accent-soft);
+		border-radius: 2px;
+		font-family: Archivo, sans-serif;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.09em;
+		text-transform: uppercase;
+	}
+	.stamp::before {
+		content: "";
+		width: 6px;
+		height: 6px;
+		background: var(--accent);
+		border-radius: 50%;
+	}
+
+	/* ---------- control strip ---------- */
+	.controls {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 4px;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	}
+	.ctl {
+		padding: 13px 16px;
+		border-right: 1px solid var(--line);
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		min-width: 0;
+	}
+	.ctl:last-child {
+		border-right: none;
+	}
+	.ctl-label {
+		font-family: Archivo, sans-serif;
+		font-size: 10.5px;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+	.seg {
+		display: flex;
+		border: 1px solid var(--line-strong);
+		border-radius: 3px;
+		overflow: hidden;
+	}
+	.seg button {
+		flex: 1;
+		background: var(--surface);
+		border: none;
+		padding: 6px 8px;
+		cursor: pointer;
+		font-family: Archivo, sans-serif;
+		font-size: 12.5px;
+		font-weight: 600;
+		color: var(--ink-2);
+		border-right: 1px solid var(--line-strong);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.seg button:last-child {
+		border-right: none;
+	}
+	.seg button[aria-pressed="true"] {
+		background: var(--ink);
+		color: var(--ground);
+	}
+	.seg.sm button {
+		font-size: 12px;
+		padding: 5px 6px;
+	}
+	.clockline {
+		display: flex;
+		align-items: baseline;
+		gap: 9px;
+		flex-wrap: wrap;
+	}
+	.clockline .t {
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 17px;
+		font-weight: 500;
+	}
+	.pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		padding: 2px 8px;
+		border-radius: 999px;
+		font-family: Archivo, sans-serif;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.03em;
+		white-space: nowrap;
+	}
+	.pill.open {
+		background: var(--ok-soft);
+		color: var(--ok);
+	}
+	.pill.shut {
+		background: var(--warn-soft);
+		color: var(--warn);
+	}
+	.pill.hot {
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
+	.pill.flat {
+		background: var(--surface-2);
+		color: var(--muted);
+	}
+	.pill::before {
+		content: "";
+		width: 5px;
+		height: 5px;
+		border-radius: 50%;
+		background: currentColor;
+	}
+	.btn {
+		background: var(--surface);
+		border: 1px solid var(--line-strong);
+		border-radius: 3px;
+		padding: 6px 10px;
+		cursor: pointer;
+		font-family: Archivo, sans-serif;
+		font-size: 12.5px;
+		font-weight: 600;
+		color: var(--ink-2);
+	}
+	.btn:hover {
+		border-color: var(--ink-2);
+		color: var(--ink);
+	}
+	.btn.primary {
+		background: var(--accent);
+		border-color: var(--accent);
+		color: var(--accent-ink);
+	}
+	.btn.primary:hover {
+		filter: brightness(1.08);
+	}
+	.btn:disabled {
+		opacity: 0.42;
+		cursor: not-allowed;
+	}
+	.btnrow {
+		display: flex;
+		gap: 6px;
+		flex-wrap: wrap;
+	}
+
+	/* ---------- bench ---------- */
+	.bench {
+		display: grid;
+		grid-template-columns: 302px minmax(0, 1.35fr) minmax(0, 1fr);
+		gap: 16px;
+		align-items: start;
+	}
+	@media (max-width: 1180px) {
+		.bench {
+			grid-template-columns: 1fr;
+		}
+	}
+	.panel {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-radius: 4px;
+		overflow: hidden;
+		box-shadow: var(--shadow);
+	}
+	.panel-head {
+		padding: 10px 14px;
+		border-bottom: 1px solid var(--line);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 10px;
+		background: var(--surface-2);
+	}
+	.panel-head h2 {
+		font-size: 13px;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+	.panel-head .meta {
+		font-size: 11.5px;
+		color: var(--muted);
+		font-family: "IBM Plex Mono", monospace;
+	}
+
+	/* phone */
+	.phone-top {
+		background: var(--wa);
+		color: #fff;
+		padding: 10px 14px;
+		display: flex;
+		align-items: center;
+		gap: 10px;
+	}
+	.avatar {
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.22);
+		display: grid;
+		place-items: center;
+		font-family: Archivo, sans-serif;
+		font-weight: 700;
+		font-size: 12px;
+		flex: none;
+	}
+	.phone-top .who {
+		font-family: Archivo, sans-serif;
+		font-weight: 600;
+		font-size: 14px;
+		line-height: 1.2;
+	}
+	.phone-top .st {
+		font-size: 11px;
+		opacity: 0.85;
+		font-family: "IBM Plex Mono", monospace;
+	}
+	.thread {
+		background: var(--wa-canvas);
+		padding: 12px;
+		height: 352px;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 7px;
+	}
+	.bub {
+		max-width: 83%;
+		padding: 7px 10px 5px;
+		border-radius: 8px;
+		font-size: 13.5px;
+		line-height: 1.42;
+		color: var(--wa-bubble-ink);
+		white-space: pre-wrap;
+		word-break: break-word;
+		box-shadow: 0 1px 1px rgba(0, 0, 0, 0.13);
+	}
+	.bub.in {
+		background: var(--wa-in);
+		align-self: flex-start;
+		border-top-left-radius: 2px;
+	}
+	.bub.out {
+		background: var(--wa-out);
+		align-self: flex-end;
+		border-top-right-radius: 2px;
+	}
+	.bub .stamp-row {
+		display: flex;
+		align-items: center;
+		gap: 5px;
+		justify-content: flex-end;
+		margin-top: 3px;
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 10px;
+		opacity: 0.62;
+	}
+	.bub .tag {
+		align-self: flex-start;
+		font-family: Archivo, sans-serif;
+		font-size: 9.5px;
+		font-weight: 600;
+		letter-spacing: 0.07em;
+		text-transform: uppercase;
+		opacity: 0.6;
+		margin-bottom: 2px;
+		display: block;
+	}
+	.tick {
+		letter-spacing: -2px;
+	}
+	.tick.read {
+		color: #3b9ce8;
+	}
+	.phone-input {
+		display: flex;
+		gap: 6px;
+		padding: 9px;
+		border-top: 1px solid var(--line);
+		background: var(--surface);
+	}
+	.phone-input input {
+		flex: 1;
+		min-width: 0;
+		border: 1px solid var(--line-strong);
+		border-radius: 999px;
+		padding: 7px 12px;
+		background: var(--ground);
+		color: var(--ink);
+		font: inherit;
+		font-size: 13.5px;
+	}
+	.phone-input button {
+		border: none;
+		background: var(--wa);
+		color: #fff;
+		border-radius: 50%;
+		width: 34px;
+		height: 34px;
+		flex: none;
+		cursor: pointer;
+		font-size: 15px;
+		display: grid;
+		place-items: center;
+	}
+	.quick {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 5px;
+		padding: 0 9px 10px;
+		background: var(--surface);
+	}
+	.quick button {
+		border: 1px solid var(--line-strong);
+		background: var(--surface);
+		border-radius: 999px;
+		padding: 3.5px 9px;
+		font-size: 11.5px;
+		cursor: pointer;
+		color: var(--ink-2);
+		font-family: "Source Sans 3", sans-serif;
+	}
+	.quick button:hover {
+		border-color: var(--wa);
+		color: var(--wa);
+	}
+
+	/* console */
+	.console {
+		display: grid;
+		grid-template-columns: 214px minmax(0, 1fr);
+		min-height: 452px;
+	}
+	@media (max-width: 640px) {
+		.console {
+			grid-template-columns: 1fr;
+		}
+	}
+	.inbox {
+		border-right: 1px solid var(--line);
+		background: var(--surface-2);
+		overflow-y: auto;
+		max-height: 452px;
+	}
+	.inbox-row {
+		width: 100%;
+		text-align: left;
+		background: none;
+		border: none;
+		border-bottom: 1px solid var(--line);
+		padding: 9px 11px;
+		cursor: pointer;
+		display: flex;
+		flex-direction: column;
+		gap: 3px;
+	}
+	.inbox-row:hover {
+		background: var(--surface);
+	}
+	.inbox-row[aria-current="true"] {
+		background: var(--surface);
+		box-shadow: inset 3px 0 0 var(--accent);
+	}
+	.inbox-row .r1 {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		gap: 8px;
+	}
+	.inbox-row .nm {
+		font-family: Archivo, sans-serif;
+		font-weight: 600;
+		font-size: 13px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+	.inbox-row .ago {
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 10px;
+		color: var(--muted);
+		flex: none;
+	}
+	.inbox-row .pv {
+		font-size: 12px;
+		color: var(--muted);
+		display: -webkit-box;
+		-webkit-line-clamp: 1;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+		line-clamp: 1;
+	}
+	.inbox-row .r3 {
+		display: flex;
+		gap: 5px;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+	.unread {
+		background: var(--accent);
+		color: var(--accent-ink);
+		border-radius: 999px;
+		min-width: 17px;
+		height: 17px;
+		display: grid;
+		place-items: center;
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 10.5px;
+		font-weight: 500;
+		padding: 0 4px;
+	}
+	.convo {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+	}
+	.convo-head {
+		padding: 11px 14px;
+		border-bottom: 1px solid var(--line);
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 14px;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.convo-head .nm {
+		font-family: Archivo, sans-serif;
+		font-weight: 700;
+		font-size: 15px;
+	}
+	.convo-head .sub {
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 11px;
+		color: var(--muted);
+	}
+	.agent-thread {
+		padding: 13px 14px;
+		height: 290px;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+		gap: 9px;
+		background: var(--ground);
+	}
+	.msg {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		max-width: 78%;
+	}
+	.msg.mine {
+		align-self: flex-end;
+		align-items: flex-end;
+	}
+	.msg .body {
+		padding: 8px 11px;
+		border-radius: 7px;
+		font-size: 13.5px;
+		line-height: 1.45;
+		white-space: pre-wrap;
+		word-break: break-word;
+	}
+	.msg.theirs .body {
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-top-left-radius: 2px;
+	}
+	.msg.mine .body {
+		background: var(--ink);
+		color: var(--ground);
+		border-top-right-radius: 2px;
+	}
+	.msg.auto .body {
+		background: var(--surface-2);
+		border: 1px dashed var(--line-strong);
+		color: var(--ink-2);
+	}
+	.msg.tmpl .body {
+		background: var(--accent-soft);
+		border: 1px solid var(--accent);
+		color: var(--ink);
+	}
+	.msg .who {
+		font-family: Archivo, sans-serif;
+		font-size: 10px;
+		font-weight: 600;
+		letter-spacing: 0.07em;
+		text-transform: uppercase;
+		color: var(--muted);
+	}
+	.msg .foot {
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 10px;
+		color: var(--muted);
+	}
+	.composer {
+		border-top: 1px solid var(--line);
+		padding: 11px 14px;
+		display: flex;
+		flex-direction: column;
+		gap: 9px;
+		background: var(--surface);
+	}
+	.composer textarea {
+		width: 100%;
+		min-height: 56px;
+		resize: vertical;
+		border: 1px solid var(--line-strong);
+		border-radius: 3px;
+		padding: 8px 10px;
+		background: var(--ground);
+		color: var(--ink);
+		font: inherit;
+		font-size: 13.5px;
+	}
+	.composer textarea:disabled {
+		background: var(--surface-2);
+		color: var(--muted);
+	}
+	.composer .row {
+		display: flex;
+		gap: 8px;
+		align-items: center;
+		justify-content: space-between;
+		flex-wrap: wrap;
+	}
+	.locked {
+		border: 1px solid var(--warn);
+		background: var(--warn-soft);
+		border-radius: 3px;
+		padding: 9px 11px;
+		font-size: 13px;
+		color: var(--ink);
+	}
+	.locked b {
+		font-family: Archivo, sans-serif;
+	}
+	.tmpl-list {
+		display: flex;
+		flex-direction: column;
+		gap: 5px;
+		margin-top: 8px;
+	}
+	.tmpl-btn {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 10px;
+		width: 100%;
+		text-align: left;
+		border: 1px solid var(--line-strong);
+		background: var(--surface);
+		border-radius: 3px;
+		padding: 7px 10px;
+		cursor: pointer;
+	}
+	.tmpl-btn:hover {
+		border-color: var(--accent);
+	}
+	.tmpl-btn .n {
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 12px;
+	}
+	.tmpl-btn .c {
+		font-family: Archivo, sans-serif;
+		font-size: 10px;
+		font-weight: 600;
+		letter-spacing: 0.07em;
+		text-transform: uppercase;
+		color: var(--muted);
+		flex: none;
+	}
+
+	/* trace */
+	.trace {
+		height: 452px;
+		overflow-y: auto;
+		padding: 6px 0;
+	}
+	.tr {
+		display: grid;
+		grid-template-columns: 52px 1fr;
+		gap: 10px;
+		padding: 6px 14px;
+		border-bottom: 1px solid var(--line);
+	}
+	.tr:last-child {
+		border-bottom: none;
+	}
+	.tr .ms {
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 11px;
+		color: var(--muted);
+		text-align: right;
+		padding-top: 2px;
+	}
+	.tr .st {
+		font-family: Archivo, sans-serif;
+		font-size: 12.5px;
+		font-weight: 600;
+		display: flex;
+		align-items: center;
+		gap: 7px;
+		flex-wrap: wrap;
+	}
+	.tr .src {
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 11px;
+		color: var(--muted);
+		margin-top: 1px;
+		word-break: break-all;
+	}
+	.dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		flex: none;
+		background: var(--muted);
+	}
+	.dot.ok {
+		background: var(--ok);
+	}
+	.dot.act {
+		background: var(--accent);
+	}
+	.dot.warn {
+		background: var(--warn);
+	}
+	.tr.fresh {
+		animation: slidein 0.32s ease-out;
+	}
+	@keyframes slidein {
+		from {
+			opacity: 0;
+			transform: translateY(-5px);
+		}
+		to {
+			opacity: 1;
+			transform: none;
+		}
+	}
+	.trace-empty {
+		padding: 22px 14px;
+		color: var(--muted);
+		font-size: 13px;
+	}
+
+	/* diagram + notes */
+	.split {
+		display: grid;
+		grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+		gap: 16px;
+		align-items: start;
+	}
+	@media (max-width: 1000px) {
+		.split {
+			grid-template-columns: 1fr;
+		}
+	}
+	.diagram-scroll {
+		overflow-x: auto;
+		padding: 14px;
+	}
+	svg.arch {
+		display: block;
+		min-width: 940px;
+		width: 100%;
+		height: auto;
+	}
+	.arch .box {
+		fill: var(--surface-2);
+		stroke: var(--line-strong);
+		stroke-width: 1.2;
+	}
+	.arch .box.edge {
+		fill: var(--accent-soft);
+		stroke: var(--accent);
+	}
+	.arch .box.store {
+		fill: var(--ok-soft);
+		stroke: var(--ok);
+	}
+	.arch .t {
+		fill: var(--ink);
+		font-family: Archivo, sans-serif;
+		font-size: 12.5px;
+		font-weight: 600;
+	}
+	.arch .s {
+		fill: var(--muted);
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 10px;
+	}
+	.arch .flow {
+		stroke: var(--line-strong);
+		stroke-width: 1.4;
+		fill: none;
+	}
+	.arch .flow.hot {
+		stroke: var(--accent);
+		stroke-width: 1.6;
+	}
+	.arch .lbl {
+		fill: var(--muted);
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 9.5px;
+	}
+	.notes {
+		padding: 14px 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 13px;
+	}
+	.rule {
+		display: flex;
+		flex-direction: column;
+		gap: 2px;
+		padding-left: 11px;
+		border-left: 2px solid var(--accent);
+	}
+	.rule .h {
+		font-family: Archivo, sans-serif;
+		font-weight: 700;
+		font-size: 13.5px;
+	}
+	.rule .b {
+		font-size: 13.5px;
+		color: var(--ink-2);
+	}
+	.foot {
+		color: var(--muted);
+		font-size: 12.5px;
+		border-top: 1px solid var(--line);
+		padding-top: 14px;
+		max-width: 80ch;
+	}
+	.try {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px 18px;
+		background: var(--surface);
+		border: 1px solid var(--line);
+		border-left: 3px solid var(--accent);
+		border-radius: 4px;
+		padding: 11px 16px;
+	}
+	.try .k {
+		font-family: Archivo, sans-serif;
+		font-size: 10.5px;
+		font-weight: 600;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		color: var(--accent);
+		flex: none;
+	}
+	.try ol {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px 22px;
+		list-style: none;
+		padding: 0;
+		counter-reset: t;
+	}
+	.try li {
+		counter-increment: t;
+		font-size: 13.5px;
+		color: var(--ink-2);
+		position: relative;
+		padding-left: 20px;
+	}
+	.try li::before {
+		content: counter(t);
+		position: absolute;
+		left: 0;
+		top: 1px;
+		width: 15px;
+		height: 15px;
+		border-radius: 50%;
+		background: var(--surface-2);
+		border: 1px solid var(--line-strong);
+		color: var(--muted);
+		font-family: "IBM Plex Mono", monospace;
+		font-size: 9.5px;
+		display: grid;
+		place-items: center;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		* {
+			animation-duration: 0.01ms !important;
+			transition-duration: 0.01ms !important;
+		}
+	}
+</style>
+
+<div class="wrap">
+	<header class="mast">
+		<div>
+			<h1>ABC Cargo WhatsApp Desk</h1>
+			<p class="sub">
+				A working simulation of the customer communication platform: a customer
+				messages a regional number, the pipeline processes it, and an agent
+				replies. Change the clock or send the team offline to see how the
+				behaviour changes.
+			</p>
+		</div>
+		<span class="stamp">Demo &mdash; no live systems, sample data</span>
+	</header>
+
+	<section class="controls" aria-label="Simulation controls">
+		<div class="ctl">
+			<span class="ctl-label">Business number</span>
+			<div
+				class="seg sm"
+				id="regionSeg"
+				role="group"
+				aria-label="Regional WhatsApp number"
+			></div>
+			<span
+				class="mono"
+				style="font-size: 11.5px; color: var(--muted)"
+				id="regionMeta"
+			></span>
+		</div>
+		<div class="ctl">
+			<span class="ctl-label">Simulated clock &middot; Asia/Dubai</span>
+			<div class="clockline">
+				<span class="t" id="clockText">&mdash;</span>
+				<span class="pill" id="hoursPill">&mdash;</span>
+			</div>
+			<div class="btnrow">
+				<button class="btn" data-adv="1">+1 hour</button>
+				<button class="btn" data-adv="12">+12 hours</button>
+				<button class="btn" data-adv="24">+24 hours</button>
+			</div>
+		</div>
+		<div class="ctl">
+			<span class="ctl-label">Agents on shift</span>
+			<div class="seg" id="staffSeg" role="group" aria-label="Agents online">
+				<button type="button" data-staff="2">2 online</button>
+				<button type="button" data-staff="0">None online</button>
+			</div>
+			<span style="font-size: 12.5px; color: var(--muted)"
+				>Drives the automatic reply when nobody can pick up.</span
+			>
+		</div>
+		<div class="ctl">
+			<span class="ctl-label">Service window &middot; open conversation</span>
+			<div class="clockline">
+				<span class="t" id="windowText">&mdash;</span>
+				<span class="pill" id="windowPill">&mdash;</span>
+			</div>
+			<div class="btnrow">
+				<button class="btn" id="resetBtn">Reset demo</button>
+			</div>
+		</div>
+	</section>
+
+	<section class="try" aria-label="Suggested experiments">
+		<span class="k">Try this</span>
+		<ol>
+			<li>
+				Send a message, then switch the team to <b>None online</b> and send
+				another.
+			</li>
+			<li>Press <b>+12 hours</b> to close the desk, then message again.</li>
+			<li>
+				Press <b>+24 hours</b> to expire the window and watch the composer lock.
+			</li>
+		</ol>
+	</section>
+
+	<section class="bench">
+		<div class="panel" aria-label="Customer phone">
+			<div class="phone-top">
+				<span class="avatar" id="phAvatar">AC</span>
+				<div style="min-width: 0">
+					<div class="who" id="phName">ABC Cargo</div>
+					<div class="st" id="phNumber">+971 4 000 0000</div>
+				</div>
+			</div>
+			<div
+				class="thread"
+				id="phThread"
+				role="log"
+				aria-label="Customer chat"
+			></div>
+			<form class="phone-input" id="phForm">
+				<label
+					class="sr"
+					for="phInput"
+					style="position: absolute; left: -9999px"
+					>Message as the customer</label
+				>
+				<input
+					id="phInput"
+					autocomplete="off"
+					placeholder="Type as the customer&hellip;"
+				/>
+				<button type="submit" aria-label="Send message">&#9654;</button>
+			</form>
+			<div class="quick" id="phQuick"></div>
+		</div>
+
+		<div class="panel">
+			<div class="panel-head">
+				<h2>Agent console</h2>
+				<span class="meta" id="consoleMeta">&mdash;</span>
+			</div>
+			<div class="console">
+				<div
+					class="inbox"
+					id="inbox"
+					role="list"
+					aria-label="Conversation inbox"
+				></div>
+				<div class="convo">
+					<div class="convo-head">
+						<div>
+							<div class="nm" id="cvName">&mdash;</div>
+							<div class="sub" id="cvSub">&mdash;</div>
+						</div>
+						<div class="btnrow" id="cvActions"></div>
+					</div>
+					<div
+						class="agent-thread"
+						id="cvThread"
+						role="log"
+						aria-label="Conversation transcript"
+					></div>
+					<div class="composer" id="composer"></div>
+				</div>
+			</div>
+		</div>
+
+		<div class="panel">
+			<div class="panel-head">
+				<h2>Pipeline trace</h2>
+				<span class="meta" id="traceMeta">idle</span>
+			</div>
+			<div class="trace" id="trace"></div>
+		</div>
+	</section>
+
+	<section class="split">
+		<div class="panel">
+			<div class="panel-head">
+				<h2>What runs behind the desk</h2>
+				<span class="meta">Cloudflare Workers</span>
+			</div>
+			<div class="diagram-scroll">
+				<svg
+					class="arch"
+					viewBox="0 0 960 400"
+					role="img"
+					aria-label="Architecture: customer to Meta Cloud API to Worker webhook, queue, consumer, conversation Durable Object, D1, R2 and the agent console."
+				>
+					<defs>
+						<marker
+							id="ah"
+							viewBox="0 0 10 10"
+							refX="9"
+							refY="5"
+							markerWidth="6"
+							markerHeight="6"
+							orient="auto-start-reverse"
+						>
+							<path d="M0,0 L10,5 L0,10 z" fill="currentColor"></path>
+						</marker>
+					</defs>
+
+					<g class="flow" color="var(--line-strong)">
+						<path d="M132 60 H196" marker-end="url(#ah)"></path>
+						<path d="M330 60 H394" marker-end="url(#ah)"></path>
+						<path d="M528 60 H592" marker-end="url(#ah)"></path>
+						<path d="M726 60 H790" marker-end="url(#ah)"></path>
+						<path d="M856 92 V150" marker-end="url(#ah)"></path>
+						<path d="M790 182 H660" marker-end="url(#ah)"></path>
+						<path d="M596 214 V272" marker-end="url(#ah)"></path>
+						<path d="M596 214 V244 H360 V272" marker-end="url(#ah)"></path>
+						<path d="M596 214 V244 H832 V272" marker-end="url(#ah)"></path>
+						<path d="M264 92 V150 H360 V182" marker-end="url(#ah)"></path>
+					</g>
+					<g class="flow hot" color="var(--accent)">
+						<path d="M528 182 H430 V104" marker-end="url(#ah)"></path>
+						<path d="M262 32 V16 H80 V32" marker-end="url(#ah)"></path>
+					</g>
+
+					<g>
+						<rect
+							class="box edge"
+							x="16"
+							y="32"
+							width="116"
+							height="56"
+							rx="3"
+						></rect>
+						<text class="t" x="30" y="56">Customer</text>
+						<text class="s" x="30" y="72">WhatsApp app</text>
+
+						<rect
+							class="box edge"
+							x="196"
+							y="32"
+							width="134"
+							height="56"
+							rx="3"
+						></rect>
+						<text class="t" x="210" y="56">Meta Cloud API</text>
+						<text class="s" x="210" y="72">graph.facebook.com</text>
+
+						<rect
+							class="box"
+							x="394"
+							y="32"
+							width="134"
+							height="56"
+							rx="3"
+						></rect>
+						<text class="t" x="408" y="56">Worker</text>
+						<text class="s" x="408" y="72">/webhooks/whatsapp</text>
+
+						<rect
+							class="box"
+							x="592"
+							y="32"
+							width="134"
+							height="56"
+							rx="3"
+						></rect>
+						<text class="t" x="606" y="56">Queue</text>
+						<text class="s" x="606" y="72">+ dead-letter</text>
+
+						<rect
+							class="box"
+							x="790"
+							y="32"
+							width="134"
+							height="56"
+							rx="3"
+						></rect>
+						<text class="t" x="804" y="56">Consumer</text>
+						<text class="s" x="804" y="72">retry, backoff</text>
+
+						<rect
+							class="box"
+							x="790"
+							y="150"
+							width="134"
+							height="64"
+							rx="3"
+						></rect>
+						<text class="t" x="804" y="174">Conversation</text>
+						<text class="s" x="804" y="190">Durable Object</text>
+						<text class="s" x="804" y="204">one per number+customer</text>
+
+						<rect
+							class="box"
+							x="528"
+							y="150"
+							width="132"
+							height="64"
+							rx="3"
+						></rect>
+						<text class="t" x="542" y="174">24-hour window</text>
+						<text class="s" x="542" y="190">auto-reply decision</text>
+						<text class="s" x="542" y="204">alarm on expiry</text>
+
+						<rect
+							class="box store"
+							x="292"
+							y="272"
+							width="136"
+							height="60"
+							rx="3"
+						></rect>
+						<text class="t" x="306" y="296">D1 database</text>
+						<text class="s" x="306" y="312">contacts, messages, audit</text>
+
+						<rect
+							class="box store"
+							x="528"
+							y="272"
+							width="136"
+							height="60"
+							rx="3"
+						></rect>
+						<text class="t" x="542" y="296">R2 bucket</text>
+						<text class="s" x="542" y="312">inbound media</text>
+
+						<rect
+							class="box"
+							x="764"
+							y="272"
+							width="136"
+							height="60"
+							rx="3"
+						></rect>
+						<text class="t" x="778" y="296">Agent console</text>
+						<text class="s" x="778" y="312">behind Access</text>
+
+						<rect
+							class="box"
+							x="292"
+							y="150"
+							width="136"
+							height="64"
+							rx="3"
+						></rect>
+						<text class="t" x="306" y="174">Reply or template</text>
+						<text class="s" x="306" y="190">agent, bot or</text>
+						<text class="s" x="306" y="204">shipment event</text>
+					</g>
+
+					<g class="lbl">
+						<text x="140" y="52">message</text>
+						<text x="338" y="52">webhook</text>
+						<text x="536" y="52">split</text>
+						<text x="734" y="52">batch</text>
+						<text x="436" y="150">send</text>
+						<text x="150" y="12">delivered to customer</text>
+						<text x="668" y="176">route</text>
+					</g>
+				</svg>
+			</div>
+		</div>
+
+		<div class="panel">
+			<div class="panel-head">
+				<h2>Meta rules the design obeys</h2>
+				<span class="meta">not optional</span>
+			</div>
+			<div class="notes">
+				<div class="rule">
+					<span class="h">24-hour service window</span>
+					<span class="b"
+						>After the customer's last message you may reply freely for 24
+						hours. Once it closes, only templates Meta has approved can go out.
+						The composer in this demo locks itself when that happens.</span
+					>
+				</div>
+				<div class="rule">
+					<span class="h">Templates are pre-approved, and charged</span>
+					<span class="b"
+						>Shipment updates, delivery confirmations and document requests are
+						utility templates. Customer-initiated conversations inside the
+						window are free; template messages are billed per message at rates
+						that vary by country.</span
+					>
+				</div>
+				<div class="rule">
+					<span class="h">Webhooks must be answered fast, and may repeat</span>
+					<span class="b"
+						>Meta expects an immediate acknowledgement and retries if it does
+						not get one. Work is queued rather than done inline, and duplicates
+						are dropped by message id.</span
+					>
+				</div>
+				<div class="rule">
+					<span class="h">Media links expire quickly</span>
+					<span class="b"
+						>Photos of damaged cartons and delivery paperwork must be pulled
+						from Meta and stored in R2 on arrival, or they are lost.</span
+					>
+				</div>
+				<div class="rule">
+					<span class="h">Each number carries its own quality rating</span>
+					<span class="b"
+						>Blocks and reports cut the daily limit of business-initiated
+						conversations, so notifications stay tied to real shipment events
+						and honour opt-out.</span
+					>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<p class="foot">
+		Everything here runs in your browser against sample conversations. Region 2
+		and Region 3 are placeholders until the number details are confirmed in
+		WhatsApp Manager, and the tracking reference format
+		<span class="mono">ABC0000000</span> is a stand-in for the real ABC Cargo
+		format. No Meta or Cloudflare account is contacted by this page.
+	</p>
+</div>
+
+<script>
+	(function () {
+		"use strict";
+
+		/* ---------------------------------------------------------------- config */
+
+		var TZ = "Asia/Dubai";
+		var WINDOW_MS = 24 * 3600 * 1000;
+		var COOLDOWN_MS = 12 * 3600 * 1000;
+		var START = Date.parse("2026-09-04T07:20:00Z"); /* Friday 11:20 in Dubai */
+
+		var REGIONS = [
+			{
+				id: "uae",
+				label: "UAE · Dubai",
+				short: "Dubai",
+				number: "+971 4 501 8800",
+				phoneNumberId: "109455012288471",
+				verified: true,
+				hours: { days: [1, 2, 3, 4, 5, 6], start: "09:00", end: "18:00" },
+			},
+			{
+				id: "r2",
+				label: "Region 2",
+				short: "Region 2",
+				number: "+971 6 000 0000",
+				phoneNumberId: "109455012288472",
+				verified: false,
+				hours: { days: [1, 2, 3, 4, 5, 6], start: "08:30", end: "17:30" },
+			},
+			{
+				id: "r3",
+				label: "Region 3",
+				short: "Region 3",
+				number: "+971 2 000 0000",
+				phoneNumberId: "109455012288473",
+				verified: false,
+				hours: { days: [1, 2, 3, 4, 5], start: "09:00", end: "17:00" },
+			},
+		];
+
+		var TEMPLATES = [
+			{
+				name: "shipment_status_update",
+				category: "Utility",
+				body: "Hello {{name}}, your shipment {{awb}} has cleared customs in Kochi and is out for door delivery today.",
+			},
+			{
+				name: "delivery_confirmation",
+				category: "Utility",
+				body: "Hello {{name}}, shipment {{awb}} was delivered and signed for. Thank you for shipping with ABC Cargo.",
+			},
+			{
+				name: "document_request",
+				category: "Utility",
+				body: "Hello {{name}}, to clear shipment {{awb}} we need a copy of your Emirates ID and the packing list. Please reply with photos.",
+			},
+			{
+				name: "reengagement_followup",
+				category: "Utility",
+				body: "Hello {{name}}, we are following up on your enquiry about {{awb}}. Reply here and an agent will continue the conversation.",
+			},
+		];
+
+		var QUICK = [
+			"Where is my shipment ABC2418877?",
+			"When will it reach Kochi?",
+			"I need the invoice copy",
+			"The carton arrived damaged",
+		];
+
+		/* ---------------------------------------------------------------- helpers */
+
+		function fmt(ms, opts) {
+			var o = Object.assign({ timeZone: TZ }, opts);
+			return new Intl.DateTimeFormat("en-GB", o).format(new Date(ms));
+		}
+		function clockLabel(ms) {
+			return (
+				fmt(ms, { weekday: "short", day: "numeric", month: "short" }) +
+				"  " +
+				fmt(ms, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" })
+			);
+		}
+		function hhmm(ms) {
+			return fmt(ms, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+		}
+
+		var DAYS = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+		function localClock(ms) {
+			var parts = new Intl.DateTimeFormat("en-US", {
+				timeZone: TZ,
+				weekday: "short",
+				hour: "2-digit",
+				minute: "2-digit",
+				hourCycle: "h23",
+			}).formatToParts(new Date(ms));
+			function get(t) {
+				for (var i = 0; i < parts.length; i++) {
+					if (parts[i].type === t) return parts[i].value;
+				}
+				return "";
+			}
+			return {
+				weekday: DAYS[get("weekday")] || 0,
+				minutes: Number(get("hour")) * 60 + Number(get("minute")),
+			};
+		}
+		function toMinutes(s) {
+			var p = s.split(":");
+			return Number(p[0]) * 60 + Number(p[1]);
+		}
+		function withinHours(region, ms) {
+			var c = localClock(ms),
+				h = region.hours;
+			if (h.days.indexOf(c.weekday) === -1) return false;
+			return c.minutes >= toMinutes(h.start) && c.minutes < toMinutes(h.end);
+		}
+		var DAY_NAMES = [
+			"Sunday",
+			"Monday",
+			"Tuesday",
+			"Wednesday",
+			"Thursday",
+			"Friday",
+			"Saturday",
+		];
+		function describeDays(days) {
+			var d = days
+				.slice()
+				.sort(function (a, b) {
+					return a - b;
+				})
+				.map(function (n) {
+					return DAY_NAMES[n];
+				});
+			if (d.length === 7) return "every day";
+			if (d.length === 1) return d[0];
+			return d.slice(0, -1).join(", ") + " and " + d[d.length - 1];
+		}
+		var TRACK_RE = /\b[A-Z]{2,4}[- ]?\d{6,12}\b/gi;
+		function trackingIn(text) {
+			if (!text) return [];
+			var seen = {},
+				out = [],
+				m;
+			TRACK_RE.lastIndex = 0;
+			while ((m = TRACK_RE.exec(text)) !== null) {
+				var k = m[0].replace(/[- ]/g, "").toUpperCase();
+				if (!seen[k]) {
+					seen[k] = 1;
+					out.push(k);
+				}
+			}
+			return out;
+		}
+		function autoReplyText(region, reason, name, inbound) {
+			var refs = trackingIn(inbound);
+			var L = [
+				name ? "Hello " + name.split(" ")[0] + "," : "Hello,",
+				"",
+				"Thank you for contacting ABC Cargo (" +
+					region.short +
+					"). This is an automatic reply.",
+			];
+			if (refs.length) {
+				L.push(
+					"",
+					"We have noted your shipment reference" +
+						(refs.length > 1 ? "s" : "") +
+						": " +
+						refs.join(", ") +
+						".",
+				);
+			}
+			if (reason === "outside-hours") {
+				L.push(
+					"",
+					"Our " +
+						region.short +
+						" team is offline right now. We are open " +
+						region.hours.start +
+						" to " +
+						region.hours.end +
+						" Gulf time, " +
+						describeDays(region.hours.days) +
+						".",
+					"An agent will reply as soon as we are back.",
+				);
+			} else {
+				L.push(
+					"",
+					"All our agents are with other customers at the moment. Your message is in the queue and an agent will reply shortly.",
+				);
+			}
+			L.push(
+				"",
+				"Please include your shipment reference so we can help you faster.",
+			);
+			return L.join("\n");
+		}
+		function el(tag, cls, text) {
+			var n = document.createElement(tag);
+			if (cls) n.className = cls;
+			if (text != null) n.textContent = text;
+			return n;
+		}
+		function initials(name) {
+			return name
+				.split(" ")
+				.map(function (p) {
+					return p.charAt(0);
+				})
+				.join("")
+				.slice(0, 2)
+				.toUpperCase();
+		}
+		function ago(ms, now) {
+			var d = Math.max(0, now - ms),
+				m = Math.round(d / 60000);
+			if (m < 1) return "now";
+			if (m < 60) return m + "m";
+			var h = Math.round(m / 60);
+			if (h < 24) return h + "h";
+			return Math.round(h / 24) + "d";
+		}
+		function relWindow(expiry, now) {
+			var d = expiry - now;
+			if (d <= 0) {
+				var past = Math.round(-d / 3600000);
+				return {
+					open: false,
+					text: past < 1 ? "closed just now" : "closed " + past + " h ago",
+				};
+			}
+			var h = Math.floor(d / 3600000),
+				m = Math.round((d % 3600000) / 60000);
+			return { open: true, text: h + " h " + m + " m left" };
+		}
+
+		/* ---------------------------------------------------------------- state */
+
+		var S;
+		function seed() {
+			var t = START;
+			return {
+				now: t,
+				regionId: "uae",
+				staff: 2,
+				selected: "c1",
+				busy: false,
+				trace: [],
+				convos: [
+					{
+						id: "c1",
+						region: "uae",
+						name: "Fathima Rasheed",
+						wa: "971502218840",
+						assigned: null,
+						status: "open",
+						unread: 1,
+						lastAutoReplyAt: null,
+						window: t - 40 * 60000 + WINDOW_MS,
+						msgs: [
+							{
+								dir: "in",
+								kind: "text",
+								body: "Good morning. I sent 3 cartons to Kochi last week, reference ABC2418877. Any update?",
+								ts: t - 3 * 3600000,
+								status: "read",
+							},
+							{
+								dir: "out",
+								kind: "text",
+								sentBy: "Rashid K.",
+								body: "Good morning Fathima. ABC2418877 left Dubai on the 2nd and is with customs in Kochi. I will confirm the clearance today.",
+								ts: t - 2.8 * 3600000,
+								status: "read",
+							},
+							{
+								dir: "in",
+								kind: "text",
+								body: "Thank you. Is door delivery included to Ernakulam?",
+								ts: t - 40 * 60000,
+								status: "delivered",
+							},
+						],
+					},
+					{
+						id: "c2",
+						region: "uae",
+						name: "Sujith Menon",
+						wa: "971555610923",
+						assigned: "Rashid K.",
+						status: "open",
+						unread: 0,
+						lastAutoReplyAt: null,
+						window: t - 5 * 3600000 + WINDOW_MS,
+						msgs: [
+							{
+								dir: "in",
+								kind: "text",
+								body: "ABC2418512 delivery date please",
+								ts: t - 5 * 3600000,
+								status: "read",
+							},
+							{
+								dir: "out",
+								kind: "text",
+								sentBy: "Rashid K.",
+								body: "Hello Sujith. ABC2418512 is booked for door delivery on Monday between 10:00 and 14:00. The driver will call you first.",
+								ts: t - 4.8 * 3600000,
+								status: "read",
+							},
+						],
+					},
+					{
+						id: "c3",
+						region: "uae",
+						name: "Marilyn Bautista",
+						wa: "971561140277",
+						assigned: null,
+						status: "open",
+						unread: 2,
+						lastAutoReplyAt: t - 9 * 3600000,
+						window: t - 9 * 3600000 + WINDOW_MS,
+						msgs: [
+							{
+								dir: "in",
+								kind: "media",
+								body: "IMG_4471.jpg — outer carton crushed on arrival",
+								ts: t - 9 * 3600000,
+								status: "read",
+							},
+							{
+								dir: "out",
+								kind: "auto",
+								sentBy: "auto",
+								body: autoReplyText(
+									REGIONS[0],
+									"outside-hours",
+									"Marilyn Bautista",
+									"damage claim",
+								),
+								ts: t - 9 * 3600000 + 4000,
+								status: "read",
+							},
+							{
+								dir: "in",
+								kind: "text",
+								body: "Shipment is ABC2417309, sent to Manila. What do I do now?",
+								ts: t - 8.6 * 3600000,
+								status: "delivered",
+							},
+						],
+					},
+					{
+						id: "c4",
+						region: "r2",
+						name: "Ahmed Sultan",
+						wa: "971509903471",
+						assigned: null,
+						status: "pending",
+						unread: 0,
+						lastAutoReplyAt: t - 30 * 3600000,
+						window: t - 30 * 3600000 + WINDOW_MS,
+						msgs: [
+							{
+								dir: "in",
+								kind: "text",
+								body: "Customs asked for an invoice copy for ABC2416680. Can you send it?",
+								ts: t - 30 * 3600000,
+								status: "read",
+							},
+							{
+								dir: "out",
+								kind: "auto",
+								sentBy: "auto",
+								body: autoReplyText(
+									REGIONS[1],
+									"no-agents-online",
+									"Ahmed Sultan",
+									"ABC2416680",
+								),
+								ts: t - 30 * 3600000 + 5000,
+								status: "read",
+							},
+						],
+					},
+					{
+						id: "c5",
+						region: "r3",
+						name: "Priya Nair",
+						wa: "971544470118",
+						assigned: null,
+						status: "open",
+						unread: 1,
+						lastAutoReplyAt: null,
+						window: t - 2 * 3600000 + WINDOW_MS,
+						msgs: [
+							{
+								dir: "in",
+								kind: "text",
+								body: "What is your rate per CBM for sea cargo to Chennai?",
+								ts: t - 2 * 3600000,
+								status: "delivered",
+							},
+						],
+					},
+				],
+			};
+		}
+
+		function region() {
+			for (var i = 0; i < REGIONS.length; i++) {
+				if (REGIONS[i].id === S.regionId) return REGIONS[i];
+			}
+			return REGIONS[0];
+		}
+		function convo() {
+			for (var i = 0; i < S.convos.length; i++) {
+				if (S.convos[i].id === S.selected) return S.convos[i];
+			}
+			return null;
+		}
+		function inRegion() {
+			return S.convos.filter(function (c) {
+				return c.region === S.regionId;
+			});
+		}
+		function regionOf(id) {
+			for (var i = 0; i < REGIONS.length; i++) {
+				if (REGIONS[i].id === id) return REGIONS[i];
+			}
+			return REGIONS[0];
+		}
+
+		/* ---------------------------------------------------------------- trace */
+
+		function pushTrace(stage, src, tone) {
+			S.trace.push({
+				t: Date.now(),
+				stage: stage,
+				src: src,
+				tone: tone || "",
+				fresh: true,
+			});
+			if (S.trace.length > 60) S.trace.shift();
+			renderTrace();
+		}
+		function runTrace(steps, done) {
+			var base = 0;
+			steps.forEach(function (s) {
+				base += s[0];
+				setTimeout(function () {
+					pushTrace(s[1], s[2], s[3]);
+				}, base);
+			});
+			setTimeout(function () {
+				S.busy = false;
+				if (done) done();
+				renderAll();
+			}, base + 60);
+		}
+
+		/* ---------------------------------------------------------------- actions */
+
+		function customerSend(text) {
+			var c = convo();
+			if (!c || S.busy || !text.trim()) return;
+			var r = regionOf(c.region);
+			S.busy = true;
+			var ts = S.now;
+			c.msgs.push({
+				dir: "in",
+				kind: "text",
+				body: text.trim(),
+				ts: ts,
+				status: "delivered",
+			});
+			c.unread += 1;
+			c.window = ts + WINDOW_MS;
+			if (c.status === "resolved") c.status = "open";
+
+			S.trace = [];
+			var open = withinHours(r, S.now);
+			var reason = null;
+			if (c.assigned) reason = null;
+			else if (c.lastAutoReplyAt && S.now - c.lastAutoReplyAt < COOLDOWN_MS)
+				reason = null;
+			else if (!open) reason = "outside-hours";
+			else if (S.staff === 0) reason = "no-agents-online";
+
+			var why = c.assigned
+				? "assigned to " + c.assigned
+				: c.lastAutoReplyAt && S.now - c.lastAutoReplyAt < COOLDOWN_MS
+					? "cooldown, replied " +
+						Math.round((S.now - c.lastAutoReplyAt) / 3600000) +
+						" h ago"
+					: !open
+						? "outside working hours"
+						: S.staff === 0
+							? "no agent online"
+							: "agent online";
+
+			var steps = [
+				[120, "POST /webhooks/whatsapp", "worker · src/index.ts", "act"],
+				[
+					110,
+					"Signature verified (HMAC-SHA256)",
+					"src/whatsapp/signature.ts",
+					"ok",
+				],
+				[90, "Payload split — 1 change", "src/whatsapp/webhook.ts", "ok"],
+				[
+					110,
+					"Queued → abc-whatsapp-webhooks",
+					"env.WEBHOOK_QUEUE.sendBatch()",
+					"ok",
+				],
+				[
+					80,
+					"200 EVENT_RECEIVED returned to Meta",
+					"acknowledged in 7 ms",
+					"ok",
+				],
+				[260, "Consumer picked up batch of 1", "src/queue/consumer.ts", "act"],
+				[
+					140,
+					"Routed to Durable Object " +
+						r.phoneNumberId.slice(-4) +
+						":" +
+						c.wa.slice(-4),
+					"conversationIdFor(phoneNumberId, waId)",
+					"ok",
+				],
+				[
+					130,
+					"Message stored — not a duplicate",
+					"src/db/repo.ts · insertMessage()",
+					"ok",
+				],
+				[
+					120,
+					"Service window extended to " + clockLabel(c.window),
+					"SERVICE_WINDOW_MS = 24 h",
+					"ok",
+				],
+				[140, "Marked as read on Meta", "client.markAsRead()", "ok"],
+			];
+			if (reason) {
+				steps.push([
+					180,
+					"Automatic reply sent — " + why,
+					"src/auto-reply.ts · buildAutoReply()",
+					"warn",
+				]);
+			} else {
+				steps.push([
+					180,
+					"Automatic reply skipped — " + why,
+					"src/conversation.ts · autoReplyReason()",
+					"",
+				]);
+			}
+
+			runTrace(steps, function () {
+				if (reason) {
+					c.msgs.push({
+						dir: "out",
+						kind: "auto",
+						sentBy: "auto",
+						body: autoReplyText(r, reason, c.name, text),
+						ts: S.now + 4000,
+						status: "delivered",
+					});
+					c.lastAutoReplyAt = S.now;
+				}
+			});
+			renderAll();
+		}
+
+		function agentSend(text) {
+			var c = convo();
+			if (!c || !text.trim()) return;
+			if (c.window <= S.now) return;
+			var m = {
+				dir: "out",
+				kind: "text",
+				sentBy: c.assigned || "You",
+				body: text.trim(),
+				ts: S.now,
+				status: "sent",
+			};
+			c.msgs.push(m);
+			c.unread = 0;
+			S.trace = [];
+			runTrace([
+				[
+					100,
+					"POST /api/conversations/…/reply",
+					"bearer key + Cloudflare Access",
+					"act",
+				],
+				[
+					110,
+					"Window open — free-form reply allowed",
+					"src/conversation.ts · reply()",
+					"ok",
+				],
+				[150, "Sent via Graph API", "client.sendText()", "ok"],
+				[
+					140,
+					"Stored outbound message",
+					"src/db/repo.ts · insertMessage()",
+					"ok",
+				],
+			]);
+			setTimeout(function () {
+				m.status = "delivered";
+				pushTrace("Status webhook — delivered", "statuses[] → D1", "ok");
+				renderAll();
+			}, 1500);
+			setTimeout(function () {
+				m.status = "read";
+				pushTrace("Status webhook — read", "statuses[] → D1", "ok");
+				renderAll();
+			}, 3200);
+			renderAll();
+		}
+
+		function sendTemplate(tpl) {
+			var c = convo();
+			if (!c) return;
+			var awb = "";
+			for (var i = c.msgs.length - 1; i >= 0 && !awb; i--) {
+				var refs = trackingIn(c.msgs[i].body);
+				if (refs.length) awb = refs[0];
+			}
+			var body = tpl.body
+				.replace("{{name}}", c.name.split(" ")[0])
+				.replace(/\{\{awb\}\}/g, awb || "your shipment");
+			var m = {
+				dir: "out",
+				kind: "template",
+				sentBy: c.assigned || "You",
+				body: body,
+				ts: S.now,
+				status: "sent",
+				tpl: tpl.name,
+			};
+			c.msgs.push(m);
+			S.trace = [];
+			runTrace([
+				[
+					100,
+					"POST /api/notifications/template",
+					"template " + tpl.name,
+					"act",
+				],
+				[
+					110,
+					"Window closed — template path used",
+					"src/conversation.ts · sendTemplate()",
+					"warn",
+				],
+				[
+					150,
+					"Sent via Graph API, billed as " + tpl.category.toLowerCase(),
+					"client.sendTemplate()",
+					"ok",
+				],
+				[
+					130,
+					"Recorded in template_sends",
+					"src/db/repo.ts · recordTemplateSend()",
+					"ok",
+				],
+				[
+					120,
+					"Window stays closed until the customer replies",
+					"Meta rule, not a setting",
+					"",
+				],
+			]);
+			setTimeout(function () {
+				m.status = "delivered";
+				renderAll();
+			}, 1500);
+			renderAll();
+		}
+
+		/* ---------------------------------------------------------------- render */
+
+		function renderControls() {
+			var seg = document.getElementById("regionSeg");
+			seg.innerHTML = "";
+			REGIONS.forEach(function (r) {
+				var b = el("button", null, r.short);
+				b.type = "button";
+				b.setAttribute("aria-pressed", String(r.id === S.regionId));
+				b.onclick = function () {
+					S.regionId = r.id;
+					var list = inRegion();
+					if (list.length) S.selected = list[0].id;
+					S.trace = [];
+					renderAll();
+				};
+				seg.appendChild(b);
+			});
+			var r = region();
+			document.getElementById("regionMeta").textContent =
+				r.number +
+				"  ·  id " +
+				r.phoneNumberId +
+				(r.verified ? "  ·  verified" : "  ·  placeholder");
+
+			document.getElementById("clockText").textContent = clockLabel(S.now);
+			var open = withinHours(r, S.now);
+			var hp = document.getElementById("hoursPill");
+			hp.className = "pill " + (open ? "open" : "shut");
+			hp.textContent = open ? "Desk open" : "Desk closed";
+
+			var staffSeg = document.getElementById("staffSeg");
+			Array.prototype.forEach.call(
+				staffSeg.querySelectorAll("button"),
+				function (b) {
+					b.setAttribute(
+						"aria-pressed",
+						String(Number(b.dataset.staff) === S.staff),
+					);
+					b.onclick = function () {
+						S.staff = Number(b.dataset.staff);
+						renderAll();
+					};
+				},
+			);
+
+			var c = convo();
+			var w = c ? relWindow(c.window, S.now) : { open: false, text: "—" };
+			document.getElementById("windowText").textContent = c ? w.text : "—";
+			var wp = document.getElementById("windowPill");
+			wp.className = "pill " + (w.open ? "open" : "hot");
+			wp.textContent = w.open ? "Free reply allowed" : "Templates only";
+		}
+
+		function renderPhone() {
+			var c = convo(),
+				r = region();
+			var thread = document.getElementById("phThread");
+			document.getElementById("phAvatar").textContent = "AC";
+			document.getElementById("phName").textContent = "ABC Cargo · " + r.short;
+			document.getElementById("phNumber").textContent = r.number;
+			thread.innerHTML = "";
+			if (!c) return;
+			c.msgs.forEach(function (m) {
+				var b = el(
+					"div",
+					"bub " + (m.dir === "in" ? "out" : "in"),
+				); /* customer's own messages sit right */
+				if (m.dir === "out" && m.kind === "auto")
+					b.appendChild(el("span", "tag", "Automatic reply"));
+				if (m.dir === "out" && m.kind === "template")
+					b.appendChild(el("span", "tag", "Template · " + m.tpl));
+				if (m.kind === "media") b.appendChild(el("span", "tag", "Photo"));
+				b.appendChild(document.createTextNode(m.body));
+				var row = el("div", "stamp-row");
+				row.appendChild(el("span", null, hhmm(m.ts)));
+				if (m.dir === "in") {
+					var tk = el(
+						"span",
+						"tick" + (m.status === "read" ? " read" : ""),
+						m.status === "sent" ? "✓" : "✓✓",
+					);
+					row.appendChild(tk);
+				}
+				b.appendChild(row);
+				thread.appendChild(b);
+			});
+			thread.scrollTop = thread.scrollHeight;
+
+			var q = document.getElementById("phQuick");
+			q.innerHTML = "";
+			QUICK.forEach(function (text) {
+				var b = el("button", null, text);
+				b.type = "button";
+				b.onclick = function () {
+					customerSend(text);
+				};
+				q.appendChild(b);
+			});
+		}
+
+		function renderInbox() {
+			var box = document.getElementById("inbox");
+			box.innerHTML = "";
+			var list = inRegion()
+				.slice()
+				.sort(function (a, b) {
+					return b.msgs[b.msgs.length - 1].ts - a.msgs[a.msgs.length - 1].ts;
+				});
+			document.getElementById("consoleMeta").textContent =
+				list.length +
+				" conversations · " +
+				S.staff +
+				" agent" +
+				(S.staff === 1 ? "" : "s") +
+				" online";
+			list.forEach(function (c) {
+				var last = c.msgs[c.msgs.length - 1];
+				var row = el("button", "inbox-row");
+				row.type = "button";
+				row.setAttribute("role", "listitem");
+				row.setAttribute("aria-current", String(c.id === S.selected));
+				var r1 = el("div", "r1");
+				r1.appendChild(el("span", "nm", c.name));
+				r1.appendChild(el("span", "ago", ago(last.ts, S.now)));
+				row.appendChild(r1);
+				row.appendChild(
+					el(
+						"div",
+						"pv",
+						(last.dir === "out" ? "You: " : "") + last.body.split("\n")[0],
+					),
+				);
+				var r3 = el("div", "r3");
+				var w = relWindow(c.window, S.now);
+				if (!w.open) r3.appendChild(el("span", "pill hot", "window closed"));
+				if (c.assigned) r3.appendChild(el("span", "pill flat", c.assigned));
+				if (c.unread) r3.appendChild(el("span", "unread", String(c.unread)));
+				row.appendChild(r3);
+				row.onclick = function () {
+					S.selected = c.id;
+					c.unread = 0;
+					renderAll();
+				};
+				box.appendChild(row);
+			});
+		}
+
+		function renderConvo() {
+			var c = convo();
+			var head = document.getElementById("cvActions");
+			var thread = document.getElementById("cvThread");
+			var comp = document.getElementById("composer");
+			head.innerHTML = "";
+			thread.innerHTML = "";
+			comp.innerHTML = "";
+			if (!c) {
+				document.getElementById("cvName").textContent = "No conversation";
+				document.getElementById("cvSub").textContent = "—";
+				return;
+			}
+			document.getElementById("cvName").textContent = c.name;
+			document.getElementById("cvSub").textContent =
+				"+" +
+				c.wa +
+				"  ·  " +
+				regionOf(c.region).short +
+				"  ·  " +
+				c.status +
+				(c.assigned ? "  ·  " + c.assigned : "  ·  unassigned");
+
+			var assign = el("button", "btn", c.assigned ? "Release" : "Assign to me");
+			assign.onclick = function () {
+				c.assigned = c.assigned ? null : "You";
+				renderAll();
+			};
+			head.appendChild(assign);
+			var res = el(
+				"button",
+				"btn",
+				c.status === "resolved" ? "Reopen" : "Resolve",
+			);
+			res.onclick = function () {
+				c.status = c.status === "resolved" ? "open" : "resolved";
+				renderAll();
+			};
+			head.appendChild(res);
+
+			c.msgs.forEach(function (m) {
+				var wrap = el(
+					"div",
+					"msg " +
+						(m.dir === "in" ? "theirs" : "mine") +
+						(m.kind === "auto" ? " auto" : "") +
+						(m.kind === "template" ? " tmpl" : ""),
+				);
+				var who =
+					m.dir === "in"
+						? c.name.split(" ")[0]
+						: m.kind === "auto"
+							? "Automatic reply"
+							: m.kind === "template"
+								? "Template · " + m.tpl
+								: m.sentBy || "Agent";
+				wrap.appendChild(el("div", "who", who));
+				wrap.appendChild(
+					el("div", "body", (m.kind === "media" ? "📎  " : "") + m.body),
+				);
+				var foot = hhmm(m.ts) + (m.dir === "out" ? "  ·  " + m.status : "");
+				if (m.kind === "media") foot += "  ·  saved to R2";
+				wrap.appendChild(el("div", "foot", foot));
+				thread.appendChild(wrap);
+			});
+			thread.scrollTop = thread.scrollHeight;
+
+			var w = relWindow(c.window, S.now);
+			if (w.open) {
+				var ta = document.createElement("textarea");
+				ta.placeholder = "Reply to " + c.name.split(" ")[0] + "…";
+				ta.id = "agentText";
+				comp.appendChild(ta);
+				var row = el("div", "row");
+				row.appendChild(el("span", "mono", "Free-form window · " + w.text));
+				var send = el("button", "btn primary", "Send reply");
+				send.onclick = function () {
+					agentSend(ta.value);
+					ta.value = "";
+				};
+				row.appendChild(send);
+				comp.appendChild(row);
+			} else {
+				var box = el("div", "locked");
+				box.innerHTML =
+					"<b>The 24-hour window is closed</b> (" +
+					w.text +
+					"). Meta only allows an approved template until " +
+					c.name.split(" ")[0] +
+					" messages again.";
+				comp.appendChild(box);
+				var list = el("div", "tmpl-list");
+				TEMPLATES.forEach(function (t) {
+					var b = el("button", "tmpl-btn");
+					b.type = "button";
+					b.appendChild(el("span", "n", t.name));
+					b.appendChild(el("span", "c", t.category));
+					b.onclick = function () {
+						sendTemplate(t);
+					};
+					list.appendChild(b);
+				});
+				comp.appendChild(list);
+			}
+		}
+
+		function renderTrace() {
+			var box = document.getElementById("trace");
+			box.innerHTML = "";
+			if (!S.trace.length) {
+				box.appendChild(
+					el(
+						"div",
+						"trace-empty",
+						"Send a message from the customer phone, or reply as an agent, and every stage the platform runs appears here.",
+					),
+				);
+				document.getElementById("traceMeta").textContent = "idle";
+				return;
+			}
+			var t0 = S.trace[0].t;
+			S.trace.forEach(function (s) {
+				var row = el("div", "tr" + (s.fresh ? " fresh" : ""));
+				s.fresh = false;
+				row.appendChild(el("div", "ms", "+" + (s.t - t0) + "ms"));
+				var right = el("div");
+				var st = el("div", "st");
+				st.appendChild(el("span", "dot " + s.tone));
+				st.appendChild(el("span", null, s.stage));
+				right.appendChild(st);
+				right.appendChild(el("div", "src", s.src));
+				row.appendChild(right);
+				box.appendChild(row);
+			});
+			document.getElementById("traceMeta").textContent =
+				S.trace.length + " stages";
+			box.scrollTop = box.scrollHeight;
+		}
+
+		function renderAll() {
+			renderControls();
+			renderPhone();
+			renderInbox();
+			renderConvo();
+			renderTrace();
+		}
+
+		/* ---------------------------------------------------------------- wiring */
+
+		document.getElementById("phForm").addEventListener("submit", function (e) {
+			e.preventDefault();
+			var i = document.getElementById("phInput");
+			customerSend(i.value);
+			i.value = "";
+		});
+		Array.prototype.forEach.call(
+			document.querySelectorAll("[data-adv]"),
+			function (b) {
+				b.addEventListener("click", function () {
+					S.now += Number(b.dataset.adv) * 3600000;
+					renderAll();
+				});
+			},
+		);
+		document.getElementById("resetBtn").addEventListener("click", function () {
+			S = seed();
+			renderAll();
+		});
+
+		S = seed();
+		S.trace = [
+			{
+				t: 1000,
+				stage: "POST /webhooks/whatsapp",
+				src: "worker · src/index.ts",
+				tone: "act",
+			},
+			{
+				t: 1112,
+				stage: "Signature verified (HMAC-SHA256)",
+				src: "src/whatsapp/signature.ts",
+				tone: "ok",
+			},
+			{
+				t: 1198,
+				stage: "Payload split — 1 change",
+				src: "src/whatsapp/webhook.ts",
+				tone: "ok",
+			},
+			{
+				t: 1305,
+				stage: "Queued → abc-whatsapp-webhooks",
+				src: "env.WEBHOOK_QUEUE.sendBatch()",
+				tone: "ok",
+			},
+			{
+				t: 1382,
+				stage: "200 EVENT_RECEIVED returned to Meta",
+				src: "acknowledged in 7 ms",
+				tone: "ok",
+			},
+			{
+				t: 1641,
+				stage: "Consumer picked up batch of 1",
+				src: "src/queue/consumer.ts",
+				tone: "act",
+			},
+			{
+				t: 1780,
+				stage: "Routed to Durable Object 8471:8840",
+				src: "conversationIdFor(phoneNumberId, waId)",
+				tone: "ok",
+			},
+			{
+				t: 1909,
+				stage: "Message stored — not a duplicate",
+				src: "src/db/repo.ts · insertMessage()",
+				tone: "ok",
+			},
+			{
+				t: 2030,
+				stage: "Service window extended",
+				src: "SERVICE_WINDOW_MS = 24 h",
+				tone: "ok",
+			},
+			{
+				t: 2171,
+				stage: "Marked as read on Meta",
+				src: "client.markAsRead()",
+				tone: "ok",
+			},
+			{
+				t: 2352,
+				stage: "Automatic reply skipped — agent online",
+				src: "src/conversation.ts · autoReplyReason()",
+				tone: "",
+			},
+		];
+		renderAll();
+	})();
+</script>

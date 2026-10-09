@@ -1,0 +1,4134 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1, viewport-fit=cover"
+		/>
+		<title>ABC Cargo Engage</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Archivo+Narrow:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+		/>
+		<style>
+			/* ============================================================
+			   ABC Cargo Engage — customer operations console (prototype)
+
+			   One record per customer, one timeline per customer. Every
+			   channel (WhatsApp, call, email) and every commercial object
+			   (lead, quotation, booking, ticket) writes to the same
+			   timeline, which is what makes this a platform rather than a
+			   WhatsApp inbox.
+
+			   Region series use validated categorical slots 1-3 (blue /
+			   orange / aqua), all-pairs CVD-checked light and dark. The
+			   aqua slot is under 3:1 on the light surface, so every series
+			   carries a direct label and every chart has a table view.
+			   Magnitude charts use one blue ramp; the lead funnel uses an
+			   ordinal ramp kept inside the contrast floor in both themes.
+			   ============================================================ */
+
+			:root {
+				color-scheme: light;
+
+				--paper: #f4f1ee;
+				--card: #ffffff;
+				--sunk: #ebe6e2;
+				--ink: #17120f;
+				--ink-2: #56504b;
+				--ink-3: #8a827c;
+				--rule: #ddd6d0;
+				--rule-soft: #eae4df;
+
+				--brand: #c1121f;
+				--brand-ink: #8c0d17;
+				--brand-wash: #fbeced;
+
+				--s-uae: #2a78d6;
+				--s-ksa: #eb6834;
+				--s-uk: #1baf7a;
+
+				--good: #0ca30c;
+				--warn: #fab219;
+				--serious: #ec835a;
+				--critical: #d03b3b;
+
+				/* ordinal ramp, light: no lighter than blue step 250 */
+				--ord-1: #86b6ef;
+				--ord-2: #5598e7;
+				--ord-3: #2a78d6;
+				--ord-4: #1c5cab;
+				--ord-5: #104281;
+
+				/* sequential ramp for magnitude bars */
+				--seq: #2a78d6;
+				--seq-soft: #cde2fb;
+
+				--grid: #e6e0da;
+				--axis: #c9c1ba;
+
+				--ui: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
+				--narrow: "Archivo Narrow", "Archivo", system-ui, sans-serif;
+				--mono:
+					"IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+			}
+
+			@media (prefers-color-scheme: dark) {
+				:root:not([data-theme="light"]) {
+					color-scheme: dark;
+
+					--paper: #100e0d;
+					--card: #1b1917;
+					--sunk: #232020;
+					--ink: #f3efec;
+					--ink-2: #b6aea8;
+					--ink-3: #8a827c;
+					--rule: #302c29;
+					--rule-soft: #262322;
+
+					--brand: #ef4352;
+					--brand-ink: #ff6b76;
+					--brand-wash: #2c1417;
+
+					--s-uae: #3987e5;
+					--s-ksa: #d95926;
+					--s-uk: #199e70;
+
+					/* ordinal ramp, dark: no darker than blue step 600 */
+					--ord-1: #b7d3f6;
+					--ord-2: #86b6ef;
+					--ord-3: #5598e7;
+					--ord-4: #2a78d6;
+					--ord-5: #184f95;
+
+					--seq: #3987e5;
+					--seq-soft: #1c3350;
+
+					--grid: #2a2725;
+					--axis: #3a3633;
+				}
+			}
+
+			:root[data-theme="dark"] {
+				color-scheme: dark;
+
+				--paper: #100e0d;
+				--card: #1b1917;
+				--sunk: #232020;
+				--ink: #f3efec;
+				--ink-2: #b6aea8;
+				--ink-3: #8a827c;
+				--rule: #302c29;
+				--rule-soft: #262322;
+
+				--brand: #ef4352;
+				--brand-ink: #ff6b76;
+				--brand-wash: #2c1417;
+
+				--s-uae: #3987e5;
+				--s-ksa: #d95926;
+				--s-uk: #199e70;
+
+				--ord-1: #b7d3f6;
+				--ord-2: #86b6ef;
+				--ord-3: #5598e7;
+				--ord-4: #2a78d6;
+				--ord-5: #184f95;
+
+				--seq: #3987e5;
+				--seq-soft: #1c3350;
+
+				--grid: #2a2725;
+				--axis: #3a3633;
+			}
+
+			* {
+				box-sizing: border-box;
+			}
+
+			html,
+			body {
+				height: 100%;
+			}
+
+			body {
+				margin: 0;
+				background: var(--paper);
+				color: var(--ink);
+				font-family: var(--ui);
+				font-size: 14px;
+				line-height: 1.45;
+				-webkit-font-smoothing: antialiased;
+			}
+
+			button {
+				font: inherit;
+				color: inherit;
+				background: none;
+				border: 0;
+				cursor: pointer;
+				text-align: left;
+			}
+
+			:focus-visible {
+				outline: 2px solid var(--brand);
+				outline-offset: 2px;
+				border-radius: 3px;
+			}
+
+			@media (prefers-reduced-motion: reduce) {
+				* {
+					animation-duration: 0.001ms !important;
+					transition-duration: 0.001ms !important;
+				}
+			}
+
+			/* ---------- atoms ---------- */
+
+			.eyebrow {
+				font-family: var(--narrow);
+				font-weight: 600;
+				font-size: 11px;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+			}
+
+			.mono {
+				font-family: var(--mono);
+				font-variant-numeric: tabular-nums;
+			}
+
+			.pill {
+				display: inline-flex;
+				align-items: center;
+				gap: 5px;
+				padding: 2px 8px;
+				border-radius: 999px;
+				font-family: var(--narrow);
+				font-weight: 600;
+				font-size: 11px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				white-space: nowrap;
+			}
+
+			.pill-soft {
+				background: var(--sunk);
+				color: var(--ink-2);
+			}
+
+			.pill-out {
+				background: transparent;
+				border: 1px solid currentColor;
+			}
+
+			.dot {
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				flex: none;
+			}
+
+			.verified {
+				display: inline-flex;
+				align-items: center;
+				gap: 4px;
+				font-family: var(--narrow);
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.07em;
+				text-transform: uppercase;
+				color: var(--good);
+			}
+
+			.btn {
+				display: inline-flex;
+				align-items: center;
+				gap: 7px;
+				padding: 6px 12px;
+				border-radius: 6px;
+				border: 1px solid var(--rule);
+				background: var(--card);
+				font-weight: 500;
+				font-size: 13px;
+				white-space: nowrap;
+			}
+
+			.btn:hover {
+				border-color: var(--ink-3);
+			}
+
+			.btn-primary {
+				background: var(--brand);
+				border-color: var(--brand);
+				color: #fff;
+				font-weight: 600;
+			}
+
+			.btn-primary:hover {
+				background: var(--brand-ink);
+				border-color: var(--brand-ink);
+			}
+
+			.link {
+				color: var(--ink);
+				border-bottom: 1px solid var(--rule);
+				cursor: pointer;
+				font-weight: 600;
+			}
+
+			.link:hover {
+				border-bottom-color: var(--brand);
+				color: var(--brand);
+			}
+
+			/* ---------- shell ---------- */
+
+			.app {
+				display: grid;
+				grid-template-columns: 198px 1fr;
+				grid-template-rows: auto 1fr;
+				height: 100%;
+			}
+
+			.topbar {
+				grid-column: 1 / -1;
+				display: flex;
+				align-items: center;
+				gap: 16px;
+				padding: 0 16px 0 14px;
+				height: 54px;
+				background: var(--card);
+				border-bottom: 1px solid var(--rule);
+				position: sticky;
+				top: env(safe-area-inset-top, 0px);
+				z-index: 20;
+			}
+
+			.brand {
+				display: flex;
+				align-items: center;
+				gap: 9px;
+				flex: none;
+				width: 184px;
+			}
+
+			.brand-mark {
+				width: 30px;
+				height: 30px;
+				border-radius: 7px;
+				background: var(--brand);
+				color: #fff;
+				display: grid;
+				place-items: center;
+				font-family: var(--narrow);
+				font-weight: 700;
+				font-size: 12px;
+				letter-spacing: 0.04em;
+			}
+
+			.brand-name {
+				font-weight: 700;
+				font-size: 15px;
+				letter-spacing: -0.01em;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.brand-name span {
+				font-weight: 400;
+				color: var(--ink-3);
+				font-size: 13px;
+			}
+
+			.regionsel {
+				display: flex;
+				border: 1px solid var(--rule);
+				border-radius: 7px;
+				overflow: hidden;
+				flex: none;
+			}
+
+			.regionsel button {
+				padding: 5px 11px;
+				font-family: var(--narrow);
+				font-weight: 600;
+				font-size: 11.5px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+				color: var(--ink-2);
+				border-right: 1px solid var(--rule);
+			}
+
+			.regionsel button:last-child {
+				border-right: 0;
+			}
+
+			.regionsel button[aria-pressed="true"] {
+				background: var(--ink);
+				color: var(--paper);
+			}
+
+			.clocks {
+				display: flex;
+				gap: 2px;
+				margin-left: auto;
+				flex-wrap: wrap;
+			}
+
+			.clock {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				padding: 4px 8px;
+			}
+
+			.clock .tz {
+				font-family: var(--narrow);
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+			}
+
+			.clock .t {
+				font-family: var(--mono);
+				font-size: 12.5px;
+				font-variant-numeric: tabular-nums;
+			}
+
+			/* ---------- sidebar ---------- */
+
+			.side {
+				background: var(--card);
+				border-right: 1px solid var(--rule);
+				overflow-y: auto;
+				padding: 10px 0 24px;
+			}
+
+			.side h2 {
+				margin: 14px 0 5px;
+				padding: 0 14px;
+				font-family: var(--narrow);
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.12em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+			}
+
+			.side h2:first-child {
+				margin-top: 2px;
+			}
+
+			.nav {
+				display: flex;
+				align-items: center;
+				gap: 9px;
+				width: 100%;
+				padding: 7px 14px;
+				color: var(--ink-2);
+				font-size: 13.5px;
+				position: relative;
+			}
+
+			.nav svg {
+				flex: none;
+				opacity: 0.85;
+			}
+
+			.nav:hover {
+				background: var(--sunk);
+				color: var(--ink);
+			}
+
+			.nav[aria-current="page"] {
+				color: var(--brand);
+				font-weight: 600;
+			}
+
+			.nav[aria-current="page"]::before {
+				content: "";
+				position: absolute;
+				left: 0;
+				top: 4px;
+				bottom: 4px;
+				width: 3px;
+				background: var(--brand);
+				border-radius: 0 3px 3px 0;
+			}
+
+			.nav .count {
+				margin-left: auto;
+				font-family: var(--mono);
+				font-size: 11px;
+				color: var(--ink-3);
+			}
+
+			.nav .count.hot {
+				color: #fff;
+				background: var(--critical);
+				border-radius: 9px;
+				padding: 0 6px;
+				font-size: 10.5px;
+				line-height: 17px;
+			}
+
+			.main {
+				overflow: hidden;
+				min-width: 0;
+			}
+
+			.screen {
+				height: 100%;
+				overflow: auto;
+			}
+
+			.screen[hidden] {
+				display: none !important;
+			}
+
+			/* ---------- page furniture ---------- */
+
+			.page {
+				padding: 20px 22px 44px;
+				display: grid;
+				gap: 20px;
+				max-width: 1220px;
+			}
+
+			.page-head {
+				display: grid;
+				gap: 5px;
+			}
+
+			.page-head h1 {
+				margin: 0;
+				font-size: 22px;
+				font-weight: 700;
+				letter-spacing: -0.02em;
+				text-wrap: balance;
+			}
+
+			.page-head p {
+				margin: 0;
+				color: var(--ink-2);
+				font-size: 13.5px;
+				max-width: 68ch;
+			}
+
+			.card {
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-radius: 10px;
+			}
+
+			.card-head {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				padding: 11px 15px;
+				border-bottom: 1px solid var(--rule-soft);
+				flex-wrap: wrap;
+			}
+
+			.card-head h3 {
+				margin: 0;
+				font-size: 14px;
+				font-weight: 700;
+			}
+
+			.card-body {
+				padding: 14px 15px;
+			}
+
+			.grid-2 {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+				gap: 14px;
+			}
+
+			.grid-3 {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+				gap: 14px;
+			}
+
+			.grid-4 {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+				gap: 12px;
+			}
+
+			.tile {
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-radius: 10px;
+				padding: 12px 14px 13px;
+				display: grid;
+				gap: 3px;
+			}
+
+			.tile .v {
+				font-size: 25px;
+				font-weight: 700;
+				letter-spacing: -0.025em;
+				line-height: 1.08;
+			}
+
+			.tile .note {
+				font-size: 12px;
+				color: var(--ink-2);
+			}
+
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 13px;
+			}
+
+			th {
+				text-align: left;
+				font-family: var(--narrow);
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+				padding: 0 10px 7px 0;
+				border-bottom: 1px solid var(--rule);
+				white-space: nowrap;
+			}
+
+			td {
+				padding: 9px 10px 9px 0;
+				border-bottom: 1px solid var(--rule-soft);
+				vertical-align: top;
+			}
+
+			tbody tr:last-child td {
+				border-bottom: 0;
+			}
+
+			.scroll-x {
+				overflow-x: auto;
+			}
+
+			.track {
+				height: 6px;
+				border-radius: 3px;
+				background: var(--sunk);
+				overflow: hidden;
+			}
+
+			.track > i {
+				display: block;
+				height: 100%;
+				border-radius: 3px;
+			}
+
+			.banner {
+				display: flex;
+				align-items: flex-start;
+				gap: 10px;
+				padding: 10px 13px;
+				border-radius: 8px;
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-left: 3px solid var(--warn);
+				font-size: 12.5px;
+				color: var(--ink-2);
+				max-width: 1220px;
+				margin: 16px 22px 0;
+			}
+
+			.banner strong {
+				color: var(--ink);
+			}
+
+			.timeline {
+				display: grid;
+			}
+
+			.tl {
+				display: grid;
+				grid-template-columns: 15px 1fr;
+				gap: 11px;
+				padding-bottom: 13px;
+				position: relative;
+			}
+
+			.tl:not(:last-child)::before {
+				content: "";
+				position: absolute;
+				left: 7px;
+				top: 15px;
+				bottom: 0;
+				width: 1px;
+				background: var(--rule);
+			}
+
+			.tl > i {
+				width: 13px;
+				height: 13px;
+				border-radius: 50%;
+				border: 2px solid var(--card);
+				margin-top: 3px;
+				z-index: 1;
+			}
+
+			.tl .h {
+				font-size: 13.5px;
+				font-weight: 600;
+			}
+
+			.tl .p {
+				font-size: 12.5px;
+				color: var(--ink-2);
+			}
+
+			.tl .when {
+				font-family: var(--mono);
+				font-size: 10.5px;
+				color: var(--ink-3);
+			}
+
+			/* ---------- inbox ---------- */
+
+			.inbox {
+				display: grid;
+				grid-template-columns: 318px minmax(0, 1fr) 316px;
+				height: 100%;
+				overflow: hidden;
+			}
+
+			.col {
+				min-width: 0;
+				display: flex;
+				flex-direction: column;
+				overflow: hidden;
+			}
+
+			.col-queue {
+				border-right: 1px solid var(--rule);
+				background: var(--card);
+			}
+
+			.col-ctx {
+				border-left: 1px solid var(--rule);
+				background: var(--card);
+				overflow-y: auto;
+			}
+
+			.colhead {
+				display: flex;
+				align-items: baseline;
+				gap: 9px;
+				padding: 12px 14px 9px;
+				border-bottom: 1px solid var(--rule-soft);
+				flex: none;
+			}
+
+			.colhead h2 {
+				margin: 0;
+				font-size: 14px;
+				font-weight: 700;
+			}
+
+			.queue {
+				overflow-y: auto;
+				flex: 1;
+			}
+
+			.qrow {
+				display: grid;
+				grid-template-columns: 3px 1fr;
+				width: 100%;
+				border-bottom: 1px solid var(--rule-soft);
+			}
+
+			.qrow:hover .qbody {
+				background: var(--sunk);
+			}
+
+			.qrow[aria-selected="true"] .qbody {
+				background: var(--brand-wash);
+			}
+
+			.qstripe {
+				background: var(--sr);
+			}
+
+			.qbody {
+				padding: 10px 13px 11px;
+				display: grid;
+				gap: 4px;
+				min-width: 0;
+			}
+
+			.qtop {
+				display: flex;
+				align-items: center;
+				gap: 7px;
+				min-width: 0;
+			}
+
+			.qname {
+				font-weight: 600;
+				font-size: 13.5px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+
+			.qcode {
+				font-family: var(--narrow);
+				font-size: 10px;
+				font-weight: 700;
+				letter-spacing: 0.08em;
+				color: var(--sr);
+				flex: none;
+			}
+
+			.qtime {
+				margin-left: auto;
+				font-family: var(--mono);
+				font-size: 11px;
+				color: var(--ink-3);
+				flex: none;
+			}
+
+			.qmsg {
+				font-size: 12.5px;
+				color: var(--ink-2);
+				display: -webkit-box;
+				-webkit-line-clamp: 2;
+				-webkit-box-orient: vertical;
+				overflow: hidden;
+			}
+
+			.qmeta {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				flex-wrap: wrap;
+			}
+
+			.thread-head {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				padding: 10px 16px;
+				border-bottom: 1px solid var(--rule);
+				background: var(--card);
+				flex: none;
+				flex-wrap: wrap;
+			}
+
+			.avatar {
+				width: 34px;
+				height: 34px;
+				border-radius: 50%;
+				display: grid;
+				place-items: center;
+				font-family: var(--narrow);
+				font-weight: 700;
+				font-size: 12.5px;
+				color: #fff;
+				flex: none;
+			}
+
+			.thread {
+				flex: 1;
+				overflow-y: auto;
+				padding: 16px 16px 20px;
+				display: flex;
+				flex-direction: column;
+				gap: 11px;
+			}
+
+			.daymark {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				color: var(--ink-3);
+			}
+
+			.daymark::before,
+			.daymark::after {
+				content: "";
+				height: 1px;
+				background: var(--rule);
+				flex: 1;
+			}
+
+			.bubble {
+				max-width: min(540px, 82%);
+				padding: 9px 12px 8px;
+				border-radius: 12px;
+				font-size: 13.5px;
+			}
+
+			.bubble .stamp {
+				display: block;
+				margin-top: 4px;
+				font-family: var(--mono);
+				font-size: 10.5px;
+				color: var(--ink-3);
+			}
+
+			.b-in {
+				align-self: flex-start;
+				background: var(--sunk);
+				border-bottom-left-radius: 4px;
+			}
+
+			.b-bot {
+				align-self: flex-end;
+				background: var(--card);
+				border: 1px dashed var(--rule);
+				border-bottom-right-radius: 4px;
+			}
+
+			.b-agent {
+				align-self: flex-end;
+				background: var(--ink);
+				color: var(--paper);
+				border-bottom-right-radius: 4px;
+			}
+
+			.b-agent .stamp {
+				color: var(--ink-3);
+			}
+
+			.botlabel {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				margin-bottom: 4px;
+			}
+
+			.quickreplies {
+				display: flex;
+				gap: 6px;
+				flex-wrap: wrap;
+				margin-top: 8px;
+				padding-top: 8px;
+				border-top: 1px solid var(--rule-soft);
+			}
+
+			.qr {
+				padding: 4px 10px;
+				border: 1px solid var(--rule);
+				border-radius: 999px;
+				font-size: 12px;
+				color: var(--ink-2);
+			}
+
+			.handover {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				align-self: stretch;
+				padding: 8px 12px;
+				border-radius: 8px;
+				background: var(--sunk);
+				border-left: 3px solid var(--brand);
+				font-size: 12.5px;
+				color: var(--ink-2);
+			}
+
+			.composer {
+				flex: none;
+				border-top: 1px solid var(--rule);
+				background: var(--card);
+				padding: 9px 14px 11px;
+				display: grid;
+				gap: 8px;
+			}
+
+			.composer-row {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				flex-wrap: wrap;
+			}
+
+			.fauxinput {
+				flex: 1;
+				min-width: 170px;
+				padding: 9px 12px;
+				border: 1px solid var(--rule);
+				border-radius: 8px;
+				color: var(--ink-3);
+				background: var(--paper);
+				font-size: 13.5px;
+			}
+
+			.locked {
+				display: flex;
+				align-items: flex-start;
+				gap: 10px;
+				padding: 10px 12px;
+				border-radius: 8px;
+				background: var(--brand-wash);
+				border: 1px solid color-mix(in srgb, var(--brand) 28%, transparent);
+			}
+
+			.locked h4 {
+				margin: 0 0 2px;
+				font-size: 13px;
+				font-weight: 700;
+			}
+
+			.locked p {
+				margin: 0;
+				font-size: 12.5px;
+				color: var(--ink-2);
+			}
+
+			.ctx-sec {
+				padding: 12px 15px;
+				border-bottom: 1px solid var(--rule-soft);
+				display: grid;
+				gap: 9px;
+			}
+
+			.kv {
+				display: grid;
+				grid-template-columns: 92px 1fr;
+				gap: 6px 10px;
+				font-size: 12.5px;
+				align-items: baseline;
+				margin: 0;
+			}
+
+			.kv dt {
+				font-family: var(--narrow);
+				font-size: 10.5px;
+				font-weight: 600;
+				letter-spacing: 0.07em;
+				text-transform: uppercase;
+				color: var(--ink-3);
+			}
+
+			.kv dd {
+				margin: 0;
+			}
+
+			.bignum {
+				font-family: var(--mono);
+				font-size: 20px;
+				font-weight: 600;
+				letter-spacing: -0.02em;
+				line-height: 1.1;
+			}
+
+			.actions {
+				display: flex;
+				gap: 6px;
+				flex-wrap: wrap;
+			}
+
+			/* ---------- customer 360 ---------- */
+
+			.c360 {
+				display: grid;
+				grid-template-columns: 268px minmax(0, 1fr) 300px;
+				gap: 0;
+				height: 100%;
+				overflow: hidden;
+			}
+
+			.c360 > div {
+				overflow-y: auto;
+				min-width: 0;
+			}
+
+			.c360-left {
+				background: var(--card);
+				border-right: 1px solid var(--rule);
+			}
+
+			.c360-right {
+				background: var(--card);
+				border-left: 1px solid var(--rule);
+			}
+
+			.c360-mid {
+				padding: 16px 20px 40px;
+			}
+
+			.stagebar {
+				display: flex;
+				gap: 3px;
+				margin: 2px 0 4px;
+			}
+
+			.stagebar div {
+				flex: 1;
+				height: 5px;
+				border-radius: 2px;
+				background: var(--sunk);
+			}
+
+			.recordcard {
+				display: grid;
+				gap: 5px;
+				padding: 11px 15px;
+				border-bottom: 1px solid var(--rule-soft);
+				width: 100%;
+			}
+
+			.recordcard:hover {
+				background: var(--sunk);
+			}
+
+			.rc-top {
+				display: flex;
+				align-items: center;
+				gap: 7px;
+			}
+
+			.rc-ref {
+				font-family: var(--mono);
+				font-size: 12px;
+				color: var(--ink-3);
+			}
+
+			/* ---------- pipeline ---------- */
+
+			.board {
+				display: grid;
+				grid-auto-flow: column;
+				grid-auto-columns: minmax(216px, 1fr);
+				gap: 12px;
+				align-items: start;
+				overflow-x: auto;
+				padding-bottom: 6px;
+			}
+
+			.lane {
+				background: var(--card);
+				border: 1px solid var(--rule);
+				border-radius: 10px;
+				display: grid;
+				align-content: start;
+			}
+
+			.lane-head {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				padding: 10px 12px;
+				border-bottom: 1px solid var(--rule-soft);
+			}
+
+			.lane-head .n {
+				font-family: var(--mono);
+				font-size: 11.5px;
+				color: var(--ink-3);
+				margin-left: auto;
+			}
+
+			.lead {
+				display: grid;
+				gap: 4px;
+				padding: 10px 12px;
+				border-bottom: 1px solid var(--rule-soft);
+				width: 100%;
+			}
+
+			.lead:last-child {
+				border-bottom: 0;
+			}
+
+			.lead:hover {
+				background: var(--sunk);
+			}
+
+			.lead .v {
+				font-family: var(--mono);
+				font-size: 12.5px;
+				font-weight: 600;
+			}
+
+			.milestones {
+				display: flex;
+				align-items: center;
+				gap: 0;
+				flex-wrap: wrap;
+			}
+
+			.ms {
+				display: flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 12px;
+				color: var(--ink-3);
+			}
+
+			.ms + .ms::before {
+				content: "";
+				width: 16px;
+				height: 1px;
+				background: var(--rule);
+				margin: 0 7px;
+			}
+
+			.ms.done {
+				color: var(--ink);
+			}
+
+			svg text {
+				font-family: var(--ui);
+			}
+
+			@media (max-width: 1180px) {
+				.inbox {
+					grid-template-columns: 290px minmax(0, 1fr);
+				}
+				.col-ctx {
+					display: none;
+				}
+				.c360 {
+					grid-template-columns: 248px minmax(0, 1fr);
+				}
+				.c360-right {
+					display: none;
+				}
+			}
+
+			@media (max-width: 860px) {
+				.app {
+					grid-template-columns: 62px 1fr;
+				}
+				.side h2 {
+					text-align: center;
+					padding: 0 2px;
+					font-size: 9px;
+				}
+				.nav {
+					flex-direction: column;
+					gap: 3px;
+					padding: 8px 2px;
+					font-size: 10px;
+					text-align: center;
+				}
+				.nav .count {
+					display: none;
+				}
+				.brand {
+					width: auto;
+				}
+				.brand-name span {
+					display: none;
+				}
+				.clocks {
+					display: none;
+				}
+				.inbox,
+				.c360 {
+					grid-template-columns: 1fr;
+				}
+				.col-queue,
+				.c360-left {
+					display: none;
+				}
+				.page {
+					padding: 16px;
+				}
+				.banner {
+					margin: 12px 16px 0;
+				}
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="app">
+			<header class="topbar">
+				<div class="brand">
+					<div class="brand-mark" aria-hidden="true">ABC</div>
+					<div class="brand-name">Engage <span>Customer operations</span></div>
+				</div>
+
+				<div class="regionsel" role="group" aria-label="Filter by region">
+					<button type="button" data-region="all" aria-pressed="true">
+						All
+					</button>
+					<button type="button" data-region="UAE" aria-pressed="false">
+						UAE
+					</button>
+					<button type="button" data-region="KSA" aria-pressed="false">
+						KSA
+					</button>
+					<button type="button" data-region="UK" aria-pressed="false">
+						UK
+					</button>
+				</div>
+
+				<div class="clocks" id="clocks"></div>
+			</header>
+
+			<nav class="side" aria-label="Sections" id="side"></nav>
+
+			<main class="main">
+				<!-- ============ CONVERSATIONS ============ -->
+				<section class="screen" id="screen-inbox">
+					<div class="inbox">
+						<div class="col col-queue">
+							<div class="colhead">
+								<h2>Live queue</h2>
+								<span class="eyebrow" id="queueCount">—</span>
+							</div>
+							<div
+								class="queue"
+								id="queue"
+								role="listbox"
+								aria-label="Conversations"
+							></div>
+						</div>
+						<div class="col">
+							<div class="thread-head" id="threadHead"></div>
+							<div class="thread" id="thread"></div>
+							<div class="composer" id="composer"></div>
+						</div>
+						<aside class="col-ctx" id="ctx"></aside>
+					</div>
+				</section>
+
+				<!-- ============ CUSTOMER 360 ============ -->
+				<section class="screen" id="screen-customer" hidden>
+					<div class="c360">
+						<div class="c360-left" id="c360Left"></div>
+						<div class="c360-mid" id="c360Mid"></div>
+						<div class="c360-right" id="c360Right"></div>
+					</div>
+				</section>
+
+				<!-- ============ CALLS ============ -->
+				<section class="screen" id="screen-calls" hidden>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Voice</span>
+							<h1>Call log</h1>
+							<p>
+								Every call lands on the same customer record as the WhatsApp
+								thread, so an agent picking up a call sees the conversation that
+								preceded it. A call can be started from any conversation, lead,
+								booking or ticket, and its outcome is written back to whichever
+								record it came from.
+							</p>
+						</div>
+						<div class="grid-4" id="callTiles"></div>
+						<div class="card">
+							<div class="card-head">
+								<h3>Today</h3>
+								<span class="eyebrow" style="margin-left: auto"
+									>Newest first</span
+								>
+							</div>
+							<div class="card-body scroll-x">
+								<table id="callTable">
+									<thead>
+										<tr>
+											<th>When</th>
+											<th>Direction</th>
+											<th>Customer</th>
+											<th>Region</th>
+											<th>Duration</th>
+											<th>Outcome</th>
+											<th>Linked to</th>
+										</tr>
+									</thead>
+									<tbody></tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ============ TICKETS ============ -->
+				<section class="screen" id="screen-tickets" hidden>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">After sales</span>
+							<h1>Tickets</h1>
+							<p>
+								Claims, delays, billing disputes and documentation requests. A
+								ticket carries its own clock against the region's target, and is
+								attached to the booking it concerns, so the agent handling a
+								claim can see the shipment's milestones without leaving the
+								ticket.
+							</p>
+						</div>
+						<div class="grid-4" id="ticketTiles"></div>
+						<div class="card">
+							<div class="card-head">
+								<h3>Open tickets</h3>
+								<span class="eyebrow" style="margin-left: auto"
+									>Breached first</span
+								>
+							</div>
+							<div class="card-body scroll-x">
+								<table id="ticketTable">
+									<thead>
+										<tr>
+											<th>Ref</th>
+											<th>Type</th>
+											<th>Subject</th>
+											<th>Customer</th>
+											<th>Booking</th>
+											<th>Owner</th>
+											<th>Resolution clock</th>
+										</tr>
+									</thead>
+									<tbody></tbody>
+								</table>
+							</div>
+						</div>
+						<div class="card">
+							<div class="card-head"><h3>Where tickets come from</h3></div>
+							<div class="card-body">
+								<div id="ticketMix" class="scroll-x"></div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ============ LEADS ============ -->
+				<section class="screen" id="screen-leads" hidden>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Pre sales</span>
+							<h1>Lead pipeline</h1>
+							<p>
+								A lead is created the moment the bot recognises a rate enquiry,
+								so the enquiry is captured before an agent is even free. The
+								lane a lead sits in is the stage, and the value shown is the
+								estimated freight value of the enquiry, not a guess at annual
+								revenue.
+							</p>
+						</div>
+						<div class="grid-4" id="leadTiles"></div>
+						<div class="board" id="leadBoard"></div>
+						<div class="card">
+							<div class="card-head">
+								<h3>Stage conversion</h3>
+								<button
+									type="button"
+									class="btn"
+									id="funnelToggle"
+									style="margin-left: auto"
+								>
+									Table view
+								</button>
+							</div>
+							<div class="card-body">
+								<div id="funnel" class="scroll-x"></div>
+								<div id="funnelTable" hidden class="scroll-x"></div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ============ QUOTATIONS ============ -->
+				<section class="screen" id="screen-quotes" hidden>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Sales</span>
+							<h1>Quotations</h1>
+							<p>
+								A quotation is produced from a lead and sent on the channel the
+								customer used. When it is sent on WhatsApp it goes as an
+								approved template, so it reaches the customer even when the
+								free-form window has closed. Accepting a quotation creates the
+								booking.
+							</p>
+						</div>
+						<div class="grid-4" id="quoteTiles"></div>
+						<div class="card">
+							<div class="card-head">
+								<h3>Open and recent</h3>
+								<span class="eyebrow" style="margin-left: auto"
+									>Expiring soonest first</span
+								>
+							</div>
+							<div class="card-body scroll-x">
+								<table id="quoteTable">
+									<thead>
+										<tr>
+											<th>Quote</th>
+											<th>Customer</th>
+											<th>Lane</th>
+											<th>Mode</th>
+											<th>Chargeable</th>
+											<th>Total</th>
+											<th>Valid to</th>
+											<th>Status</th>
+										</tr>
+									</thead>
+									<tbody></tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ============ BOOKINGS ============ -->
+				<section class="screen" id="screen-bookings" hidden>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Operations</span>
+							<h1>Bookings</h1>
+							<p>
+								The booking is the spine of the customer record. Milestones
+								drive the proactive messages the customer receives, and a
+								milestone that stalls is what turns a quiet shipment into an
+								after-sales ticket before the customer has to chase it.
+							</p>
+						</div>
+						<div class="grid-4" id="bookingTiles"></div>
+						<div class="card">
+							<div class="card-head">
+								<h3>Active bookings</h3>
+								<span class="eyebrow" style="margin-left: auto"
+									>Milestone reached shown in full colour</span
+								>
+							</div>
+							<div
+								class="card-body"
+								id="bookingList"
+								style="display: grid; gap: 0"
+							></div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ============ REPORTS ============ -->
+				<section class="screen" id="screen-reports" hidden>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Measurement</span>
+							<h1>Regional performance</h1>
+							<p>
+								Each region is measured on its own calendar and its own targets.
+								Figures here are sample data for the prototype; the reporting
+								baseline from Freshworks has not been exported, so nothing on
+								this screen is a comparison against the platform in use today.
+							</p>
+						</div>
+						<div class="grid-3" id="repTiles"></div>
+						<div class="card">
+							<div class="card-head">
+								<h3>Conversations per day</h3>
+								<div
+									class="actions"
+									id="legend1"
+									style="margin-left: auto"
+								></div>
+								<button type="button" class="btn" id="tableToggle1">
+									Table view
+								</button>
+							</div>
+							<div class="card-body">
+								<div id="chart1" class="scroll-x"></div>
+								<div
+									id="table1"
+									hidden
+									class="scroll-x"
+									style="margin-top: 10px"
+								></div>
+							</div>
+						</div>
+						<div class="grid-2">
+							<div class="card">
+								<div class="card-head">
+									<h3>Median first response</h3>
+									<span class="eyebrow" style="margin-left: auto"
+										>Business hours only</span
+									>
+								</div>
+								<div class="card-body">
+									<div id="chart2" class="scroll-x"></div>
+								</div>
+							</div>
+							<div class="card">
+								<div class="card-head"><h3>Satisfaction</h3></div>
+								<div
+									class="card-body"
+									id="csat"
+									style="display: grid; gap: 11px"
+								></div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ============ RULES ============ -->
+				<section class="screen" id="screen-rules" hidden>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Routing</span>
+							<h1>Assignment rules</h1>
+							<p>
+								Rules run top to bottom and stop at the first match, the order
+								Freshchat evaluates them in today. The inbound number is the
+								routing key: each WhatsApp number reaches the engine as a topic
+								named
+								<span class="mono">WHATSAPP_&lt;number&gt;</span>, which is how
+								the three regions stay separate.
+							</p>
+						</div>
+						<div class="card">
+							<div class="card-head">
+								<h3>Rule order</h3>
+								<button type="button" class="btn" style="margin-left: auto">
+									Add rule
+								</button>
+							</div>
+							<div class="card-body" id="rules" style="display: grid"></div>
+						</div>
+						<div class="grid-2">
+							<div class="card">
+								<div class="card-head"><h3>Bot before agent</h3></div>
+								<div
+									class="card-body"
+									id="botsPanel"
+									style="display: grid; gap: 13px"
+								></div>
+							</div>
+							<div class="card">
+								<div class="card-head"><h3>Escalation ladder</h3></div>
+								<div class="card-body">
+									<div class="timeline" id="escalation"></div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ============ SEND ============ -->
+				<section class="screen" id="screen-send" hidden>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Outbound</span>
+							<h1>Templates and sends</h1>
+							<p>
+								Outside the 24-hour service window only an approved template may
+								be sent. Each send is checked against the number's messaging
+								limit and quality rating before it is queued, so a campaign
+								cannot quietly damage a number's standing with Meta.
+							</p>
+						</div>
+						<div class="grid-3" id="sendTiles"></div>
+						<div class="card">
+							<div class="card-head">
+								<h3>Approved templates</h3>
+								<span class="eyebrow" style="margin-left: auto"
+									>Meta category governs pricing</span
+								>
+							</div>
+							<div class="card-body scroll-x">
+								<table id="templates">
+									<thead>
+										<tr>
+											<th>Template</th>
+											<th>Used by</th>
+											<th>Category</th>
+											<th>Languages</th>
+											<th>Status</th>
+											<th>Sent 7d</th>
+										</tr>
+									</thead>
+									<tbody></tbody>
+								</table>
+							</div>
+						</div>
+						<div class="card">
+							<div class="card-head">
+								<h3>Send check — rate update to UAE trade customers</h3>
+							</div>
+							<div
+								class="card-body"
+								id="sendCheck"
+								style="display: grid; gap: 12px"
+							></div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ============ NUMBERS ============ -->
+				<section class="screen" id="screen-numbers" hidden>
+					<div class="banner">
+						<span
+							class="dot"
+							style="background: var(--good); margin-top: 5px"
+						></span>
+						<div>
+							Number, topic, bot, assignment group and survey state were read
+							from ABC Cargo's live Freshchat configuration and are
+							<span class="verified">✓ verified</span>. Quality rating,
+							messaging limit and webhook figures are placeholders — they come
+							from Meta WhatsApp Manager, which has not been read yet.
+						</div>
+					</div>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Platform</span>
+							<h1>Numbers and health</h1>
+							<p>
+								One row per WhatsApp business number. Quality rating and
+								messaging limit are Meta's, not ours — they decide how many
+								customers the number may reach in a rolling 24 hours, and a
+								rating falling to red is the fastest way to lose the channel.
+							</p>
+						</div>
+						<div id="numberCards" class="grid-2"></div>
+						<div class="card">
+							<div class="card-head"><h3>Groups and cover</h3></div>
+							<div class="card-body scroll-x">
+								<table id="groups">
+									<thead>
+										<tr>
+											<th>Group</th>
+											<th>Region</th>
+											<th>Covers</th>
+											<th>Agents</th>
+											<th>Online</th>
+											<th>Open work</th>
+										</tr>
+									</thead>
+									<tbody></tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+				</section>
+
+				<!-- ============ CUTOVER ============ -->
+				<section class="screen" id="screen-cutover" hidden>
+					<div class="banner">
+						<span
+							class="dot"
+							style="background: var(--warn); margin-top: 5px"
+						></span>
+						<div>
+							<strong>Prototype with sample data.</strong> Customers, shipments,
+							leads, quotations and figures are illustrative. Items marked
+							<span class="verified">✓ verified</span> were read from ABC
+							Cargo's live Freshworks configuration; everything else is a
+							placeholder pending the configuration export.
+						</div>
+					</div>
+					<div class="page">
+						<div class="page-head">
+							<span class="eyebrow">Migration control</span>
+							<h1>Cutover readiness</h1>
+							<p>
+								All three numbers run live in Freshchat today, so every region
+								is a production migration. A number moves only when its row
+								reads ready — a WhatsApp number can feed one platform at a time,
+								and the switch is not reversible within the same hour.
+							</p>
+						</div>
+						<div class="grid-3" id="cutTiles"></div>
+						<div class="card">
+							<div class="card-head">
+								<h3>Readiness by region</h3>
+								<span class="eyebrow" style="margin-left: auto"
+									>Blocking items only</span
+								>
+							</div>
+							<div
+								class="card-body"
+								id="readiness"
+								style="display: grid; gap: 10px"
+							></div>
+						</div>
+						<div class="card">
+							<div class="card-head"><h3>Proposed sequence</h3></div>
+							<div class="card-body">
+								<div class="timeline" id="sequence"></div>
+							</div>
+						</div>
+					</div>
+				</section>
+			</main>
+		</div>
+
+		<script>
+			(() => {
+				"use strict";
+
+				/* =========================================================
+				   Data
+				   Values marked verified came from ABC Cargo's live
+				   Freshchat configuration. Everything else is sample data
+				   and is labelled as such in the interface.
+				   ========================================================= */
+
+				const HOUR = 3600e3;
+				const ago = (m) => new Date(Date.now() - m * 60e3);
+
+				const REGIONS = {
+					UAE: {
+						code: "UAE",
+						name: "United Arab Emirates",
+						number: "+971800916",
+						topic: "WHATSAPP_+971800916",
+						bot: "ABC Cargo",
+						group: "UAE Sales Team",
+						tz: "Asia/Dubai",
+						offset: 4,
+						open: [8, 18],
+						color: "var(--s-uae)",
+						cur: "AED",
+						quality: "Green",
+						tier: 10000,
+						used: 3840,
+					},
+					KSA: {
+						code: "KSA",
+						name: "Saudi Arabia",
+						number: "+966548454866",
+						topic: "WHATSAPP_+966548454866",
+						bot: "ABC Cargo KSA",
+						group: "KSA Sales Team",
+						tz: "Asia/Riyadh",
+						offset: 3,
+						open: [9, 18],
+						color: "var(--s-ksa)",
+						cur: "SAR",
+						quality: "Green",
+						tier: 1000,
+						used: 410,
+					},
+					UK: {
+						code: "UK",
+						name: "United Kingdom",
+						number: "+447388800000",
+						topic: "WHATSAPP_+447388800000",
+						bot: "ABC Cargo UK",
+						group: "UK Customer Support",
+						tz: "Europe/London",
+						offset: 1,
+						open: [9, 17],
+						color: "var(--s-uk)",
+						cur: "GBP",
+						quality: "Yellow",
+						tier: 1000,
+						used: 705,
+					},
+				};
+
+				const CUSTOMERS = {
+					k1: {
+						id: "k1",
+						name: "Rashid Al Marzooqi",
+						company: "Marzooqi Trading LLC",
+						phone: "+971 50 662 1184",
+						email: "rashid@marzooqi-trading.ae",
+						region: "UAE",
+						since: "2019",
+						tier: "Trade account",
+						ar: "AED 12,400 outstanding, 18 days",
+						optIn: "Utility and marketing",
+						ytd: "AED 486,200",
+					},
+					k2: {
+						id: "k2",
+						name: "Fatimah Al Otaibi",
+						company: "Otaibi Textiles",
+						phone: "+966 55 218 9032",
+						email: "f.alotaibi@otaibitex.sa",
+						region: "KSA",
+						since: "2024",
+						tier: "Trade account",
+						ar: "Nil",
+						optIn: "Utility only",
+						ytd: "SAR 91,300",
+					},
+					k3: {
+						id: "k3",
+						name: "Daniel Okoye",
+						company: "Private customer",
+						phone: "+44 7700 900 214",
+						email: "d.okoye@example.co.uk",
+						region: "UK",
+						since: "2026",
+						tier: "Cash customer",
+						ar: "Nil",
+						optIn: "Utility only",
+						ytd: "GBP 780",
+					},
+					k4: {
+						id: "k4",
+						name: "Meera Raghavan",
+						company: "New enquiry",
+						phone: "+971 56 331 7742",
+						email: "—",
+						region: "UAE",
+						since: "—",
+						tier: "Not yet a customer",
+						ar: "Nil",
+						optIn: "Not captured",
+						ytd: "—",
+					},
+					k5: {
+						id: "k5",
+						name: "Abdulaziz Al Harbi",
+						company: "Harbi Garments Est.",
+						phone: "+966 50 774 2201",
+						email: "aziz@harbigarments.sa",
+						region: "KSA",
+						since: "2022",
+						tier: "Trade account",
+						ar: "SAR 4,100 outstanding, 6 days",
+						optIn: "Utility and marketing",
+						ytd: "SAR 212,900",
+					},
+					k6: {
+						id: "k6",
+						name: "Priya Sundaram",
+						company: "Private customer",
+						phone: "+44 7911 123 660",
+						email: "priya.s@example.com",
+						region: "UK",
+						since: "2025",
+						tier: "Cash customer",
+						ar: "Nil",
+						optIn: "Utility only",
+						ytd: "GBP 1,140",
+					},
+				};
+
+				const BOOKINGS = [
+					{
+						ref: "ABC-471-88210",
+						cust: "k1",
+						region: "UAE",
+						lane: "Dubai → Kochi",
+						mode: "Air",
+						pieces: 3,
+						kg: 41,
+						value: "AED 3,180",
+						stage: 3,
+						stalled: true,
+					},
+					{
+						ref: "ABC-966-30488",
+						cust: "k5",
+						region: "KSA",
+						lane: "Jeddah → Karachi",
+						mode: "Air",
+						pieces: 5,
+						kg: 96,
+						value: "SAR 5,640",
+						stage: 6,
+						stalled: false,
+					},
+					{
+						ref: "ABC-447-11903",
+						cust: "k3",
+						region: "UK",
+						lane: "Manchester → Lagos",
+						mode: "Air",
+						pieces: 2,
+						kg: 18,
+						value: "GBP 412",
+						stage: 1,
+						stalled: false,
+					},
+					{
+						ref: "ABC-447-11877",
+						cust: "k6",
+						region: "UK",
+						lane: "London → Colombo",
+						mode: "Air",
+						pieces: 1,
+						kg: 7,
+						value: "GBP 186",
+						stage: 6,
+						stalled: false,
+					},
+					{
+						ref: "ABC-471-88164",
+						cust: "k1",
+						region: "UAE",
+						lane: "Dubai → Chennai",
+						mode: "Sea LCL",
+						pieces: 12,
+						kg: 940,
+						value: "AED 7,450",
+						stage: 4,
+						stalled: false,
+					},
+				];
+
+				const MILESTONES = [
+					"Booked",
+					"Collected",
+					"Departed",
+					"In transit",
+					"Arrived",
+					"Cleared",
+					"Delivered",
+				];
+
+				const LEAD_STAGES = [
+					"New",
+					"Qualified",
+					"Quoted",
+					"Negotiating",
+					"Won",
+				];
+
+				const LEADS = [
+					{
+						id: "L-2291",
+						cust: "k4",
+						region: "UAE",
+						lane: "Sharjah → Chennai",
+						mode: "Air",
+						stage: 0,
+						value: 2400,
+						src: "WhatsApp bot",
+						owner: "Unassigned",
+						age: "2m",
+					},
+					{
+						id: "L-2288",
+						cust: "k2",
+						region: "KSA",
+						lane: "Riyadh → Manila",
+						mode: "Sea LCL",
+						stage: 2,
+						value: 1840,
+						src: "WhatsApp bot",
+						owner: "Noura A.",
+						age: "3h",
+					},
+					{
+						id: "L-2284",
+						cust: "k1",
+						region: "UAE",
+						lane: "Dubai → Colombo",
+						mode: "Air",
+						stage: 3,
+						value: 5200,
+						src: "Call",
+						owner: "Sameer K.",
+						age: "1d",
+					},
+					{
+						id: "L-2279",
+						cust: "k5",
+						region: "KSA",
+						lane: "Jeddah → Dhaka",
+						mode: "Air",
+						stage: 1,
+						value: 3100,
+						src: "WhatsApp bot",
+						owner: "Noura A.",
+						age: "2d",
+					},
+					{
+						id: "L-2275",
+						cust: "k6",
+						region: "UK",
+						lane: "London → Colombo",
+						mode: "Air",
+						stage: 4,
+						value: 186,
+						src: "WhatsApp bot",
+						owner: "James P.",
+						age: "4d",
+					},
+					{
+						id: "L-2270",
+						cust: "k3",
+						region: "UK",
+						lane: "Manchester → Lagos",
+						mode: "Air",
+						stage: 4,
+						value: 412,
+						src: "Website form",
+						owner: "James P.",
+						age: "5d",
+					},
+					{
+						id: "L-2268",
+						cust: "k1",
+						region: "UAE",
+						lane: "Dubai → Kochi",
+						mode: "Air",
+						stage: 4,
+						value: 3180,
+						src: "WhatsApp bot",
+						owner: "Sameer K.",
+						age: "6d",
+					},
+				];
+
+				const QUOTES = [
+					{
+						ref: "Q-8841",
+						cust: "k2",
+						region: "KSA",
+						lane: "Riyadh → Manila",
+						mode: "Sea LCL",
+						ch: "320 kg",
+						total: "SAR 1,840",
+						valid: "in 2 days",
+						status: "Sent",
+					},
+					{
+						ref: "Q-8838",
+						cust: "k1",
+						region: "UAE",
+						lane: "Dubai → Colombo",
+						mode: "Air",
+						ch: "64 kg",
+						total: "AED 5,200",
+						valid: "in 5 days",
+						status: "Negotiating",
+					},
+					{
+						ref: "Q-8834",
+						cust: "k5",
+						region: "KSA",
+						lane: "Jeddah → Dhaka",
+						mode: "Air",
+						ch: "52 kg",
+						total: "SAR 3,100",
+						valid: "in 6 days",
+						status: "Sent",
+					},
+					{
+						ref: "Q-8829",
+						cust: "k6",
+						region: "UK",
+						lane: "London → Colombo",
+						mode: "Air",
+						ch: "7 kg",
+						total: "GBP 186",
+						valid: "expired",
+						status: "Accepted",
+					},
+					{
+						ref: "Q-8825",
+						cust: "k3",
+						region: "UK",
+						lane: "Manchester → Lagos",
+						mode: "Air",
+						ch: "18 kg",
+						total: "GBP 412",
+						valid: "expired",
+						status: "Accepted",
+					},
+					{
+						ref: "Q-8818",
+						cust: "k1",
+						region: "UAE",
+						lane: "Dubai → Kochi",
+						mode: "Air",
+						ch: "41 kg",
+						total: "AED 3,180",
+						valid: "expired",
+						status: "Accepted",
+					},
+					{
+						ref: "Q-8811",
+						cust: "k5",
+						region: "KSA",
+						lane: "Jeddah → Colombo",
+						mode: "Air",
+						ch: "88 kg",
+						total: "SAR 4,900",
+						valid: "expired",
+						status: "Lost — rate",
+					},
+				];
+
+				const TICKETS = [
+					{
+						ref: "T-4402",
+						cust: "k5",
+						region: "KSA",
+						type: "Claim",
+						subject: "Carton arrived open, two items missing",
+						booking: "ABC-966-30488",
+						owner: "Unassigned",
+						left: -78 * 60e3,
+						prio: "High",
+					},
+					{
+						ref: "T-4399",
+						cust: "k1",
+						region: "UAE",
+						type: "Delay",
+						subject: "No scan since departure, customer chasing",
+						booking: "ABC-471-88210",
+						owner: "Sameer K.",
+						left: -24 * 60e3,
+						prio: "High",
+					},
+					{
+						ref: "T-4396",
+						cust: "k1",
+						region: "UAE",
+						type: "Billing",
+						subject: "Duty charge queried on invoice",
+						booking: "ABC-471-88164",
+						owner: "Sameer K.",
+						left: 92 * 60e3,
+						prio: "Normal",
+					},
+					{
+						ref: "T-4391",
+						cust: "k3",
+						region: "UK",
+						type: "Documentation",
+						subject: "Commercial invoice needs consignee correction",
+						booking: "ABC-447-11903",
+						owner: "James P.",
+						left: 214 * 60e3,
+						prio: "Normal",
+					},
+					{
+						ref: "T-4388",
+						cust: "k6",
+						region: "UK",
+						type: "Delivery",
+						subject: "Consignee address changed after booking",
+						booking: "ABC-447-11877",
+						owner: "James P.",
+						left: 340 * 60e3,
+						prio: "Low",
+					},
+				];
+
+				const TICKET_MIX = [
+					["Delay or no scan", 31],
+					["Claim — damage or loss", 22],
+					["Billing dispute", 16],
+					["Documentation", 12],
+					["Delivery or address", 9],
+					["Other", 5],
+				];
+
+				const CALLS = [
+					{
+						at: ago(24),
+						dir: "In",
+						cust: "k5",
+						region: "KSA",
+						dur: "6:12",
+						out: "Claim taken",
+						link: "T-4402",
+					},
+					{
+						at: ago(58),
+						dir: "Out",
+						cust: "k1",
+						region: "UAE",
+						dur: "3:40",
+						out: "Rate discussed",
+						link: "L-2284",
+					},
+					{
+						at: ago(96),
+						dir: "In",
+						cust: "k1",
+						region: "UAE",
+						dur: "1:58",
+						out: "Chasing shipment",
+						link: "ABC-471-88210",
+					},
+					{
+						at: ago(142),
+						dir: "Out",
+						cust: "k2",
+						region: "KSA",
+						dur: "4:05",
+						out: "Quotation explained",
+						link: "Q-8841",
+					},
+					{
+						at: ago(205),
+						dir: "In",
+						cust: "k6",
+						region: "UK",
+						dur: "2:22",
+						out: "Address change",
+						link: "T-4388",
+					},
+					{
+						at: ago(268),
+						dir: "In",
+						cust: "k3",
+						region: "UK",
+						dur: "0:41",
+						out: "Missed — called back",
+						link: "L-2270",
+					},
+				];
+
+				const CONVOS = [
+					{
+						id: "c1",
+						cust: "k1",
+						state: "sla",
+						last: "It still says in transit since Tuesday. Can someone check where it actually is?",
+						at: ago(6),
+						windowLeft: 2.1 * HOUR,
+						slaLeft: -4 * 60e3,
+						assigned: "Unassigned",
+						booking: "ABC-471-88210",
+						tags: ["Tracking", "Repeat contact"],
+						thread: [
+							{
+								t: "in",
+								m: "Hi, I need an update on ABC-471-88210",
+								at: ago(31),
+							},
+							{
+								t: "bot",
+								m: "Welcome to ABC Cargo. I can help with tracking, rates, a claim, or connect you to an agent. What do you need?",
+								at: ago(31),
+								qr: [
+									"Track a shipment",
+									"Get a rate",
+									"Raise a claim",
+									"Talk to an agent",
+								],
+							},
+							{ t: "in", m: "Track a shipment", at: ago(30) },
+							{
+								t: "bot",
+								m: "Please send the airway bill reference, starting ABC-",
+								at: ago(30),
+							},
+							{ t: "in", m: "ABC-471-88210", at: ago(29) },
+							{
+								t: "bot",
+								m: "ABC-471-88210 — Dubai to Kochi, 3 pieces, 41 kg. Last scan: departed DXB, 12 Sep 21:40. Status: in transit.",
+								at: ago(29),
+							},
+							{
+								t: "in",
+								m: "It still says in transit since Tuesday. Can someone check where it actually is?",
+								at: ago(6),
+							},
+							{
+								t: "handover",
+								m: "Bot could not resolve — escalated to UAE Sales Team, ticket T-4399 opened",
+								at: ago(6),
+							},
+						],
+					},
+					{
+						id: "c2",
+						cust: "k2",
+						state: "assigned",
+						last: "Yes please send the quote in writing.",
+						at: ago(14),
+						windowLeft: 17.4 * HOUR,
+						slaLeft: 11 * 60e3,
+						assigned: "Noura A. — KSA Sales Team",
+						booking: "—",
+						tags: ["Quotation"],
+						thread: [
+							{
+								t: "in",
+								m: "السلام عليكم، أحتاج سعر شحن إلى مانيلا",
+								at: ago(48),
+							},
+							{
+								t: "bot",
+								m: "أهلاً بك في ABC Cargo. هل ترغب في تتبع شحنة، أو الحصول على عرض سعر، أو التحدث مع موظف؟",
+								at: ago(48),
+								qr: ["تتبع شحنة", "عرض سعر", "موظف خدمة"],
+							},
+							{ t: "in", m: "عرض سعر", at: ago(47) },
+							{
+								t: "handover",
+								m: "Rate enquiry recognised — lead L-2288 created, routed to KSA Sales Team",
+								at: ago(47),
+							},
+							{
+								t: "agent",
+								m: "Good morning. Sea freight Riyadh to Manila, one pallet at 320 kg, is 1,840 SAR all-in, transit 26 to 31 days.",
+								at: ago(20),
+								by: "Noura A.",
+							},
+							{
+								t: "in",
+								m: "Yes please send the quote in writing.",
+								at: ago(14),
+							},
+						],
+					},
+					{
+						id: "c3",
+						cust: "k3",
+						state: "window",
+						last: "Thanks, I'll check with my brother and come back to you.",
+						at: ago(1390),
+						windowLeft: 0.6 * HOUR,
+						slaLeft: null,
+						assigned: "James P. — UK Customer Support",
+						booking: "ABC-447-11903",
+						tags: ["Awaiting customer"],
+						thread: [
+							{
+								t: "in",
+								m: "Hello, has my parcel left Manchester yet?",
+								at: ago(1500),
+							},
+							{
+								t: "bot",
+								m: "Hello, welcome to ABC Cargo UK. I can check a shipment, quote a shipment, or pass you to the team.",
+								at: ago(1500),
+								qr: ["Check a shipment", "Get a quote", "Speak to the team"],
+							},
+							{ t: "in", m: "Check a shipment", at: ago(1499) },
+							{
+								t: "bot",
+								m: "ABC-447-11903 — Manchester to Lagos, 2 pieces, 18 kg. Booked and awaiting uplift on the 16 Sep rotation.",
+								at: ago(1499),
+							},
+							{
+								t: "in",
+								m: "Can I add one more box to the same booking?",
+								at: ago(1470),
+							},
+							{
+								t: "handover",
+								m: "Booking change — escalated to UK Customer Support",
+								at: ago(1470),
+							},
+							{
+								t: "agent",
+								m: "Yes, we can add a third piece if it reaches our Trafford Park depot before 14:00 on the 15th. Shall I hold the space?",
+								at: ago(1420),
+								by: "James P.",
+							},
+							{
+								t: "in",
+								m: "Thanks, I'll check with my brother and come back to you.",
+								at: ago(1390),
+							},
+						],
+					},
+					{
+						id: "c4",
+						cust: "k4",
+						state: "bot",
+						last: "Get a rate",
+						at: ago(2),
+						windowLeft: 23.9 * HOUR,
+						slaLeft: null,
+						assigned: "Bot — ABC Cargo",
+						booking: "—",
+						tags: ["New contact", "Lead L-2291"],
+						thread: [
+							{ t: "in", m: "hi", at: ago(3) },
+							{
+								t: "bot",
+								m: "Welcome to ABC Cargo. I can help with tracking, rates, a claim, or connect you to an agent. What do you need?",
+								at: ago(3),
+								qr: [
+									"Track a shipment",
+									"Get a rate",
+									"Raise a claim",
+									"Talk to an agent",
+								],
+							},
+							{ t: "in", m: "Get a rate", at: ago(2) },
+							{
+								t: "bot",
+								m: "Which city are you sending from, and which city is it going to?",
+								at: ago(2),
+							},
+						],
+					},
+					{
+						id: "c5",
+						cust: "k5",
+						state: "sla",
+						last: "One carton arrived open and two shirts are missing.",
+						at: ago(22),
+						windowLeft: 9.2 * HOUR,
+						slaLeft: -13 * 60e3,
+						assigned: "Unassigned",
+						booking: "ABC-966-30488",
+						tags: ["Claim", "Priority"],
+						thread: [
+							{
+								t: "in",
+								m: "I want to raise a complaint about a damaged carton",
+								at: ago(26),
+							},
+							{
+								t: "bot",
+								m: "أهلاً بك في ABC Cargo. I can start a claim for you. Please send the airway bill reference.",
+								at: ago(26),
+								qr: ["Start a claim", "Talk to an agent"],
+							},
+							{ t: "in", m: "ABC-966-30488", at: ago(24) },
+							{
+								t: "in",
+								m: "One carton arrived open and two shirts are missing.",
+								at: ago(22),
+							},
+							{
+								t: "handover",
+								m: "Claim intent — ticket T-4402 opened, escalated to KSA Sales Team",
+								at: ago(22),
+							},
+						],
+					},
+					{
+						id: "c6",
+						cust: "k6",
+						state: "assigned",
+						last: "Perfect, thank you for sorting that so quickly.",
+						at: ago(38),
+						windowLeft: 20.8 * HOUR,
+						slaLeft: 46 * 60e3,
+						assigned: "James P. — UK Customer Support",
+						booking: "ABC-447-11877",
+						tags: ["Resolved today"],
+						thread: [
+							{
+								t: "in",
+								m: "My delivery address changed, can you update it?",
+								at: ago(74),
+							},
+							{
+								t: "bot",
+								m: "Hello, welcome to ABC Cargo UK. An address change needs the team — putting you through now.",
+								at: ago(74),
+							},
+							{
+								t: "handover",
+								m: "Address change — ticket T-4388 opened, escalated to UK Customer Support",
+								at: ago(74),
+							},
+							{
+								t: "agent",
+								m: "Updated to 14 Bramley Court, Colombo 05. The consignee will get an SMS on arrival.",
+								at: ago(40),
+								by: "James P.",
+							},
+							{
+								t: "in",
+								m: "Perfect, thank you for sorting that so quickly.",
+								at: ago(38),
+							},
+						],
+					},
+				];
+
+				const STATE = {
+					sla: { label: "SLA breached", bg: "var(--critical)", fg: "#fff" },
+					assigned: {
+						label: "With agent",
+						bg: "var(--sunk)",
+						fg: "var(--ink-2)",
+					},
+					bot: { label: "Bot handling", bg: "var(--sunk)", fg: "var(--ink-2)" },
+					window: { label: "Window closing", bg: "var(--warn)", fg: "#2a2000" },
+				};
+
+				const DAYS = ["Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "Mon"];
+				const SERIES = [
+					{
+						key: "UAE",
+						color: "var(--s-uae)",
+						v: [118, 131, 126, 109, 74, 141, 152],
+					},
+					{
+						key: "KSA",
+						color: "var(--s-ksa)",
+						v: [46, 52, 61, 38, 29, 67, 72],
+					},
+					{ key: "UK", color: "var(--s-uk)", v: [31, 28, 34, 37, 19, 22, 41] },
+				];
+				const FRT = [
+					{ key: "UAE", color: "var(--s-uae)", v: 4.2, target: 5 },
+					{ key: "KSA", color: "var(--s-ksa)", v: 6.8, target: 5 },
+					{ key: "UK", color: "var(--s-uk)", v: 3.1, target: 5 },
+				];
+				const FUNNEL = [
+					["New", 412],
+					["Qualified", 268],
+					["Quoted", 181],
+					["Negotiating", 96],
+					["Won", 61],
+				];
+
+				/* =========================================================
+				   Helpers
+				   ========================================================= */
+
+				const $ = (s, r = document) => r.querySelector(s);
+				const esc = (s) =>
+					String(s).replace(
+						/[&<>"]/g,
+						(c) =>
+							({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+					);
+				const pad = (n) => String(n).padStart(2, "0");
+				const el = (tag, attrs = {}, html) => {
+					const n = document.createElement(tag);
+					for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+					if (html != null) n.innerHTML = html;
+					return n;
+				};
+
+				function rel(d) {
+					const m = Math.round((Date.now() - d.getTime()) / 60e3);
+					if (m < 1) return "now";
+					if (m < 60) return m + "m";
+					const h = Math.floor(m / 60);
+					if (h < 24) return h + "h";
+					return Math.floor(h / 24) + "d";
+				}
+
+				function clockFor(r) {
+					const now = new Date();
+					return new Date(
+						now.getTime() + now.getTimezoneOffset() * 60e3 + r.offset * HOUR,
+					);
+				}
+
+				const isOpen = (r) => {
+					const h = clockFor(r).getHours();
+					return h >= r.open[0] && h < r.open[1];
+				};
+
+				function dur(ms) {
+					const neg = ms < 0;
+					const t = Math.abs(ms);
+					const h = Math.floor(t / HOUR);
+					const m = Math.floor((t % HOUR) / 60e3);
+					const s = Math.floor((t % 60e3) / 1000);
+					return (
+						(neg ? "−" : "") +
+						(h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`)
+					);
+				}
+
+				function clockShort(ms) {
+					const neg = ms < 0;
+					const t = Math.abs(ms);
+					const h = Math.floor(t / HOUR);
+					const m = Math.floor((t % HOUR) / 60e3);
+					return (neg ? "−" : "") + (h ? `${h}h ${pad(m)}m` : `${m}m`);
+				}
+
+				const K = (id) => CUSTOMERS[id];
+				const rgn = (code) => REGIONS[code];
+
+				function regionChip(code) {
+					const r = rgn(code);
+					return `<span class="pill pill-soft" style="color:${r.color}">${r.code}</span>`;
+				}
+
+				/* =========================================================
+				   Navigation
+				   ========================================================= */
+
+				const NAV = [
+					[
+						"Work",
+						[
+							[
+								"inbox",
+								"Conversations",
+								"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
+							],
+							[
+								"calls",
+								"Calls",
+								"M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8.1 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.8 2Z",
+							],
+							[
+								"tickets",
+								"Tickets",
+								"M4 9V6a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v3a3 3 0 0 0 0 6v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a3 3 0 0 0 0-6Z",
+							],
+						],
+					],
+					[
+						"Commercial",
+						[
+							["leads", "Leads", "M3 3v18h18M7 15l4-5 3 3 5-7"],
+							[
+								"quotes",
+								"Quotations",
+								"M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8Zm0 0v5h5M9 13h6M9 17h4",
+							],
+							["bookings", "Bookings", "M3 9l1-5h16l1 5M4 9h16v11H4zM9 13h6"],
+						],
+					],
+					[
+						"Customer",
+						[
+							[
+								"customer",
+								"Customer 360",
+								"M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1",
+							],
+							["reports", "Reports", "M5 20V9M12 20V4M19 20v-7"],
+						],
+					],
+					[
+						"Setup",
+						[
+							["rules", "Routing rules", "M4 5h16M4 12h10M4 19h6"],
+							[
+								"send",
+								"Templates",
+								"M3 11v2a1 1 0 0 0 1 1h3l5 4V6L7 10H4a1 1 0 0 0-1 1Zm14-2a4 4 0 0 1 0 6",
+							],
+							[
+								"numbers",
+								"Numbers",
+								"M12 2 3 6v6c0 5 4 8 9 9 5-1 9-4 9-9V6zm-3 10 2 2 4-4",
+							],
+							["cutover", "Cutover", "M3 12h7l2-4 3 8 2-4h4"],
+						],
+					],
+				];
+
+				let activeRegion = "all";
+				let activeConvo = "c1";
+				let activeCustomer = "k1";
+
+				function navCounts() {
+					const inRegion = (x) =>
+						activeRegion === "all" || x.region === activeRegion;
+					const convos = CONVOS.filter((c) =>
+						inRegion({ region: K(c.cust).region }),
+					);
+					return {
+						inbox: {
+							n: convos.length,
+							hot: convos.filter((c) => c.state === "sla").length,
+						},
+						calls: { n: CALLS.filter(inRegion).length, hot: 0 },
+						tickets: {
+							n: TICKETS.filter(inRegion).length,
+							hot: TICKETS.filter((t) => inRegion(t) && t.left < 0).length,
+						},
+						leads: {
+							n: LEADS.filter((l) => inRegion(l) && l.stage < 4).length,
+							hot: 0,
+						},
+						quotes: {
+							n: QUOTES.filter(
+								(q) => inRegion(q) && /Sent|Negotiating/.test(q.status),
+							).length,
+							hot: 0,
+						},
+						bookings: {
+							n: BOOKINGS.filter(inRegion).length,
+							hot: BOOKINGS.filter((b) => inRegion(b) && b.stalled).length,
+						},
+					};
+				}
+
+				function renderNav() {
+					const counts = navCounts();
+					const side = $("#side");
+					const current =
+						side.querySelector('[aria-current="page"]')?.dataset.screen ||
+						"inbox";
+					side.innerHTML = "";
+					for (const [group, items] of NAV) {
+						side.appendChild(el("h2", {}, esc(group)));
+						for (const [id, label, path] of items) {
+							const c = counts[id];
+							const b = el("button", {
+								type: "button",
+								class: "nav",
+								"data-screen": id,
+							});
+							if (id === current) b.setAttribute("aria-current", "page");
+							b.innerHTML =
+								`<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${path}"/></svg>` +
+								`<span>${esc(label)}</span>` +
+								(c
+									? `<span class="count${c.hot ? " hot" : ""}">${c.hot ? c.hot : c.n}</span>`
+									: "");
+							b.addEventListener("click", () => go(id));
+							side.appendChild(b);
+						}
+					}
+				}
+
+				function go(id) {
+					document.querySelectorAll(".nav").forEach((x) => {
+						if (x.dataset.screen === id) x.setAttribute("aria-current", "page");
+						else x.removeAttribute("aria-current");
+					});
+					document
+						.querySelectorAll(".screen")
+						.forEach((s) => (s.hidden = true));
+					$("#screen-" + id).hidden = false;
+					if (id === "customer") renderCustomer();
+				}
+
+				function openCustomer(id) {
+					activeCustomer = id;
+					go("customer");
+				}
+				window.__openCustomer = openCustomer;
+
+				document.querySelectorAll(".regionsel button").forEach((b) => {
+					b.addEventListener("click", () => {
+						activeRegion = b.dataset.region;
+						document
+							.querySelectorAll(".regionsel button")
+							.forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+						renderAll();
+					});
+				});
+
+				/* =========================================================
+				   Clocks
+				   ========================================================= */
+
+				function renderClocks() {
+					const wrap = $("#clocks");
+					wrap.innerHTML = Object.values(REGIONS)
+						.map((r) => {
+							const c = clockFor(r);
+							const open = isOpen(r);
+							return (
+								`<div class="clock" title="${r.tz} — ${open ? "within business hours" : "outside business hours"}">` +
+								`<span class="dot" style="background:${open ? "var(--good)" : "var(--ink-3)"}"></span>` +
+								`<span class="tz">${r.code}</span><span class="t">${pad(c.getHours())}:${pad(c.getMinutes())}</span></div>`
+							);
+						})
+						.join("");
+				}
+
+				/* =========================================================
+				   Conversations
+				   ========================================================= */
+
+				const inR = (code) => activeRegion === "all" || code === activeRegion;
+
+				function renderQueue() {
+					const list = CONVOS.filter((c) => inR(K(c.cust).region));
+					const q = $("#queue");
+					$("#queueCount").textContent = list.length + " open";
+					q.innerHTML = "";
+					for (const c of list) {
+						const k = K(c.cust);
+						const r = rgn(k.region);
+						const st = STATE[c.state];
+						const row = el("button", {
+							type: "button",
+							class: "qrow",
+							role: "option",
+							"aria-selected": String(c.id === activeConvo),
+							style: `--sr:${r.color}`,
+						});
+						row.innerHTML =
+							`<span class="qstripe"></span><span class="qbody">` +
+							`<span class="qtop"><span class="qcode">${r.code}</span><span class="qname">${esc(k.name)}</span>` +
+							`<span class="qtime">${rel(c.at)}</span></span>` +
+							`<span class="qmsg">${esc(c.last)}</span>` +
+							`<span class="qmeta"><span class="pill" style="background:${st.bg};color:${st.fg}">${st.label}</span>` +
+							(c.booking !== "—"
+								? `<span class="mono" style="font-size:11px;color:var(--ink-3)">${c.booking}</span>`
+								: "") +
+							`</span></span>`;
+						row.addEventListener("click", () => {
+							activeConvo = c.id;
+							renderQueue();
+							renderThread();
+						});
+						q.appendChild(row);
+					}
+					if (!list.some((c) => c.id === activeConvo) && list.length) {
+						activeConvo = list[0].id;
+						renderThread();
+					}
+				}
+
+				const currentConvo = () =>
+					CONVOS.find((c) => c.id === activeConvo) || CONVOS[0];
+
+				function renderThread() {
+					const c = currentConvo();
+					const k = K(c.cust);
+					const r = rgn(k.region);
+
+					$("#threadHead").innerHTML =
+						`<div class="avatar" style="background:${r.color}">${esc(
+							k.name
+								.split(" ")
+								.map((w) => w[0])
+								.slice(0, 2)
+								.join(""),
+						)}</div>` +
+						`<div style="display:grid;gap:1px;min-width:0">` +
+						`<div style="font-weight:700;font-size:14.5px">${esc(k.name)}</div>` +
+						`<div class="mono" style="font-size:11.5px;color:var(--ink-3)">${esc(k.phone)} · ${esc(k.company)}</div></div>` +
+						`<div class="actions" style="margin-left:auto">` +
+						`<span class="pill pill-soft">${esc(c.assigned)}</span>` +
+						`<button type="button" class="btn" onclick="window.__openCustomer('${k.id}')">Open customer</button>` +
+						`<button type="button" class="btn">Resolve</button></div>`;
+
+					const t = $("#thread");
+					t.innerHTML = `<div class="daymark"><span class="eyebrow">Conversation start</span></div>`;
+					for (const m of c.thread) {
+						if (m.t === "handover") {
+							t.insertAdjacentHTML(
+								"beforeend",
+								`<div class="handover"><span class="dot" style="background:var(--brand)"></span>` +
+									`<span><strong>Handover.</strong> ${esc(m.m)}</span>` +
+									`<span class="mono" style="margin-left:auto;font-size:11px;color:var(--ink-3)">${rel(m.at)} ago</span></div>`,
+							);
+							continue;
+						}
+						const cls =
+							m.t === "in" ? "b-in" : m.t === "bot" ? "b-bot" : "b-agent";
+						let inner = "";
+						if (m.t === "bot")
+							inner += `<span class="botlabel"><span class="dot" style="background:var(--ink-3)"></span><span class="eyebrow">${esc(r.bot)} · bot</span></span>`;
+						if (m.t === "agent")
+							inner += `<span class="botlabel"><span class="eyebrow">${esc(m.by)}</span></span>`;
+						inner += esc(m.m);
+						if (m.qr)
+							inner += `<span class="quickreplies">${m.qr.map((x) => `<span class="qr">${esc(x)}</span>`).join("")}</span>`;
+						inner += `<span class="stamp">${rel(m.at)} ago</span>`;
+						t.insertAdjacentHTML(
+							"beforeend",
+							`<div class="bubble ${cls}">${inner}</div>`,
+						);
+					}
+					t.scrollTop = t.scrollHeight;
+
+					renderComposer();
+					renderCtx();
+				}
+
+				function renderComposer() {
+					const c = currentConvo();
+					const k = K(c.cust);
+					const first = k.name.split(" ")[0];
+					const box = $("#composer");
+					if (c.windowLeft > 0) {
+						box.innerHTML =
+							`<div class="composer-row"><div class="fauxinput">Reply to ${esc(first)}…</div>` +
+							`<button type="button" class="btn">Canned reply</button>` +
+							`<button type="button" class="btn btn-primary">Send</button></div>` +
+							`<div class="composer-row"><span class="eyebrow">Create from this conversation</span>` +
+							`<button type="button" class="btn">Lead</button>` +
+							`<button type="button" class="btn">Quotation</button>` +
+							`<button type="button" class="btn">Booking</button>` +
+							`<button type="button" class="btn">Ticket</button>` +
+							`<button type="button" class="btn">Call back</button>` +
+							`<span class="mono" id="cw" style="margin-left:auto;font-size:12px;color:var(--ink-2)">window ${dur(c.windowLeft)}</span></div>`;
+					} else {
+						box.innerHTML =
+							`<div class="locked"><span class="dot" style="background:var(--brand);margin-top:5px"></span>` +
+							`<div><h4>Free-form replies are closed</h4><p>More than 24 hours have passed since ${esc(first)} last wrote. Meta allows only an approved template until they reply again.</p></div></div>` +
+							`<div class="composer-row"><div class="fauxinput">Choose a template…</div>` +
+							`<button type="button" class="btn btn-primary">Open templates</button></div>`;
+					}
+				}
+
+				function renderCtx() {
+					const c = currentConvo();
+					const k = K(c.cust);
+					const r = rgn(k.region);
+					const pct = Math.max(
+						0,
+						Math.min(100, (c.windowLeft / (24 * HOUR)) * 100),
+					);
+					const wc =
+						c.windowLeft <= 0
+							? "var(--critical)"
+							: c.windowLeft < 2 * HOUR
+								? "var(--warn)"
+								: "var(--good)";
+					const openTickets = TICKETS.filter((t) => t.cust === k.id);
+					const openLeads = LEADS.filter((l) => l.cust === k.id && l.stage < 4);
+
+					$("#ctx").innerHTML =
+						`<div class="ctx-sec"><span class="eyebrow">Response clock</span>` +
+						(c.slaLeft == null
+							? `<span class="pill pill-soft">No clock running</span>`
+							: `<div class="bignum" id="slaNum" style="color:${c.slaLeft < 0 ? "var(--critical)" : "var(--ink)"}">${dur(c.slaLeft)}</div>` +
+								`<div style="font-size:12px;color:var(--ink-2)">${c.slaLeft < 0 ? "over the first-response target" : "until the first-response target"}</div>`) +
+						`</div>` +
+						`<div class="ctx-sec"><span class="eyebrow">24-hour service window</span>` +
+						`<div class="bignum" id="winNum" style="color:${wc}">${c.windowLeft > 0 ? dur(c.windowLeft) : "Closed"}</div>` +
+						`<div class="track"><i style="width:${pct}%;background:${wc}"></i></div>` +
+						`<div style="font-size:12px;color:var(--ink-2)">Resets to 24:00:00 each time the customer sends a message.</div></div>` +
+						`<div class="ctx-sec"><span class="eyebrow">Customer</span>` +
+						`<dl class="kv"><dt>Company</dt><dd>${esc(k.company)}</dd>` +
+						`<dt>Account</dt><dd>${esc(k.tier)}</dd>` +
+						`<dt>Since</dt><dd>${esc(k.since)}</dd>` +
+						`<dt>Balance</dt><dd>${esc(k.ar)}</dd>` +
+						`<dt>Opt-in</dt><dd>${esc(k.optIn)}</dd></dl>` +
+						`<button type="button" class="btn" onclick="window.__openCustomer('${k.id}')">Open full record</button></div>` +
+						`<div class="ctx-sec"><span class="eyebrow">Open work</span>` +
+						(openTickets.length
+							? openTickets
+									.map(
+										(t) =>
+											`<div style="display:flex;gap:8px;align-items:baseline"><span class="rc-ref">${t.ref}</span>` +
+											`<span style="font-size:12.5px">${esc(t.type)} — ${esc(t.subject)}</span></div>`,
+									)
+									.join("")
+							: "") +
+						(openLeads.length
+							? openLeads
+									.map(
+										(l) =>
+											`<div style="display:flex;gap:8px;align-items:baseline"><span class="rc-ref">${l.id}</span>` +
+											`<span style="font-size:12.5px">Lead, ${esc(LEAD_STAGES[l.stage])} — ${esc(l.lane)}</span></div>`,
+									)
+									.join("")
+							: "") +
+						(!openTickets.length && !openLeads.length
+							? `<span style="font-size:12.5px;color:var(--ink-2)">Nothing open.</span>`
+							: "") +
+						`</div>` +
+						`<div class="ctx-sec"><span class="eyebrow">Routing</span>` +
+						`<dl class="kv"><dt>Number</dt><dd class="mono">${esc(r.number)}</dd>` +
+						`<dt>Topic</dt><dd class="mono" style="font-size:11.5px">${esc(r.topic)}</dd>` +
+						`<dt>Bot</dt><dd>${esc(r.bot)}</dd><dt>Group</dt><dd>${esc(r.group)}</dd></dl>` +
+						`<span class="verified">✓ verified from Freshchat</span></div>`;
+				}
+
+				setInterval(() => {
+					renderClocks();
+					const c = currentConvo();
+					if (c.windowLeft > 0) c.windowLeft -= 1000;
+					if (c.slaLeft != null) c.slaLeft -= 1000;
+					const w = $("#winNum");
+					if (w)
+						w.textContent = c.windowLeft > 0 ? dur(c.windowLeft) : "Closed";
+					const s = $("#slaNum");
+					if (s) s.textContent = dur(c.slaLeft);
+					const cw = $("#cw");
+					if (cw) cw.textContent = "window " + dur(c.windowLeft);
+					if (c.windowLeft <= 0 && $("#composer").querySelector(".fauxinput")) {
+						if (
+							$("#composer")
+								.querySelector(".fauxinput")
+								.textContent.startsWith("Reply")
+						)
+							renderComposer();
+					}
+				}, 1000);
+
+				/* =========================================================
+				   Customer 360 — the record everything writes to
+				   ========================================================= */
+
+				function renderCustomer() {
+					const k = K(activeCustomer);
+					const r = rgn(k.region);
+					const convo = CONVOS.find((c) => c.cust === k.id);
+					const tickets = TICKETS.filter((t) => t.cust === k.id);
+					const leads = LEADS.filter((l) => l.cust === k.id);
+					const quotes = QUOTES.filter((q) => q.cust === k.id);
+					const books = BOOKINGS.filter((b) => b.cust === k.id);
+					const calls = CALLS.filter((c) => c.cust === k.id);
+
+					/* left: identity */
+					$("#c360Left").innerHTML =
+						`<div class="ctx-sec" style="gap:11px">` +
+						`<div style="display:flex;align-items:center;gap:11px">` +
+						`<div class="avatar" style="background:${r.color};width:40px;height:40px;font-size:14px">${esc(
+							k.name
+								.split(" ")
+								.map((w) => w[0])
+								.slice(0, 2)
+								.join(""),
+						)}</div>` +
+						`<div><div style="font-weight:700;font-size:15px">${esc(k.name)}</div>` +
+						`<div style="font-size:12.5px;color:var(--ink-2)">${esc(k.company)}</div></div></div>` +
+						`<div class="actions">${regionChip(k.region)}<span class="pill pill-soft">${esc(k.tier)}</span></div>` +
+						`<dl class="kv"><dt>Phone</dt><dd class="mono" style="font-size:12px">${esc(k.phone)}</dd>` +
+						`<dt>Email</dt><dd style="font-size:12px;word-break:break-all">${esc(k.email)}</dd>` +
+						`<dt>Customer</dt><dd>since ${esc(k.since)}</dd>` +
+						`<dt>Revenue</dt><dd class="mono">${esc(k.ytd)}</dd>` +
+						`<dt>Balance</dt><dd>${esc(k.ar)}</dd>` +
+						`<dt>Opt-in</dt><dd>${esc(k.optIn)}</dd></dl></div>` +
+						`<div class="ctx-sec"><span class="eyebrow">Act</span><div class="actions">` +
+						`<button type="button" class="btn">WhatsApp</button><button type="button" class="btn">Call</button>` +
+						`<button type="button" class="btn">Quote</button><button type="button" class="btn">Ticket</button></div></div>` +
+						`<div class="ctx-sec"><span class="eyebrow">Lifecycle</span>` +
+						`<div style="font-size:12.5px;color:var(--ink-2)">Where this customer sits right now, across everything open.</div>` +
+						`<div class="stagebar">` +
+						["Enquiry", "Quoted", "Booked", "In transit", "After sales"]
+							.map((_, i) => {
+								const reached = books.length
+									? Math.min(4, 2 + Math.floor((books[0].stage / 6) * 2))
+									: leads.length
+										? Math.min(1, leads[0].stage)
+										: 0;
+								return `<div style="background:${i <= reached ? r.color : "var(--sunk)"}"></div>`;
+							})
+							.join("") +
+						`</div>` +
+						`<div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--ink-3);font-family:var(--narrow);text-transform:uppercase;letter-spacing:.06em">` +
+						`<span>Enquiry</span><span>After sales</span></div></div>`;
+
+					/* middle: one timeline */
+					const events = [];
+					if (convo)
+						for (const m of convo.thread)
+							events.push({
+								at: m.at,
+								kind: m.t === "handover" ? "handover" : "whatsapp",
+								h:
+									m.t === "in"
+										? "WhatsApp from customer"
+										: m.t === "bot"
+											? `Bot reply — ${r.bot}`
+											: m.t === "handover"
+												? "Handover to an agent"
+												: `Agent reply — ${m.by}`,
+								p: m.m,
+							});
+					for (const c of calls)
+						events.push({
+							at: c.at,
+							kind: "call",
+							h: `${c.dir === "In" ? "Inbound" : "Outbound"} call · ${c.dur}`,
+							p: `${c.out} · linked to ${c.link}`,
+						});
+					for (const l of leads)
+						events.push({
+							at: ago(60 * 24 * (l.stage + 1)),
+							kind: "lead",
+							h: `Lead ${l.id} — ${LEAD_STAGES[l.stage]}`,
+							p: `${l.lane}, ${l.mode}. Estimated ${l.value.toLocaleString()} ${r.cur}. Source: ${l.src}.`,
+						});
+					for (const q of quotes)
+						events.push({
+							at: ago(60 * 24 * 2 + 30),
+							kind: "quote",
+							h: `Quotation ${q.ref} — ${q.status}`,
+							p: `${q.lane}, ${q.mode}, ${q.ch}. ${q.total}.`,
+						});
+					for (const b of books)
+						events.push({
+							at: ago(60 * 24 * 3),
+							kind: "booking",
+							h: `Booking ${b.ref} — ${MILESTONES[b.stage]}`,
+							p: `${b.lane}, ${b.mode}, ${b.pieces} pcs, ${b.kg} kg. ${b.value}.`,
+						});
+					for (const t of tickets)
+						events.push({
+							at: ago(60 * 8),
+							kind: "ticket",
+							h: `Ticket ${t.ref} — ${t.type}`,
+							p: `${t.subject} · booking ${t.booking} · ${t.owner}`,
+						});
+
+					const KIND = {
+						whatsapp: ["var(--good)", "WhatsApp"],
+						handover: ["var(--brand)", "Handover"],
+						call: ["var(--ord-3)", "Call"],
+						lead: ["var(--warn)", "Lead"],
+						quote: ["var(--ord-4)", "Quotation"],
+						booking: ["var(--ink-2)", "Booking"],
+						ticket: ["var(--critical)", "Ticket"],
+					};
+
+					events.sort((a, b) => b.at - a.at);
+
+					$("#c360Mid").innerHTML =
+						`<div class="page-head" style="margin-bottom:16px"><span class="eyebrow">Customer 360</span>` +
+						`<h1>One customer, one history</h1>` +
+						`<p>Every WhatsApp message, call, lead, quotation, booking and ticket for ${esc(k.name)}, newest first. This is the record an agent opens before replying — not a channel inbox.</p></div>` +
+						`<div class="actions" style="margin-bottom:14px">` +
+						Object.entries(KIND)
+							.map(
+								([, [c, label]]) =>
+									`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2)"><span class="dot" style="background:${c}"></span>${label}</span>`,
+							)
+							.join("") +
+						`</div>` +
+						`<div class="timeline">` +
+						events
+							.map(
+								(e) =>
+									`<div class="tl"><i style="background:${KIND[e.kind][0]}"></i><div>` +
+									`<div class="h">${esc(e.h)}</div><div class="p">${esc(e.p)}</div>` +
+									`<div class="when">${rel(e.at)} ago</div></div></div>`,
+							)
+							.join("") +
+						`</div>`;
+
+					/* right: open records */
+					const card = (ref, title, sub, color) =>
+						`<button type="button" class="recordcard"><div class="rc-top"><span class="dot" style="background:${color}"></span>` +
+						`<span class="rc-ref">${esc(ref)}</span></div>` +
+						`<div style="font-size:13px;font-weight:600">${esc(title)}</div>` +
+						`<div style="font-size:12px;color:var(--ink-2)">${esc(sub)}</div></button>`;
+
+					$("#c360Right").innerHTML =
+						`<div class="colhead"><h2>Open records</h2></div>` +
+						tickets
+							.map((t) =>
+								card(
+									t.ref,
+									`${t.type} ticket`,
+									`${t.subject} · ${clockShort(t.left)} ${t.left < 0 ? "over target" : "left"}`,
+									"var(--critical)",
+								),
+							)
+							.join("") +
+						books
+							.map((b) =>
+								card(
+									b.ref,
+									`${b.mode} booking`,
+									`${b.lane} · ${MILESTONES[b.stage]}${b.stalled ? " · stalled" : ""}`,
+									b.stalled ? "var(--warn)" : "var(--ink-2)",
+								),
+							)
+							.join("") +
+						quotes
+							.filter((q) => /Sent|Negotiating/.test(q.status))
+							.map((q) =>
+								card(
+									q.ref,
+									"Quotation",
+									`${q.lane} · ${q.total} · valid ${q.valid}`,
+									"var(--ord-4)",
+								),
+							)
+							.join("") +
+						leads
+							.filter((l) => l.stage < 4)
+							.map((l) =>
+								card(
+									l.id,
+									"Lead",
+									`${l.lane} · ${LEAD_STAGES[l.stage]} · ${l.owner}`,
+									"var(--warn)",
+								),
+							)
+							.join("") +
+						(!tickets.length && !books.length && !quotes.length && !leads.length
+							? `<div class="ctx-sec"><span style="font-size:12.5px;color:var(--ink-2)">Nothing open for this customer.</span></div>`
+							: "");
+				}
+
+				/* =========================================================
+				   Calls
+				   ========================================================= */
+
+				function renderCalls() {
+					const list = CALLS.filter((c) => inR(c.region));
+					const inbound = list.filter((c) => c.dir === "In").length;
+					$("#callTiles").innerHTML =
+						tile("Calls today", list.length, "Across every region in view") +
+						tile("Inbound", inbound, "Answered by the regional group") +
+						tile(
+							"Outbound",
+							list.length - inbound,
+							"Follow-ups from a lead or ticket",
+						) +
+						tile("Average length", "3:11", "Sample data");
+
+					$("#callTable tbody").innerHTML = list
+						.map((c) => {
+							const k = K(c.cust);
+							return (
+								`<tr><td class="mono">${rel(c.at)} ago</td>` +
+								`<td><span class="pill pill-soft">${c.dir === "In" ? "Inbound" : "Outbound"}</span></td>` +
+								`<td><span class="link" onclick="window.__openCustomer('${k.id}')">${esc(k.name)}</span></td>` +
+								`<td>${regionChip(c.region)}</td><td class="mono">${c.dur}</td>` +
+								`<td>${esc(c.out)}</td><td class="mono" style="font-size:12px">${esc(c.link)}</td></tr>`
+							);
+						})
+						.join("");
+				}
+
+				const tile = (label, v, note, color) =>
+					`<div class="tile"><span class="eyebrow">${esc(label)}</span>` +
+					`<span class="v"${color ? ` style="color:${color}"` : ""}>${typeof v === "number" ? v.toLocaleString() : esc(v)}</span>` +
+					`<span class="note">${esc(note)}</span></div>`;
+
+				/* =========================================================
+				   Tickets
+				   ========================================================= */
+
+				function renderTickets() {
+					const list = TICKETS.filter((t) => inR(t.region))
+						.slice()
+						.sort((a, b) => a.left - b.left);
+					const breached = list.filter((t) => t.left < 0).length;
+					$("#ticketTiles").innerHTML =
+						tile("Open", list.length, "In the regions in view") +
+						tile(
+							"Past target",
+							breached,
+							"Resolution clock has run out",
+							breached ? "var(--critical)" : undefined,
+						) +
+						tile(
+							"Claims",
+							list.filter((t) => t.type === "Claim").length,
+							"Damage or loss, highest cost to settle",
+						) +
+						tile(
+							"Unassigned",
+							list.filter((t) => t.owner === "Unassigned").length,
+							"No owner yet",
+						);
+
+					$("#ticketTable tbody").innerHTML = list
+						.map((t) => {
+							const k = K(t.cust);
+							return (
+								`<tr><td class="mono">${t.ref}</td>` +
+								`<td><span class="pill pill-soft">${esc(t.type)}</span></td>` +
+								`<td>${esc(t.subject)}</td>` +
+								`<td><span class="link" onclick="window.__openCustomer('${k.id}')">${esc(k.name)}</span><br><span class="eyebrow">${rgn(t.region).code}</span></td>` +
+								`<td class="mono" style="font-size:12px">${esc(t.booking)}</td>` +
+								`<td>${esc(t.owner)}</td>` +
+								`<td class="mono" style="color:${t.left < 0 ? "var(--critical)" : "var(--ink)"}">${clockShort(t.left)}${t.left < 0 ? " over" : " left"}</td></tr>`
+							);
+						})
+						.join("");
+
+					/* magnitude → one blue ramp, single series, no legend */
+					const W = 560,
+						RW = 190,
+						rowH = 30,
+						H = TICKET_MIX.length * rowH + 8;
+					const max = Math.max(...TICKET_MIX.map((m) => m[1]));
+					let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:420px;display:block" role="img" aria-label="Where tickets come from, share of tickets">`;
+					TICKET_MIX.forEach(([label, v], i) => {
+						const y = i * rowH + 4;
+						const w = ((W - RW - 56) * v) / max;
+						s += `<text x="${RW - 10}" y="${y + 15}" text-anchor="end" font-size="12" fill="var(--ink-2)">${esc(label)}</text>`;
+						s += `<rect x="${RW}" y="${y + 3}" width="${Math.max(w, 2)}" height="16" rx="4" fill="var(--seq)"/>`;
+						s += `<text x="${RW + w + 9}" y="${y + 16}" font-size="12" font-weight="600" fill="var(--ink-2)">${v}%</text>`;
+					});
+					s += `</svg>`;
+					$("#ticketMix").innerHTML = s;
+				}
+
+				/* =========================================================
+				   Leads
+				   ========================================================= */
+
+				function renderLeads() {
+					const list = LEADS.filter((l) => inR(l.region));
+					const open = list.filter((l) => l.stage < 4);
+					const value = open.reduce((a, l) => a + l.value, 0);
+					$("#leadTiles").innerHTML =
+						tile("Open leads", open.length, "Not yet won or lost") +
+						tile(
+							"Estimated value",
+							value.toLocaleString(),
+							"Freight value of open leads, mixed currency",
+						) +
+						tile(
+							"From the bot",
+							list.filter((l) => l.src === "WhatsApp bot").length,
+							"Captured without an agent",
+						) +
+						tile(
+							"Unassigned",
+							list.filter((l) => l.owner === "Unassigned").length,
+							"Waiting for an owner",
+						);
+
+					$("#leadBoard").innerHTML = LEAD_STAGES.map((stage, i) => {
+						const inStage = list.filter((l) => l.stage === i);
+						return (
+							`<div class="lane"><div class="lane-head">` +
+							`<span class="dot" style="background:var(--ord-${i + 1})"></span>` +
+							`<strong style="font-size:13px">${esc(stage)}</strong><span class="n">${inStage.length}</span></div>` +
+							(inStage.length
+								? inStage
+										.map((l) => {
+											const k = K(l.cust);
+											return (
+												`<button type="button" class="lead" onclick="window.__openCustomer('${k.id}')">` +
+												`<div style="display:flex;align-items:center;gap:7px"><span class="rc-ref">${l.id}</span>${regionChip(l.region)}` +
+												`<span class="qtime">${l.age}</span></div>` +
+												`<div style="font-size:13px;font-weight:600">${esc(k.name)}</div>` +
+												`<div style="font-size:12px;color:var(--ink-2)">${esc(l.lane)} · ${esc(l.mode)}</div>` +
+												`<div style="display:flex;align-items:center;gap:8px"><span class="v">${l.value.toLocaleString()}</span>` +
+												`<span class="eyebrow">${esc(l.owner)}</span></div></button>`
+											);
+										})
+										.join("")
+								: `<div style="padding:12px;font-size:12.5px;color:var(--ink-3)">Empty</div>`) +
+							`</div>`
+						);
+					}).join("");
+
+					/* ordinal ramp funnel */
+					const W = 640,
+						rowH = 42,
+						LW = 120,
+						H = FUNNEL.length * rowH + 6;
+					const max = FUNNEL[0][1];
+					let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:460px;display:block" role="img" aria-label="Lead stage conversion over 90 days">`;
+					FUNNEL.forEach(([label, v], i) => {
+						const y = i * rowH + 4;
+						const w = ((W - LW - 130) * v) / max;
+						const pct = Math.round((v / max) * 100);
+						s += `<text x="${LW - 10}" y="${y + 21}" text-anchor="end" font-size="12.5" fill="var(--ink-2)">${esc(label)}</text>`;
+						s += `<rect x="${LW}" y="${y + 6}" width="${Math.max(w, 2)}" height="24" rx="4" fill="var(--ord-${i + 1})"/>`;
+						s += `<text x="${LW + w + 10}" y="${y + 23}" font-size="12.5" font-weight="600" fill="var(--ink-2)">${v} · ${pct}%</text>`;
+					});
+					s += `</svg>`;
+					$("#funnel").innerHTML = s;
+
+					$("#funnelTable").innerHTML =
+						`<table><thead><tr><th>Stage</th><th>Leads</th><th>Share of new</th><th>Step conversion</th></tr></thead><tbody>` +
+						FUNNEL.map(([label, v], i) => {
+							const prev = i ? FUNNEL[i - 1][1] : v;
+							return (
+								`<tr><td>${esc(label)}</td><td class="mono">${v}</td>` +
+								`<td class="mono">${Math.round((v / max) * 100)}%</td>` +
+								`<td class="mono">${i ? Math.round((v / prev) * 100) + "%" : "—"}</td></tr>`
+							);
+						}).join("") +
+						`</tbody></table>`;
+				}
+
+				$("#funnelToggle").addEventListener("click", () => {
+					const t = $("#funnelTable"),
+						c = $("#funnel"),
+						b = $("#funnelToggle");
+					const show = t.hidden;
+					t.hidden = !show;
+					c.hidden = show;
+					b.textContent = show ? "Chart view" : "Table view";
+				});
+
+				/* =========================================================
+				   Quotations
+				   ========================================================= */
+
+				function renderQuotes() {
+					const list = QUOTES.filter((q) => inR(q.region));
+					const open = list.filter((q) => /Sent|Negotiating/.test(q.status));
+					const accepted = list.filter((q) => q.status === "Accepted").length;
+					const decided =
+						accepted + list.filter((q) => q.status.startsWith("Lost")).length;
+					$("#quoteTiles").innerHTML =
+						tile(
+							"Awaiting decision",
+							open.length,
+							"Sent or under negotiation",
+						) +
+						tile("Accepted", accepted, "Became a booking") +
+						tile(
+							"Win rate",
+							decided ? Math.round((accepted / decided) * 100) + "%" : "—",
+							"Of quotations the customer decided on",
+						) +
+						tile(
+							"Sent on WhatsApp",
+							list.length - 1,
+							"Delivered as an approved template",
+						);
+
+					$("#quoteTable tbody").innerHTML = list
+						.map((q) => {
+							const k = K(q.cust);
+							const c =
+								q.status === "Accepted"
+									? "var(--good)"
+									: q.status.startsWith("Lost")
+										? "var(--critical)"
+										: q.status === "Negotiating"
+											? "var(--warn)"
+											: "var(--ink-2)";
+							return (
+								`<tr><td class="mono">${q.ref}</td>` +
+								`<td><span class="link" onclick="window.__openCustomer('${k.id}')">${esc(k.name)}</span><br><span class="eyebrow">${rgn(q.region).code}</span></td>` +
+								`<td>${esc(q.lane)}</td><td>${esc(q.mode)}</td><td class="mono">${esc(q.ch)}</td>` +
+								`<td class="mono">${esc(q.total)}</td><td>${esc(q.valid)}</td>` +
+								`<td><span class="pill pill-out" style="color:${c}">${esc(q.status)}</span></td></tr>`
+							);
+						})
+						.join("");
+				}
+
+				/* =========================================================
+				   Bookings
+				   ========================================================= */
+
+				function renderBookings() {
+					const list = BOOKINGS.filter((b) => inR(b.region));
+					$("#bookingTiles").innerHTML =
+						tile("Active", list.length, "Not yet delivered or closed") +
+						tile(
+							"Stalled",
+							list.filter((b) => b.stalled).length,
+							"No milestone movement in 48 hours",
+							list.some((b) => b.stalled) ? "var(--warn)" : undefined,
+						) +
+						tile("Delivered this week", 14, "Sample data") +
+						tile(
+							"Proactive messages",
+							38,
+							"Milestone updates sent without the customer asking",
+						);
+
+					$("#bookingList").innerHTML = list
+						.map((b, i) => {
+							const k = K(b.cust);
+							const r = rgn(b.region);
+							return (
+								`<div style="display:grid;gap:8px;padding:13px 0;${i ? "border-top:1px solid var(--rule-soft)" : ""}">` +
+								`<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">` +
+								`<span class="dot" style="background:${r.color}"></span>` +
+								`<strong class="mono" style="font-size:13.5px">${b.ref}</strong>` +
+								`<span class="link" onclick="window.__openCustomer('${k.id}')">${esc(k.name)}</span>` +
+								`<span style="font-size:12.5px;color:var(--ink-2)">${esc(b.lane)} · ${esc(b.mode)} · ${b.pieces} pcs · ${b.kg} kg</span>` +
+								`<span class="mono" style="margin-left:auto;font-size:12.5px">${esc(b.value)}</span>` +
+								(b.stalled
+									? `<span class="pill" style="background:var(--warn);color:#2a2000">Stalled</span>`
+									: "") +
+								`</div>` +
+								`<div class="milestones">` +
+								MILESTONES.map(
+									(m, mi) =>
+										`<span class="ms${mi <= b.stage ? " done" : ""}"><span class="dot" style="background:${mi <= b.stage ? r.color : "var(--rule)"}"></span>${esc(m)}</span>`,
+								).join("") +
+								`</div>` +
+								(b.stalled
+									? `<div style="font-size:12.5px;color:var(--ink-2)">No scan for 48 hours. Engage opened ticket T-4399 and told the customer before they had to chase.</div>`
+									: "") +
+								`</div>`
+							);
+						})
+						.join("");
+				}
+
+				/* =========================================================
+				   Reports
+				   ========================================================= */
+
+				function renderReports() {
+					const active = SERIES.filter(
+						(s) => activeRegion === "all" || s.key === activeRegion,
+					);
+					const frt = FRT.filter(
+						(s) => activeRegion === "all" || s.key === activeRegion,
+					);
+					const total = active.reduce(
+						(a, s) => a + s.v.reduce((x, y) => x + y, 0),
+						0,
+					);
+
+					$("#repTiles").innerHTML =
+						tile(
+							"Conversations, 7 days",
+							total,
+							activeRegion === "all"
+								? "All three regions"
+								: rgn(activeRegion).name,
+						) +
+						tile("Resolved by bot", "63%", "Closed without reaching an agent") +
+						tile(
+							"Breached first response",
+							18,
+							"Of " + total.toLocaleString() + " conversations",
+							"var(--critical)",
+						);
+
+					$("#legend1").innerHTML = active
+						.map(
+							(s) =>
+								`<span style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2)"><span class="dot" style="background:${s.color}"></span>${s.key}</span>`,
+						)
+						.join("");
+
+					const W = 760,
+						H = 230,
+						L = 40,
+						R = 96,
+						T = 16,
+						B = 30;
+					const max = Math.max(...active.flatMap((s) => s.v), 10);
+					const ymax = Math.ceil(max / 40) * 40;
+					const x = (i) => L + (i * (W - L - R)) / (DAYS.length - 1);
+					const y = (v) => T + (H - T - B) * (1 - v / ymax);
+
+					let svg = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:560px;display:block" role="img" aria-label="Conversations per day by region">`;
+					for (let g = 0; g <= 4; g++) {
+						const v = (ymax / 4) * g;
+						svg += `<line x1="${L}" y1="${y(v)}" x2="${W - R}" y2="${y(v)}" stroke="var(--grid)" stroke-width="1"/>`;
+						svg += `<text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" fill="var(--ink-3)">${v}</text>`;
+					}
+					DAYS.forEach((d, i) => {
+						svg += `<text x="${x(i)}" y="${H - 9}" text-anchor="middle" font-size="11" fill="var(--ink-3)">${d}</text>`;
+					});
+					for (const s of active) {
+						svg += `<polyline points="${s.v.map((v, i) => `${x(i)},${y(v)}`).join(" ")}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+						const li = s.v.length - 1;
+						svg += `<circle cx="${x(li)}" cy="${y(s.v[li])}" r="4.5" fill="${s.color}" stroke="var(--card)" stroke-width="2"/>`;
+						svg += `<text x="${x(li) + 10}" y="${y(s.v[li]) + 4}" font-size="11.5" font-weight="600" fill="var(--ink-2)">${s.key} ${s.v[li]}</text>`;
+					}
+					svg += `</svg>`;
+					$("#chart1").innerHTML = svg;
+
+					$("#table1").innerHTML =
+						`<table><thead><tr><th>Region</th>${DAYS.map((d) => `<th>${d}</th>`).join("")}<th>Total</th></tr></thead><tbody>` +
+						active
+							.map(
+								(s) =>
+									`<tr><td><span class="dot" style="display:inline-block;background:${s.color};margin-right:7px"></span>${s.key}</td>` +
+									s.v.map((v) => `<td class="mono">${v}</td>`).join("") +
+									`<td class="mono"><strong>${s.v.reduce((a, b) => a + b, 0)}</strong></td></tr>`,
+							)
+							.join("") +
+						`</tbody></table>`;
+
+					const BW = 420,
+						BH = 30 + frt.length * 44,
+						BL = 52,
+						BR = 74;
+					const fmax = Math.max(...frt.map((s) => s.v), 8);
+					const tx = BL + ((BW - BL - BR) * 5) / fmax;
+					let b2 = `<svg viewBox="0 0 ${BW} ${BH}" width="100%" style="min-width:340px;display:block" role="img" aria-label="Median first response by region, minutes">`;
+					b2 += `<line x1="${tx}" y1="6" x2="${tx}" y2="${BH - 22}" stroke="var(--axis)" stroke-width="1" stroke-dasharray="3 3"/>`;
+					b2 += `<text x="${tx}" y="${BH - 7}" text-anchor="middle" font-size="10.5" fill="var(--ink-3)">target 5 min</text>`;
+					frt.forEach((s, i) => {
+						const yy = 12 + i * 44;
+						const w = ((BW - BL - BR) * s.v) / fmax;
+						b2 += `<text x="${BL - 9}" y="${yy + 16}" text-anchor="end" font-size="11.5" fill="var(--ink-2)">${s.key}</text>`;
+						b2 += `<rect x="${BL}" y="${yy + 4}" width="${Math.max(w, 2)}" height="18" rx="4" fill="${s.color}"/>`;
+						b2 += `<text x="${BW - 6}" y="${yy + 18}" text-anchor="end" font-size="12" font-weight="600" fill="${s.v > s.target ? "var(--critical)" : "var(--ink-2)"}">${s.v.toFixed(1)} min</text>`;
+					});
+					b2 += `</svg>`;
+					$("#chart2").innerHTML = b2;
+
+					$("#csat").innerHTML =
+						`<div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap">` +
+						`<span style="font-size:26px;font-weight:700;letter-spacing:-0.025em;color:var(--ink-3)">Not measured</span>` +
+						`<span class="pill pill-soft">No baseline exists</span></div>` +
+						`<div style="font-size:12.5px;color:var(--ink-2)">The satisfaction survey is off on all three WhatsApp numbers in Freshworks today <span class="verified">✓ verified</span>, so there is no history to carry over and nothing to compare against.</div>` +
+						`<div style="font-size:12.5px;color:var(--ink-2)">Engage can ask one question after a resolved conversation, a closed ticket or a delivered booking. That makes satisfaction a new capability rather than a migration item.</div>` +
+						`<div><button type="button" class="btn btn-primary">Turn on after cutover</button></div>`;
+				}
+
+				$("#tableToggle1").addEventListener("click", () => {
+					const t = $("#table1"),
+						c = $("#chart1"),
+						b = $("#tableToggle1");
+					const show = t.hidden;
+					t.hidden = !show;
+					c.hidden = show;
+					b.textContent = show ? "Chart view" : "Table view";
+				});
+
+				/* =========================================================
+				   Rules
+				   ========================================================= */
+
+				const RULES = [
+					{
+						n: 1,
+						name: "KSA · claims to a named owner",
+						when: [
+							["Topic", "is", "WHATSAPP_+966548454866"],
+							["Message", "contains", "claim, damage, missing, تالف"],
+						],
+						then: "Open a Claim ticket · assign KSA Sales Team · resolution target 4 h",
+						on: true,
+					},
+					{
+						n: 2,
+						name: "KSA · rate enquiry becomes a lead",
+						when: [
+							["Topic", "is", "WHATSAPP_+966548454866"],
+							["Bot intent", "is", "Get a rate"],
+						],
+						then: "Create a lead · assign KSA Sales Team, round robin",
+						on: true,
+					},
+					{
+						n: 3,
+						name: "KSA · everything else",
+						when: [["Topic", "is", "WHATSAPP_+966548454866"]],
+						then: "Assign KSA Sales Team, round robin by load",
+						on: true,
+					},
+					{
+						n: 4,
+						name: "UK · booking changes",
+						when: [
+							["Topic", "is", "WHATSAPP_+447388800000"],
+							["Message", "contains", "change, add, cancel, reschedule"],
+						],
+						then: "Open a Delivery ticket · assign UK Customer Support",
+						on: true,
+					},
+					{
+						n: 5,
+						name: "UK · everything else",
+						when: [["Topic", "is", "WHATSAPP_+447388800000"]],
+						then: "Assign UK Customer Support, round robin by load",
+						on: true,
+					},
+					{
+						n: 6,
+						name: "UAE · where is my shipment",
+						when: [
+							["Topic", "is", "WHATSAPP_+971800916"],
+							["Message", "contains", "where is my"],
+						],
+						then: "Attach to the booking · assign UAE Sales Team",
+						on: true,
+						note: "This rule exists in Freshchat today and was the first evidence that UAE WhatsApp was already live.",
+					},
+					{
+						n: 7,
+						name: "UAE · everything else",
+						when: [["Topic", "is", "WHATSAPP_+971800916"]],
+						then: "Assign UAE Sales Team, round robin by load",
+						on: true,
+					},
+					{
+						n: 8,
+						name: "Out of hours acknowledgement",
+						when: [["Time", "is outside", "the region's business hours"]],
+						then: "Send the region's away template, hold in queue until opening",
+						on: false,
+					},
+				];
+
+				function renderRules() {
+					$("#rules").innerHTML = RULES.map((r, i) => {
+						const t = r.when[0][2];
+						const region = t.includes("971")
+							? "UAE"
+							: t.includes("966")
+								? "KSA"
+								: t.includes("447")
+									? "UK"
+									: null;
+						const color = region ? rgn(region).color : "var(--ink-3)";
+						return (
+							`<div style="display:grid;gap:6px;padding:12px 0;${i ? "border-top:1px solid var(--rule-soft)" : ""}">` +
+							`<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">` +
+							`<span class="mono" style="font-size:12px;color:var(--ink-3)">${pad(r.n)}</span>` +
+							`<span class="dot" style="background:${color}"></span>` +
+							`<strong style="font-size:13.5px">${esc(r.name)}</strong>` +
+							`<span class="pill pill-out" style="margin-left:auto;color:${r.on ? "var(--good)" : "var(--ink-3)"}">${r.on ? "Live" : "Draft"}</span></div>` +
+							r.when
+								.map(
+									(w, j) =>
+										`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px">` +
+										`<span class="eyebrow" style="width:38px">${j ? "and" : "when"}</span><span>${esc(w[0])}</span>` +
+										`<span class="eyebrow">${esc(w[1])}</span>` +
+										`<span class="mono" style="background:var(--sunk);padding:3px 9px;border-radius:6px;font-size:12px">${esc(w[2])}</span></div>`,
+								)
+								.join("") +
+							`<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span class="eyebrow" style="width:38px">then</span><span>${esc(r.then)}</span></div>` +
+							(r.note
+								? `<div style="font-size:12px;color:var(--ink-2);padding-left:46px">${esc(r.note)} <span class="verified">✓ verified</span></div>`
+								: "") +
+							`</div>`
+						);
+					}).join("");
+
+					$("#botsPanel").innerHTML = Object.values(REGIONS)
+						.map(
+							(r) =>
+								`<div style="display:grid;gap:5px"><div style="display:flex;align-items:center;gap:8px">` +
+								`<span class="dot" style="background:${r.color}"></span><strong style="font-size:13.5px">${esc(r.bot)}</strong>` +
+								`<span class="pill pill-soft" style="margin-left:auto">Both hours</span></div>` +
+								`<div style="font-size:12.5px;color:var(--ink-2)">Answers first on ${esc(r.number)}, 24 hours a day, then hands to ${esc(r.group)}.</div></div>`,
+						)
+						.join("");
+
+					$("#escalation").innerHTML = [
+						[
+							"Bot answers",
+							"Every message, at every hour. The customer is never left without a reply.",
+							"var(--ink-3)",
+						],
+						[
+							"Agent group",
+							"On handover, or when the bot cannot resolve the intent.",
+							"var(--s-uae)",
+						],
+						[
+							"Supervisor",
+							"When the first-response or resolution target passes.",
+							"var(--warn)",
+						],
+						[
+							"Regional manager",
+							"When a claim or priority conversation passes twice the target.",
+							"var(--critical)",
+						],
+					]
+						.map(
+							([h, p, c]) =>
+								`<div class="tl"><i style="background:${c}"></i><div><div class="h">${esc(h)}</div><div class="p">${esc(p)}</div></div></div>`,
+						)
+						.join("");
+				}
+
+				/* =========================================================
+				   Send
+				   ========================================================= */
+
+				const TEMPLATES = [
+					[
+						"abc_shipment_status_update",
+						"Bookings",
+						"Utility",
+						"en, ar",
+						"Approved",
+						1284,
+					],
+					[
+						"abc_delivery_scheduled",
+						"Bookings",
+						"Utility",
+						"en, ar",
+						"Approved",
+						671,
+					],
+					[
+						"abc_quotation_sent",
+						"Quotations",
+						"Utility",
+						"en, ar",
+						"Approved",
+						214,
+					],
+					[
+						"abc_claim_acknowledged",
+						"Tickets",
+						"Utility",
+						"en, ar",
+						"Approved",
+						88,
+					],
+					[
+						"abc_out_of_hours",
+						"Conversations",
+						"Utility",
+						"en, ar",
+						"Approved",
+						942,
+					],
+					[
+						"abc_rate_update_trade",
+						"Marketing",
+						"Marketing",
+						"en",
+						"Approved",
+						0,
+					],
+					[
+						"abc_ramadan_hours",
+						"Marketing",
+						"Marketing",
+						"en, ar",
+						"Pending review",
+						0,
+					],
+				];
+
+				function renderSend() {
+					$("#sendTiles").innerHTML = Object.values(REGIONS)
+						.map((r) => {
+							const pct = Math.round((r.used / r.tier) * 100);
+							const qc =
+								r.quality === "Green"
+									? "var(--good)"
+									: r.quality === "Yellow"
+										? "var(--warn)"
+										: "var(--critical)";
+							return (
+								`<div class="tile"><span class="eyebrow">${r.code} · messaging limit</span>` +
+								`<span class="v">${r.used.toLocaleString()}<span style="font-size:15px;font-weight:500;color:var(--ink-3)"> / ${r.tier.toLocaleString()}</span></span>` +
+								`<div class="track"><i style="width:${Math.min(100, pct)}%;background:${r.color}"></i></div>` +
+								`<span class="note"><span class="dot" style="display:inline-block;background:${qc};vertical-align:middle;margin-right:5px"></span>Quality ${r.quality} · rolling 24 hours</span></div>`
+							);
+						})
+						.join("");
+
+					$("#templates tbody").innerHTML = TEMPLATES.map(
+						([n, used_by, cat, lang, st, used]) => {
+							const ok = st === "Approved";
+							return (
+								`<tr><td class="mono" style="font-size:12.5px">${esc(n)}</td>` +
+								`<td>${esc(used_by)}</td>` +
+								`<td><span class="pill pill-soft">${esc(cat)}</span></td>` +
+								`<td class="mono" style="font-size:12.5px">${esc(lang)}</td>` +
+								`<td><span class="pill pill-out" style="color:${ok ? "var(--good)" : "var(--warn)"}">${esc(st)}</span></td>` +
+								`<td class="mono">${used.toLocaleString()}</td></tr>`
+							);
+						},
+					).join("");
+
+					const checks = [
+						[
+							"Template approved by Meta",
+							true,
+							"abc_rate_update_trade, English, Marketing category",
+						],
+						[
+							"Recipients opted in",
+							true,
+							"1,120 contacts with a marketing opt-in on the UAE number",
+						],
+						[
+							"Inside the messaging limit",
+							true,
+							"3,840 used of 10,000 in the rolling window — 1,120 fits",
+						],
+						[
+							"Quality rating healthy",
+							true,
+							"UAE is Green. A marketing send on a Yellow number is blocked.",
+						],
+						[
+							"Sent within local hours",
+							false,
+							"Scheduled 02:10 Asia/Dubai. Move into business hours before sending.",
+						],
+					];
+					$("#sendCheck").innerHTML =
+						checks
+							.map(
+								([h, ok, p]) =>
+									`<div style="display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start">` +
+									`<span class="dot" style="background:${ok ? "var(--good)" : "var(--warn)"};margin-top:6px"></span>` +
+									`<div><div style="font-size:13px;font-weight:600">${esc(h)}</div>` +
+									`<div style="font-size:12.5px;color:var(--ink-2)">${esc(p)}</div></div></div>`,
+							)
+							.join("") +
+						`<div class="actions"><button type="button" class="btn btn-primary">Schedule for 09:00 Asia/Dubai</button>` +
+						`<button type="button" class="btn">Send anyway</button></div>`;
+				}
+
+				/* =========================================================
+				   Numbers
+				   ========================================================= */
+
+				function renderNumbers() {
+					$("#numberCards").innerHTML = Object.values(REGIONS)
+						.map((r) => {
+							const qc =
+								r.quality === "Green"
+									? "var(--good)"
+									: r.quality === "Yellow"
+										? "var(--warn)"
+										: "var(--critical)";
+							return (
+								`<div class="card"><div class="card-head"><span class="dot" style="background:${r.color}"></span>` +
+								`<h3 class="mono">${esc(r.number)}</h3><span class="pill pill-soft" style="margin-left:auto">${r.code}</span></div>` +
+								`<div class="card-body"><dl class="kv">` +
+								`<dt>Topic</dt><dd class="mono" style="font-size:12px">${esc(r.topic)}</dd>` +
+								`<dt>Bot</dt><dd>${esc(r.bot)} <span class="verified">✓</span></dd>` +
+								`<dt>Group</dt><dd>${esc(r.group)} <span class="verified">✓</span></dd>` +
+								`<dt>Quality</dt><dd><span class="dot" style="display:inline-block;background:${qc};margin-right:6px"></span>${r.quality}</dd>` +
+								`<dt>Limit</dt><dd class="mono">${r.tier.toLocaleString()} / 24h</dd>` +
+								`<dt>Survey</dt><dd>Off <span class="verified">✓</span></dd>` +
+								`<dt>Webhook</dt><dd><span class="dot" style="display:inline-block;background:var(--good);margin-right:6px"></span>Delivering · 0 failures 24h</dd>` +
+								`</dl></div></div>`
+							);
+						})
+						.join("");
+
+					const G = [
+						[
+							"UAE Sales Team",
+							"UAE",
+							"Conversations, leads, quotations, tickets",
+							9,
+							6,
+							31,
+						],
+						[
+							"KSA Sales Team",
+							"KSA",
+							"Conversations, leads, quotations, tickets",
+							4,
+							3,
+							14,
+						],
+						[
+							"UK Customer Support",
+							"UK",
+							"Conversations, bookings, tickets",
+							3,
+							2,
+							9,
+						],
+						[
+							"HR Department",
+							"—",
+							"Internal only — migration undecided",
+							2,
+							0,
+							0,
+						],
+					];
+					$("#groups tbody").innerHTML = G.map(
+						([n, code, covers, a, on, open]) => {
+							const c = REGIONS[code] ? REGIONS[code].color : "var(--ink-3)";
+							return (
+								`<tr><td><span class="dot" style="display:inline-block;background:${c};margin-right:7px"></span>${esc(n)}</td>` +
+								`<td>${esc(code)}</td><td style="color:var(--ink-2)">${esc(covers)}</td><td class="mono">${a}</td>` +
+								`<td class="mono" style="color:${on ? "var(--good)" : "var(--ink-3)"}">${on}</td><td class="mono">${open}</td></tr>`
+							);
+						},
+					).join("");
+				}
+
+				/* =========================================================
+				   Cutover
+				   ========================================================= */
+
+				const READY = {
+					KSA: [
+						["SLA policy exported", true],
+						["Business hours exported", true],
+						["Assignment rules captured", false],
+						["Bot flow captured", false],
+						["Templates re-submitted to Meta", false],
+						["Contacts and history exported", false],
+					],
+					UK: [
+						["SLA policy exported", true],
+						["Business hours exported", false],
+						["Assignment rules captured", false],
+						["Bot flow captured", false],
+						["Templates re-submitted to Meta", false],
+						["Contacts and history exported", false],
+					],
+					UAE: [
+						["SLA policy exported", false],
+						["Business hours exported", false],
+						["Assignment rules captured", false],
+						["Bot flow captured", false],
+						["Templates re-submitted to Meta", false],
+						["Contacts and history exported", false],
+					],
+				};
+
+				function renderCutover() {
+					$("#cutTiles").innerHTML = ["KSA", "UK", "UAE"]
+						.map((code) => {
+							const r = rgn(code);
+							const items = READY[code];
+							const done = items.filter((i) => i[1]).length;
+							const pct = Math.round((done / items.length) * 100);
+							return (
+								`<div class="tile"><span class="eyebrow">${r.code} · ${esc(r.number)}</span>` +
+								`<span class="v" style="color:${r.color}">${pct}%</span>` +
+								`<div class="track"><i style="width:${pct}%;background:${r.color}"></i></div>` +
+								`<span class="note">${done} of ${items.length} blocking items cleared</span></div>`
+							);
+						})
+						.join("");
+
+					$("#readiness").innerHTML = ["KSA", "UK", "UAE"]
+						.map((code) => {
+							const r = rgn(code);
+							return (
+								`<div style="display:flex;align-items:center;gap:9px;margin-top:4px">` +
+								`<span class="dot" style="background:${r.color}"></span><span class="eyebrow" style="color:var(--ink)">${r.code} — ${esc(r.group)}</span></div>` +
+								READY[code]
+									.map(
+										([label, ok]) =>
+											`<div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">` +
+											`<span style="font-size:13px">${esc(label)}</span>` +
+											`<span class="pill ${ok ? "pill-out" : "pill-soft"}" style="color:${ok ? "var(--good)" : "var(--ink-2)"}">${ok ? "✓ done" : "outstanding"}</span></div>`,
+									)
+									.join("")
+							);
+						})
+						.join("");
+
+					$("#sequence").innerHTML = [
+						[
+							"KSA first",
+							"Lowest volume, so the smallest number of customers is exposed to a first cutover.",
+							"var(--s-ksa)",
+						],
+						[
+							"UK second",
+							"Different timezone from the Gulf, so a fault is contained inside UK hours.",
+							"var(--s-uk)",
+						],
+						[
+							"UAE last",
+							"Highest volume and the busiest number — moved only once the pattern is proven twice.",
+							"var(--s-uae)",
+						],
+						[
+							"Freshworks decision",
+							"Retire it, or keep it for email, phone and ticketing. Open for the Head of IT.",
+							"var(--ink-3)",
+						],
+					]
+						.map(
+							([h, p, c]) =>
+								`<div class="tl"><i style="background:${c}"></i><div><div class="h">${esc(h)}</div><div class="p">${esc(p)}</div></div></div>`,
+						)
+						.join("");
+				}
+
+				/* =========================================================
+				   Boot
+				   ========================================================= */
+
+				function renderAll() {
+					renderNav();
+					renderClocks();
+					renderQueue();
+					renderThread();
+					renderCalls();
+					renderTickets();
+					renderLeads();
+					renderQuotes();
+					renderBookings();
+					renderReports();
+					renderRules();
+					renderSend();
+					renderNumbers();
+					renderCutover();
+					if (!$("#screen-customer").hidden) renderCustomer();
+				}
+
+				renderAll();
+			})();
+		</script>
+	</body>
+</html>

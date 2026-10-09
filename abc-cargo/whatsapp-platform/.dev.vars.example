@@ -1,0 +1,26 @@
+# Local development settings for `wrangler dev`.
+#
+# Copy this file to `.dev.vars` and it is picked up automatically. `.dev.vars`
+# is ignored by git and must never be committed.
+#
+# Every value below is a LOCAL TEST value. None of them touch Meta, and none of
+# them are real ABC Cargo credentials. Nothing you do with this file can send a
+# message to a real customer.
+
+# Pretend Meta credentials. The simulator signs its fake webhook with the app
+# secret below, exactly the way Meta signs a real one, so the signature check
+# is genuinely exercised.
+WHATSAPP_APP_SECRET = "local-test-app-secret"
+WHATSAPP_VERIFY_TOKEN = "local-test-verify-token"
+
+# Deliberately invalid. Any attempt to actually call Meta will fail rather than
+# reach the live API by accident.
+WHATSAPP_ACCESS_TOKEN = "local-test-token-not-valid-for-meta"
+
+# Bearer key for the /api/* routes while testing.
+INTERNAL_API_KEY = "local-test-api-key"
+
+# Local stand-ins for the three ABC Cargo numbers. The phone number ids are
+# invented; the display numbers match the real ones so the screens read
+# correctly. Business hours are placeholders until the Freshworks export.
+REGION_NUMBERS = '[{"id":"uae","label":"UAE","phoneNumberId":"100000000000001","displayNumber":"+971800916","timezone":"Asia/Dubai","language":"en","businessHours":{"days":[0,1,2,3,4],"start":"08:00","end":"18:00"}},{"id":"ksa","label":"KSA","phoneNumberId":"100000000000002","displayNumber":"+966548454866","timezone":"Asia/Riyadh","language":"ar","businessHours":{"days":[0,1,2,3,4],"start":"09:00","end":"18:00"}},{"id":"uk","label":"UK","phoneNumberId":"100000000000003","displayNumber":"+447388800000","timezone":"Europe/London","language":"en","businessHours":{"days":[1,2,3,4,5],"start":"09:00","end":"17:00"}}]'
