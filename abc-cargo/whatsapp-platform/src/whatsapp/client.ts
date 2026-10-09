@@ -42,7 +42,12 @@ export class WhatsAppClient {
 	constructor(options: WhatsAppClientOptions) {
 		this.token = options.accessToken;
 		this.base = `https://graph.facebook.com/${options.graphApiVersion}`;
-		this.fetchImpl = options.fetchImpl ?? fetch;
+		// Wrapped rather than stored bare. Kept as a property and called as
+		// `this.fetchImpl(...)`, the global fetch would receive the client as
+		// its `this`, which the Workers runtime refuses with "Illegal
+		// invocation" — every send would fail before reaching Meta.
+		this.fetchImpl =
+			options.fetchImpl ?? ((input, init) => globalThis.fetch(input, init));
 	}
 
 	sendText(

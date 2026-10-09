@@ -49,14 +49,46 @@ import {
 import { checkLocation, checkMedia } from "./composer/media.ts";
 import { canEditNote, checkNoteBody, Notes } from "./composer/notes.ts";
 import { CrmService } from "./crm/service.ts";
+import { TransferStore } from "./crm/transfer-store.ts";
+import {
+	assertChannelUnchanged,
+	transferConversation,
+	type TransferRefusal,
+} from "./crm/transfer.ts";
+import { SlaPolicyStore } from "./crm/sla-store.ts";
+import {
+	effectivePolicyTable,
+	validateTeamPolicy,
+	type TeamSlaPolicy,
+} from "./crm/sla-policy.ts";
+import { CsatStore } from "./crm/csat-store.ts";
+import { summarise, summariseByRegion } from "./crm/csat.ts";
+import {
+	abandonmentHotspots,
+	summariseByFlow,
+	summariseDeflection,
+} from "./crm/deflection.ts";
+import {
+	REPORT_LIBRARY,
+	csatDistributionRows,
+	exportFilename,
+	findReport,
+	toCsv,
+	toSeries,
+	type ReportDefinition,
+} from "./crm/report-library.ts";
+import { ReportQueries, clampWindow } from "./crm/report-queries.ts";
+import { cloneFlowToRegion, cloneNeedsReview } from "./bots/clone.ts";
+import { BotService, toFlow } from "./bots/service.ts";
 import { Reports, parseWindow } from "./crm/reports.ts";
 import { Contacts, isCustomerStage } from "./crm/contacts.ts";
 import { ChatService, isRefKind } from "./chat/service.ts";
 import { AdminService } from "./admin/service.ts";
-import { BotService } from "./bots/service.ts";
 import { DashboardService } from "./dashboard/service.ts";
 import { BroadcastService } from "./broadcasts/service.ts";
 import { runSendPass, sendingEnabled } from "./broadcasts/sender.ts";
+import { runFallbackSweep } from "./bots/fallback-sweep.ts";
+import { runSurveySweep } from "./crm/csat-sweep.ts";
 import {
 	describeAudience,
 	validateAudience,
@@ -204,6 +236,34 @@ export default {
 					}
 				}
 			}),
+		);
+
+		// Bot sessions nobody is answering: handed to the agent queue after
+		// the step's silence threshold, or ended as expired after a day. Sends
+		// nothing to the customer. Separate promises so one failing sweep
+		// does not stop the others.
+		ctx.waitUntil(
+			runFallbackSweep(env)
+				.then((sweep) => {
+					if (sweep.handedOver + sweep.expired + sweep.lostRace > 0) {
+						console.info("bot fallback sweep", sweep);
+					}
+				})
+				.catch((error: unknown) =>
+					console.error("bot fallback sweep failed", errorMessage(error)),
+				),
+		);
+
+		// Satisfaction surveys. Does nothing unless CSAT_SURVEYS_ENABLED is
+		// "true", which is not the default.
+		ctx.waitUntil(
+			runSurveySweep(env)
+				.then((pass) => {
+					if (pass.sent + pass.failed > 0) console.info("survey pass", pass);
+				})
+				.catch((error: unknown) =>
+					console.error("survey pass failed", errorMessage(error)),
+				),
 		);
 	},
 } satisfies ExportedHandler<Env, WebhookQueueMessage>;
@@ -904,6 +964,121 @@ async function handleApi(
 			}
 			throw error;
 		}
+	}
+
+	// POST /api/conversations/:id/transfer   { toTeamId, toAgentId?, reason }
+	//
+	// Moves a conversation to another team, in this region or another. The
+	// customer keeps writing to the number they wrote to: only ownership moves,
+	// never the channel. The destination region is read from the team, not
+	// taken from the body.
+	if (
+		resource === "conversations" &&
+		id &&
+		action === "transfer" &&
+		request.method === "POST"
+	) {
+		if (caller.kind !== "user") return refuse("service_caller");
+		const body = await readJson<{
+			toTeamId?: string;
+			toAgentId?: string | null;
+			reason?: string;
+		}>(request);
+		if (!body?.toTeamId?.trim()) {
+			return json({ error: "toTeamId is required" }, 400);
+		}
+		const transfers = new TransferStore(env.DB);
+		const conversation = await transfers.loadTransferable(id);
+		if (!conversation) return json({ error: "Not found" }, 404);
+		// Reading first, so a caller who cannot see the conversation learns
+		// nothing about it from the transfer rules' answer.
+		const mayRead = canReadConversation(caller, {
+			id: conversation.id,
+			regionId: conversation.regionId,
+			assignedAgentId: conversation.assignedAgentId ?? null,
+		});
+		if (!mayRead.allowed) return refuse(mayRead.reason);
+
+		const team = await transfers.team(body.toTeamId.trim());
+		if (!team) return json({ error: "unknown team" }, 400);
+		const toAgentId = body.toAgentId?.trim() || null;
+		if (toAgentId && !(await transfers.isActiveMember(toAgentId, team.id))) {
+			return json(
+				{
+					error: "that person is not an active member of the receiving team",
+					reason: "not_team_member",
+				},
+				400,
+			);
+		}
+
+		const outcome = transferConversation(
+			caller,
+			conversation,
+			{
+				toTeamId: team.id,
+				toRegionId: team.region_id,
+				toAgentId,
+				reason: body.reason ?? "",
+			},
+			parseRegionConfig(env.REGION_NUMBERS),
+		);
+		if (!outcome.ok) {
+			const status = TRANSFER_REFUSAL_STATUS[outcome.refusal];
+			return status === 403
+				? refuse(outcome.refusal)
+				: json({ error: outcome.message, reason: outcome.refusal }, status);
+		}
+		assertChannelUnchanged(conversation, outcome.patch.phoneNumberId);
+		const transferId = await transfers.apply(outcome.record, outcome.warnings);
+
+		// The Durable Object keeps its own copy of the assignee. The transfer
+		// has already been written, so a failure here is logged rather than
+		// reported as a failed transfer — the next assignment corrects it.
+		try {
+			const stub = env.CONVERSATION.get(env.CONVERSATION.idFromName(id));
+			await stub.assign(outcome.patch.assignedAgentId, caller.id);
+		} catch (error) {
+			console.error("transfer written; conversation state not updated", {
+				conversationId: id,
+				transferId,
+				error: errorMessage(error),
+			});
+		}
+		return json({
+			ok: true,
+			transferId,
+			regionId: outcome.patch.regionId,
+			assignedTeamId: outcome.patch.assignedTeamId,
+			assignedAgentId: outcome.patch.assignedAgentId,
+			crossRegion: outcome.record.crossRegion,
+			warnings: outcome.warnings,
+		});
+	}
+
+	// GET /api/conversations/:id/transfers — who moved it, where and why.
+	if (
+		resource === "conversations" &&
+		id &&
+		action === "transfers" &&
+		request.method === "GET"
+	) {
+		const conversation = await repo.getConversation(id);
+		if (!conversation) return json({ error: "Not found" }, 404);
+		const mayRead = canReadConversation(caller, {
+			id: conversation.id,
+			regionId: conversation.region_id,
+			assignedAgentId: conversation.assigned_agent_id,
+		});
+		if (!mayRead.allowed) return refuse(mayRead.reason);
+		const rows = await new TransferStore(env.DB).history(id);
+		return json({
+			transfers: rows.map((row) => ({
+				...row,
+				cross_region: row.cross_region === 1,
+				warnings: parseStringList(row.warnings),
+			})),
+		});
 	}
 
 	// POST /api/conversations/:id/assign   { agentId | null, actor }
@@ -2033,6 +2208,64 @@ async function handleOperationsApi(
 			return json(saved, 201);
 		}
 
+		// POST /api/bots/flows/:flowId/clone   { toRegionId, name? }
+		//
+		// Copies a flow to another region as a draft, never published, with
+		// a warning for every step that still speaks for the old region.
+		if (
+			id === "flows" &&
+			action &&
+			segments[4] === "clone" &&
+			request.method === "POST"
+		) {
+			if (!mayAdminister.allowed) return refuse(mayAdminister.reason);
+			const body = await readJson<{ toRegionId?: string; name?: string }>(
+				request,
+			);
+			const row = await bots.getFlowRow(action);
+			if (!row) return json({ error: "Not found" }, 404);
+			const fromRegion = findRegionById(regions, row.region_id);
+			const toRegion = body?.toRegionId
+				? findRegionById(regions, body.toRegionId)
+				: undefined;
+			if (!fromRegion || !toRegion) {
+				return json({ error: "unknown region" }, 400);
+			}
+			if (fromRegion.id === toRegion.id) {
+				return json({ error: "a flow is cloned to a different region" }, 400);
+			}
+			const loaded = toFlow(row);
+			if (!loaded.ok) {
+				return json(
+					{ error: "the flow could not be read", problems: loaded.problems },
+					409,
+				);
+			}
+			const cloned = cloneFlowToRegion(loaded.flow, fromRegion, toRegion, {
+				name: body?.name?.trim() || undefined,
+			});
+			if (!cloned.ok) return json({ error: cloned.error }, 400);
+
+			// Saved through the ordinary draft path, which gives it the next
+			// version in the target region and never publishes.
+			const saved = await bots.saveDraft({
+				regionId: toRegion.id,
+				name: cloned.flow.name,
+				entryStepId: cloned.flow.entryStepId,
+				steps: cloned.flow.steps,
+				author: caller.kind === "user" ? caller.email : null,
+			});
+			return json(
+				{
+					...saved,
+					clonedFrom: { flowId: row.id, regionId: row.region_id },
+					warnings: cloned.warnings,
+					needsReview: cloneNeedsReview(cloned),
+				},
+				201,
+			);
+		}
+
 		// POST /api/bots/flows/:flowId/publish
 		if (id === "flows" && action && request.method === "POST") {
 			if (!mayAdminister.allowed) return refuse(mayAdminister.reason);
@@ -2269,6 +2502,219 @@ async function handleOperationsApi(
 		return json(await reports.summary(regionIds, window));
 	}
 
+	/**
+	 * The regions a report covers: the ones asked for, cut down to the ones
+	 * this person may report on. Returns a refusal when that leaves none.
+	 */
+	const reportRegions = (): string[] | Response => {
+		const mayView = canViewReports(caller);
+		if (!mayView.allowed) return refuse(mayView.reason);
+		const reportable = reportableRegions(caller);
+		const requested = url.searchParams.get("region");
+		const regionIds =
+			reportable === null
+				? requested
+					? [requested]
+					: parseRegionConfig(env.REGION_NUMBERS).map((r) => r.id)
+				: requested
+					? reportable.filter((r) => r === requested)
+					: reportable;
+		return regionIds.length === 0 ? refuse("wrong_region") : regionIds;
+	};
+
+	// GET /api/reports/library — the named reports, without running any.
+	if (
+		resource === "reports" &&
+		id === "library" &&
+		!action &&
+		request.method === "GET"
+	) {
+		const mayView = canViewReports(caller);
+		if (!mayView.allowed) return refuse(mayView.reason);
+		return json({ reports: REPORT_LIBRARY });
+	}
+
+	// GET /api/reports/library/:reportId?region=&from=&to=&format=csv
+	//
+	// One report's rows. The chart series and the CSV are built from the same
+	// rows, so the picture and the download cannot disagree.
+	if (
+		resource === "reports" &&
+		id === "library" &&
+		action &&
+		request.method === "GET"
+	) {
+		const definition = findReport(action);
+		if (!definition) return json({ error: "Not found" }, 404);
+		const regionIds = reportRegions();
+		if (regionIds instanceof Response) return regionIds;
+		const window = clampWindow(
+			parseWindow(url.searchParams.get("from"), url.searchParams.get("to")),
+		);
+		const rows = await reportRows(env, definition, regionIds, window);
+
+		if (url.searchParams.get("format") === "csv") {
+			return new Response(toCsv(definition, rows), {
+				headers: {
+					"content-type": "text/csv; charset=utf-8",
+					"content-disposition": `attachment; filename="${exportFilename(definition, window)}"`,
+					"cache-control": "no-store",
+				},
+			});
+		}
+		return json({
+			report: definition,
+			window,
+			regionIds,
+			rows,
+			series: reportSeries(definition, rows),
+		});
+	}
+
+	// GET /api/reports/csat?region=&from=&to=
+	//
+	// A mean is published only above the minimum number of responses, per
+	// region as well as overall. Below it the count is shown instead.
+	if (resource === "reports" && id === "csat" && request.method === "GET") {
+		const regionIds = reportRegions();
+		if (regionIds instanceof Response) return regionIds;
+		const window = parseWindow(
+			url.searchParams.get("from"),
+			url.searchParams.get("to"),
+		);
+		const store = new CsatStore(env.DB);
+		const [records, sent] = await Promise.all([
+			store.responses({ ...window, regionIds }),
+			store.sentByRegion({ ...window, regionIds }),
+		]);
+		const totalSent = Object.values(sent).reduce((a, b) => a + b, 0);
+		return json({
+			window,
+			regionIds,
+			overall: summarise(records, totalSent),
+			byRegion: summariseByRegion(records, sent),
+		});
+	}
+
+	// GET /api/reports/deflection?region=&from=&to=
+	//
+	// Deflected, escalated and abandoned are reported side by side; the
+	// abandoned share is never folded into either of the others.
+	if (
+		resource === "reports" &&
+		id === "deflection" &&
+		request.method === "GET"
+	) {
+		const regionIds = reportRegions();
+		if (regionIds instanceof Response) return regionIds;
+		const window = clampWindow(
+			parseWindow(url.searchParams.get("from"), url.searchParams.get("to")),
+		);
+		const sessions = await new ReportQueries(env.DB).deflectionSessions(
+			regionIds,
+			window,
+		);
+		return json({
+			window,
+			regionIds,
+			overall: summariseDeflection(sessions),
+			byFlow: summariseByFlow(sessions),
+			abandonmentHotspots: abandonmentHotspots(sessions).slice(0, 10),
+		});
+	}
+
+	/* ---------------------------------------------------- service targets */
+
+	// GET /api/sla/teams — every team's effective targets and where each
+	// came from. Supervisors may read the teams of their own regions.
+	if (
+		resource === "sla" &&
+		id === "teams" &&
+		!action &&
+		request.method === "GET"
+	) {
+		const mayView = canViewReports(caller);
+		if (!mayView.allowed) return refuse(mayView.reason);
+		const reportable = reportableRegions(caller);
+		const store = new SlaPolicyStore(env.DB);
+		const [teams, teamPolicies, regionPolicies] = await Promise.all([
+			new TransferStore(env.DB).teams(),
+			store.teamPolicies(),
+			store.regionPolicies(),
+		]);
+		const visible = teams.filter(
+			(t) => reportable === null || reportable.includes(t.region_id),
+		);
+		return json({
+			teams: visible.map((team) => ({
+				...team,
+				policy: teamPolicies.policies.find((p) => p.teamId === team.id) ?? null,
+				effective: effectivePolicyTable({
+					teamId: team.id,
+					regionId: team.region_id,
+					teamPolicies: teamPolicies.policies,
+					regionPolicies: regionPolicies.policies,
+				}),
+			})),
+			// A stored policy that cannot be read is skipped when tickets
+			// open; it is listed here so somebody can see it and fix it.
+			unreadable: [
+				...teamPolicies.unreadable,
+				...regionPolicies.unreadable,
+			].filter(
+				(u) =>
+					reportable === null ||
+					(u.kind === "team"
+						? visible.some((t) => t.id === u.key)
+						: reportable.includes(u.key)),
+			),
+		});
+	}
+
+	// PUT /api/sla/teams/:teamId   { byType?, fallback? }
+	// DELETE /api/sla/teams/:teamId — the team inherits its region's targets.
+	//
+	// Master admin only: a target is a commitment on the team's behalf.
+	if (
+		resource === "sla" &&
+		id === "teams" &&
+		action &&
+		(request.method === "PUT" || request.method === "DELETE")
+	) {
+		const mayAdminister = canAdminister(caller);
+		if (!mayAdminister.allowed) return refuse(mayAdminister.reason);
+		const team = await new TransferStore(env.DB).team(action);
+		if (!team) return json({ error: "Not found" }, 404);
+		const store = new SlaPolicyStore(env.DB);
+
+		if (request.method === "DELETE") {
+			return json({ deleted: await store.deleteTeamPolicy(team.id) });
+		}
+
+		const body = await readJson<{
+			byType?: TeamSlaPolicy["byType"];
+			fallback?: TeamSlaPolicy["fallback"];
+		}>(request);
+		if (!body) return json({ error: "a JSON body is required" }, 400);
+		// The team and region come from the URL and the teams table, never
+		// the body, so a policy cannot be filed against the wrong region.
+		const policy: TeamSlaPolicy = {
+			teamId: team.id,
+			regionId: team.region_id,
+			byType: body.byType,
+			fallback: body.fallback,
+		};
+		const errors = validateTeamPolicy(policy);
+		if (errors.length > 0) {
+			return json({ error: "the policy was not saved", problems: errors }, 400);
+		}
+		await store.saveTeamPolicy(
+			policy,
+			caller.kind === "user" ? caller.id : "service",
+		);
+		return json({ ok: true, policy });
+	}
+
 	/* ------------------------------------------------------- stalled sweep */
 
 	// POST /api/operations/sweep-stalled — opens a ticket for each shipment
@@ -2290,6 +2736,81 @@ async function handleOperationsApi(
 	}
 
 	return null;
+}
+
+/**
+ * How each transfer refusal is answered. A permission refusal is a 403 with
+ * the same body as every other; a malformed or pointless request is not a
+ * permission problem and says what to fix.
+ */
+const TRANSFER_REFUSAL_STATUS: Record<TransferRefusal, 400 | 403 | 409> = {
+	suspended: 403,
+	insufficient_role: 403,
+	wrong_region: 403,
+	service_caller: 403,
+	unknown_region: 400,
+	reason_required: 400,
+	same_team: 409,
+};
+
+/** A stored JSON list of strings, or an empty list if it cannot be read. */
+function parseStringList(text: string | null | undefined): string[] {
+	try {
+		const parsed: unknown = JSON.parse(text ?? "[]");
+		return Array.isArray(parsed)
+			? parsed.filter((v): v is string => typeof v === "string")
+			: [];
+	} catch {
+		return [];
+	}
+}
+
+/** The rows of one library report. */
+async function reportRows(
+	env: Env,
+	definition: ReportDefinition,
+	regionIds: string[],
+	window: { from: string; to: string },
+): Promise<Array<Record<string, unknown>>> {
+	const queries = new ReportQueries(env.DB);
+	switch (definition.id) {
+		case "volume_by_day":
+			return queries.volumeByDay(regionIds, window);
+		case "first_response":
+			return queries.firstResponse(regionIds, window);
+		case "tickets_by_type":
+			return (await queries.ticketsByType(regionIds, window)).map((r) => ({
+				...r,
+			}));
+		case "csat_distribution": {
+			const records = await new CsatStore(env.DB).responses({
+				...window,
+				regionIds,
+			});
+			return csatDistributionRows(summarise(records, 0).distribution);
+		}
+		default:
+			// A definition with no query is a programming error, and an empty
+			// report would hide it.
+			throw new Error(`report ${definition.id} has no query`);
+	}
+}
+
+/** The chart series for a report, or none where the numbers are the point. */
+function reportSeries(
+	definition: ReportDefinition,
+	rows: Array<Record<string, unknown>>,
+) {
+	switch (definition.id) {
+		case "volume_by_day":
+			return toSeries(rows, "day", "conversations", "regionId");
+		case "tickets_by_type":
+			return toSeries(rows, "type", "opened");
+		case "csat_distribution":
+			return toSeries(rows, "score", "responses");
+		default:
+			return [];
+	}
 }
 
 /** Narrows a query or body value to one of a literal union. */

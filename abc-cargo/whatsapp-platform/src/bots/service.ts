@@ -312,6 +312,37 @@ export class BotService {
 			.run();
 	}
 
+	/**
+	 * Ends a session, but only if nobody has touched it since it was read.
+	 *
+	 * The sweep reads a waiting session, decides, then writes. A customer who
+	 * replies in between has moved the session on, and an unconditional write
+	 * would put it back to where it was and end it — answering their reply by
+	 * forgetting it. The `updated_at` guard makes the sweep lose that race.
+	 */
+	async endSessionIfUnchanged(input: {
+		conversationId: string;
+		expectedUpdatedAt: string;
+		ended: BotSession;
+	}): Promise<boolean> {
+		const result = await this.db
+			.prepare(
+				`UPDATE bot_sessions
+				    SET step_id = ?3, updated_at = ?4, ended_at = ?5, ended_reason = ?6
+				  WHERE conversation_id = ?1 AND updated_at = ?2 AND ended_at IS NULL`,
+			)
+			.bind(
+				input.conversationId,
+				input.expectedUpdatedAt,
+				input.ended.stepId,
+				input.ended.updatedAt,
+				input.ended.endedAt,
+				input.ended.endedReason,
+			)
+			.run();
+		return (result.meta?.changes ?? 0) > 0;
+	}
+
 	/** The record of why the bot did what it did, one row per inbound message. */
 	async recordTurn(input: {
 		conversationId: string;

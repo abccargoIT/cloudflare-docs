@@ -84,7 +84,7 @@ export const REPORT_LIBRARY: ReportDefinition[] = [
 		id: "first_response",
 		title: "First response against target",
 		description:
-			"How many conversations were answered inside the service target, by region.",
+			"How many first replies landed inside the service target, by region. On the live platform the target is the ticket's.",
 		group: "region",
 		columns: [
 			{ key: "regionId", label: "Region" },

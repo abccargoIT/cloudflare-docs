@@ -92,6 +92,16 @@ export class Repository {
 			.run();
 	}
 
+	/**
+	 * Records an inbound message against its conversation.
+	 *
+	 * The ON CONFLICT branch must NEVER update `region_id`. A transfer
+	 * (src/crm/transfer.ts) moves a conversation's region to the receiving
+	 * team's, and this runs on every inbound message; if it reset the region
+	 * from the phone number, every transfer would silently revert the next
+	 * time the customer wrote, and the conversation would vanish from the
+	 * receiving team's queue with no trace of why.
+	 */
 	async upsertConversationOnInbound(input: {
 		id: string;
 		waId: string;
@@ -100,6 +110,11 @@ export class Repository {
 		windowExpiresAt: string;
 		inboundAt: string;
 		preview: string;
+		/**
+		 * False for a message that answers a satisfaction survey, which must
+		 * not put a resolved conversation back in the queue. Defaults to true.
+		 */
+		reopen?: boolean;
 	}): Promise<void> {
 		await this.db
 			.prepare(
@@ -108,7 +123,7 @@ export class Repository {
 				    last_inbound_at, last_message_preview, unread_count, created_at, updated_at)
 				 VALUES (?1, ?2, ?3, ?4, 'open', ?5, ?6, ?7, 1, ?6, ?6)
 				 ON CONFLICT(id) DO UPDATE SET
-				   status = CASE WHEN conversations.status = 'resolved' THEN 'open' ELSE conversations.status END,
+				   status = CASE WHEN conversations.status = 'resolved' AND ?8 = 1 THEN 'open' ELSE conversations.status END,
 				   window_expires_at = excluded.window_expires_at,
 				   last_inbound_at = excluded.last_inbound_at,
 				   last_message_preview = excluded.last_message_preview,
@@ -123,6 +138,7 @@ export class Repository {
 				input.windowExpiresAt,
 				input.inboundAt,
 				input.preview,
+				input.reopen === false ? 0 : 1,
 			)
 			.run();
 	}

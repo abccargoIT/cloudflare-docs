@@ -81,6 +81,10 @@
 		// broadcast will not dispatch a single message and the pacer does
 		// nothing.
 		"BROADCASTS_ENABLED": "false",
+		// Satisfaction surveys after resolution. Same posture as broadcasts:
+		// "false" sends nothing. The survey wording in src/crm/csat-sweep.ts is
+		// a draft to approve before this is switched on.
+		"CSAT_SURVEYS_ENABLED": "false",
 	},
 	// Secrets are NOT stored here. Set them with `wrangler secret put <NAME>`:
 	//   WHATSAPP_ACCESS_TOKEN  - permanent System User token (whatsapp_business_messaging,
@@ -99,7 +103,10 @@
 	// The broadcast pacer. A campaign of several thousand cannot be sent inside
 	// the request that pressed Send, so Send only marks the broadcast as
 	// sending and this dispatches a paced batch each minute. It does nothing
-	// unless BROADCASTS_ENABLED is "true", which is not the default.
+	// unless BROADCASTS_ENABLED is "true", which is not the default. The same
+	// minute also runs the bot fallback sweep (hands silent bot sessions to the
+	// agent queue; sends the customer nothing) and the survey pass (off unless
+	// CSAT_SURVEYS_ENABLED is "true").
 	"triggers": { "crons": ["* * * * *"] },
 	"queues": {
 		"producers": [

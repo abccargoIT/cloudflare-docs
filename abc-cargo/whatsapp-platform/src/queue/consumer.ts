@@ -5,6 +5,12 @@ import { CrmService } from "../crm/service.ts";
 import { BotRunner } from "../bots/runner.ts";
 import { BroadcastService } from "../broadcasts/service.ts";
 import { MILESTONE_LABELS } from "../crm/types.ts";
+import { CsatStore } from "../crm/csat-store.ts";
+import {
+	parseSurveyReply,
+	surveyStillOpen,
+	type SurveyResponse,
+} from "../crm/csat.ts";
 import type { WebhookQueueMessage } from "../whatsapp/webhook.ts";
 import {
 	findRegionByPhoneNumberId,
@@ -65,6 +71,7 @@ export async function processWebhookMessage(
 	const crm = new CrmService(env.DB);
 	const bots = new BotRunner(env.DB, crm);
 	const broadcasts = new BroadcastService(env.DB);
+	const surveys = new CsatStore(env.DB);
 
 	// Asked once per batch rather than once per message. With no published flow
 	// for this region the rest of this function behaves exactly as it did
@@ -77,15 +84,45 @@ export async function processWebhookMessage(
 		const stub = env.CONVERSATION.get(
 			env.CONVERSATION.idFromName(conversationId),
 		);
+
+		// An answer to a satisfaction survey is decided before anything else
+		// reads the message. Read by the bot, "5" is menu option five; read
+		// by the out-of-hours reply, a customer who has just rated us is told
+		// the office is closed. Neither should happen.
+		const surveyAnswer = await answerToOpenSurvey(
+			surveys,
+			conversationId,
+			inbound,
+		);
+
 		const stored = await stub.handleInbound({
 			phoneNumberId,
 			contact: contactsByWaId.get(inbound.from),
 			message: inbound,
 			receivedAt: message.receivedAt,
 			// The bot is going to answer, so the customer should not also get
-			// the automated reply in the same moment.
-			autoReply: !botFronted,
+			// the automated reply in the same moment. Nor is a survey answer
+			// something to reply to automatically.
+			autoReply: !botFronted && !surveyAnswer,
+			reopen: !surveyAnswer,
 		});
+
+		if (surveyAnswer) {
+			// Only the first answer counts; a duplicate webhook or a second
+			// score finds the survey already answered and changes nothing.
+			if (!stored.duplicate) {
+				await surveys.recordResponse({
+					conversationId,
+					score: surveyAnswer.score,
+					comment: surveyAnswer.comment,
+					respondedAt: waTimestampToIso(inbound.timestamp, message.receivedAt),
+				});
+			}
+			// The message is in the conversation for anyone reading it. It is
+			// not classified — a score is not an enquiry — and the bot does
+			// not see it.
+			continue;
+		}
 
 		// Classify the message and open whatever record it implies — a rate
 		// enquiry becomes a lead before an agent is free, a claim becomes a
@@ -134,6 +171,7 @@ export async function processWebhookMessage(
 					: null,
 			},
 			conversation: stub,
+			reopened: stored.reopened,
 		});
 	}
 
@@ -163,6 +201,43 @@ export async function processWebhookMessage(
 
 	for (const error of value.errors ?? []) {
 		console.error("webhook-level error from Meta", error);
+	}
+}
+
+/**
+ * The customer's score, when this message answers a survey still open on the
+ * conversation. Null for everything else, including a reply that does not
+ * read as a score: "actually I have another question" starts a conversation
+ * and is handled as one.
+ */
+async function answerToOpenSurvey(
+	surveys: CsatStore,
+	conversationId: string,
+	message: {
+		text?: { body: string };
+		button?: { payload: string; text: string };
+		interactive?: { button_reply?: { id: string; title: string } };
+	},
+	now: Date = new Date(),
+): Promise<SurveyResponse | null> {
+	const raw = message.text?.body ?? message.button?.text ?? "";
+	const payload =
+		message.interactive?.button_reply?.id ?? message.button?.payload ?? null;
+	// Cheap test first: most messages are not a number or a csat: button, and
+	// those need no database read at all.
+	if (!parseSurveyReply(raw, payload)) return null;
+	try {
+		const survey = await surveys.openSurvey(conversationId);
+		if (!survey || !surveyStillOpen(survey.sent_at, now)) return null;
+		return parseSurveyReply(raw, payload);
+	} catch (error) {
+		// A survey table that cannot be read must not stop the customer's
+		// message being handled. It falls through as an ordinary message.
+		console.error("could not check for an open survey", {
+			conversationId,
+			error: error instanceof Error ? error.message : String(error),
+		});
+		return null;
 	}
 }
 

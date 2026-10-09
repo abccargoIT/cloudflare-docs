@@ -18,7 +18,7 @@ import {
 	templateForMilestone,
 } from "./lifecycle.ts";
 import { lifecycleFor } from "./customer-lifecycle.ts";
-import { ticketDueDates } from "./sla.ts";
+import { SlaPolicyStore } from "./sla-store.ts";
 import { classifyIntent, outcomeFor, ticketTypeFor } from "./intent.ts";
 import type {
 	BookingRow,
@@ -60,9 +60,11 @@ function id(prefix: string): string {
 
 export class CrmService {
 	private readonly repo: CrmRepository;
+	private readonly sla: SlaPolicyStore;
 
 	constructor(db: D1Database) {
 		this.repo = new CrmRepository(db);
+		this.sla = new SlaPolicyStore(db);
 	}
 
 	get repository(): CrmRepository {
@@ -551,7 +553,20 @@ export class CrmService {
 		const nowIso = now.toISOString();
 		const ticketId = id("tkt");
 		const ref = await this.repo.nextRef("ticket");
-		const due = ticketDueDates(input.region, input.type, input.priority, now);
+		// Through the owning team's policy where there is one — before this,
+		// a supervisor could set UAE Support to five minutes and every ticket
+		// would still have been given the platform's thirty. The team is the
+		// conversation's, which after a transfer may be another region's.
+		const teamId = input.conversationId
+			? await this.sla.teamForConversation(input.conversationId)
+			: null;
+		const due = await this.sla.dueDates({
+			region: input.region,
+			type: input.type,
+			priority: input.priority,
+			teamId,
+			now,
+		});
 
 		await this.repo.createTicket({
 			id: ticketId,

@@ -199,8 +199,10 @@ group"** from the wireframe. The runtime hands over to a queue but does not
 choose a group inside it, because who gets what is a routing rule ABC Cargo
 has not written down. A button that picks arbitrarily is worse than no button.
 
-**Recommendation:** do B1–B3 next, before adding any further modules. The
-platform currently knows how to do more than it can actually do.
+**Update, 9 October 2026: B1–B3 are done** and verified locally, along with
+the survey sweep (off by default) and survey answer capture. The work also
+found and fixed a defect that would have made every WhatsApp send fail in
+production. See [module-wiring.md](module-wiring.md). Nothing was deployed.
 
 ---
 
@@ -219,7 +221,7 @@ One account, on **Workers Paid**. Inside it:
 | 5   | Queue          | `abc-whatsapp-webhooks-dlq`   | Dead letters, after 5 failed attempts                                       |
 | 6   | Durable Object | `Conversation` (SQLite)       | One per customer conversation; serialises concurrent webhooks               |
 | 7   | Custom Domain  | `engage.abccargosupport.com`  | The stable webhook callback URL                                             |
-| 8   | Cron trigger   | every minute                  | The broadcast pacer, and (after B3) the bot fallback sweep                  |
+| 8   | Cron trigger   | every minute                  | The broadcast pacer, the bot fallback sweep and the survey pass             |
 
 The zone is already active in the ABC Cargo Cloudflare account and
 `engage.abccargosupport.com` already resolves through the Cloudflare proxy,
@@ -369,5 +371,5 @@ Answer **A1** (the repository) and **A3** (the Freshchat exports). A1 unblocks
 meaningful CI and a sane working tree; A3 unblocks everything about replacing
 the live service.
 
-Meanwhile, say the word and I will do **B1–B3**, which needs nothing from you
-and touches nothing live.
+B1–B3 are done (see [module-wiring.md](module-wiring.md)); nothing in them
+touched anything live.

@@ -46,6 +46,12 @@ export interface InboundEvent {
 	 * Defaults to the behaviour that existed before the bot did: reply here.
 	 */
 	autoReply?: boolean;
+	/**
+	 * False when the message answers a satisfaction survey. A score sent
+	 * after resolution is not a new enquiry, and reopening the conversation
+	 * would put it back in an agent's queue for nothing. Defaults to true.
+	 */
+	reopen?: boolean;
 }
 
 export interface ConversationInit {
@@ -107,7 +113,7 @@ export class Conversation extends DurableObject<Env> {
 
 	async handleInbound(
 		event: InboundEvent,
-	): Promise<{ duplicate: boolean; autoReplied: boolean }> {
+	): Promise<{ duplicate: boolean; autoReplied: boolean; reopened: boolean }> {
 		const region = this.requireRegion(event.phoneNumberId);
 		const message = event.message;
 		const state = await this.ensureState(
@@ -138,7 +144,7 @@ export class Conversation extends DurableObject<Env> {
 		);
 		if (!inserted) {
 			// Meta retried a webhook we already processed.
-			return { duplicate: true, autoReplied: false };
+			return { duplicate: true, autoReplied: false, reopened: false };
 		}
 
 		// Customer message opens / extends the 24-hour service window.
@@ -146,7 +152,11 @@ export class Conversation extends DurableObject<Env> {
 			waTimestamp.getTime() + SERVICE_WINDOW_MS,
 		).toISOString();
 		state.windowExpiresAt = windowExpiresAt;
-		if (state.status === "resolved") state.status = "open";
+		// Whether this message brought a resolved conversation back. The bot
+		// needs to know: a handover that was resolved is finished, and the
+		// customer writing again is a new enquiry for the bot to greet.
+		const reopened = state.status === "resolved" && event.reopen !== false;
+		if (reopened) state.status = "open";
 
 		await this.repo.upsertContact(
 			state.waId,
@@ -162,6 +172,7 @@ export class Conversation extends DurableObject<Env> {
 			windowExpiresAt,
 			inboundAt: nowIso,
 			preview,
+			reopen: event.reopen !== false,
 		});
 		await this.saveState(state);
 		await this.ctx.storage.setAlarm(new Date(windowExpiresAt).getTime());
@@ -176,10 +187,10 @@ export class Conversation extends DurableObject<Env> {
 		}
 
 		if (event.autoReply === false)
-			return { duplicate: false, autoReplied: false };
+			return { duplicate: false, autoReplied: false, reopened };
 
 		const reason = await this.autoReplyReason(state, region, receivedAt);
-		if (!reason) return { duplicate: false, autoReplied: false };
+		if (!reason) return { duplicate: false, autoReplied: false, reopened };
 
 		const text = buildAutoReply({
 			region,
@@ -192,7 +203,7 @@ export class Conversation extends DurableObject<Env> {
 		state.lastAutoReplyAt = nowIso;
 		await this.saveState(state);
 		await this.repo.audit("auto", "auto_reply", state.id, { reason }, nowIso);
-		return { duplicate: false, autoReplied: true };
+		return { duplicate: false, autoReplied: true, reopened };
 	}
 
 	// -------------------------------------------------------------------- bot
@@ -208,6 +219,22 @@ export class Conversation extends DurableObject<Env> {
 	async sendBotText(text: string): Promise<{ messageId: string }> {
 		const state = await this.requireState();
 		const messageId = await this.sendTextInternal(state, text, "bot");
+		return { messageId };
+	}
+
+	/**
+	 * Sends a satisfaction survey question.
+	 *
+	 * Attributed to "survey" rather than "bot" or a person, so deflection does
+	 * not count it as a colleague replying and the history shows plainly what
+	 * it was. Free text is only lawful inside the 24-hour service window, so
+	 * outside it this refuses rather than sends; a template is the only way to
+	 * ask then, and none is approved yet.
+	 */
+	async sendSurveyText(text: string): Promise<{ messageId: string }> {
+		const state = await this.requireState();
+		if (!this.windowOpen(state)) throw new WindowClosedError();
+		const messageId = await this.sendTextInternal(state, text, "survey");
 		return { messageId };
 	}
 

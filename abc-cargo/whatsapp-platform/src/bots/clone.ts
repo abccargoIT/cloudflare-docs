@@ -101,9 +101,11 @@ export function cloneFlowToRegion(
 		id: options.newId ?? `${flow.id}-${toRegion.id}`,
 		regionId: toRegion.id,
 		name: options.name ?? `${flow.name} (${toRegion.label})`,
-		// A clone starts at version 1 in its new region: it shares no history
-		// with the original, and carrying the version over would make two
-		// unrelated flows look like the same one at the same revision.
+		// The source's version is not carried over: the clone shares no history
+		// with the original, and keeping it would make two unrelated flows look
+		// like the same one at the same revision. 1 is a placeholder — when the
+		// clone is saved, `BotService.saveDraft` gives it the next version in
+		// the target region, because versions are unique per region.
 		version: 1,
 		// Never published. See the file comment.
 		status: "draft",

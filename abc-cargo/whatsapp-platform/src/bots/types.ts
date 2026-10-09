@@ -195,7 +195,8 @@ export type BotEffect =
 /** One line of the record of why the bot did what it did. */
 export interface BotTrace {
 	stepId: string;
-	kind: StepKind | "escape" | "budget";
+	/** `timeout` is the scheduled sweep acting on a silent session. */
+	kind: StepKind | "escape" | "budget" | "timeout";
 	note: string;
 }
 

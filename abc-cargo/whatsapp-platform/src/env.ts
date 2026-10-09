@@ -32,6 +32,13 @@ export interface Env {
 	 * deploying the Worker.
 	 */
 	BROADCASTS_ENABLED?: string;
+	/**
+	 * "true" allows satisfaction surveys to be sent after a conversation is
+	 * resolved. Anything else, including unset, and none is sent. Same
+	 * posture as broadcasts: asking customers to rate us is a decision, not
+	 * something a deploy should start doing on its own.
+	 */
+	CSAT_SURVEYS_ENABLED?: string;
 
 	// Secrets
 	WHATSAPP_ACCESS_TOKEN: string;
