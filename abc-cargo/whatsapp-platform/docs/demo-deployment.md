@@ -135,8 +135,45 @@ worth knowing about before somebody runs a deploy out of habit.
 
 ## 9. Status
 
-Prepared, dry-run verified, committed and pushed. Awaiting the four commands in
-§4, which need your Cloudflare login.
+**Deployed, and redeployed.**
+
+### 9.1 Deployment record
+
+| Date           | What                                                                                                                                           | By         | Verified                         |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------- | -------------------------------- |
+| 8 October 2026 | First deploy of `abc-cargo-engage-demo`, from `c0bb19c`                                                                                        | Head of IT | Head of IT                       |
+| 9 October 2026 | Redeployed with the current page — palette, reports, bot fallback, service-clock fix. **The hostname was switched to `abc-cargo-engage-demo`** | Head of IT | Head of IT; outside checks below |
+
+### 9.2 What was checked from outside, 9 October 2026
+
+From an unauthenticated client, after the redeploy:
+
+| Path                 | Result                                        |
+| -------------------- | --------------------------------------------- |
+| `/`                  | 302 to `white-rice-9a5e.cloudflareaccess.com` |
+| `/health`            | 302 to the same                               |
+| `/webhooks/whatsapp` | 302 to the same                               |
+
+So the hostname is up, its certificate is valid, and **every path is behind
+Cloudflare Access — including the webhook path, which is correct until
+cutover.** What sits _behind_ Access cannot be seen without signing in, so
+which version is serving rests on the Head of IT's confirmation rather than on
+an independent check.
+
+### 9.3 One loose end
+
+The Head of IT reported that the hostname was _switched_ to this Worker, which
+means a different Worker held it before. That one still exists in the account,
+no longer attached to anything. It is harmless where it is, but worth
+identifying in **Workers & Pages** and deleting if it is not needed, so that
+nobody re-attaches it to the hostname by accident. This also closes the open
+question from 8 October about which Worker was serving
+`engage.abccargosupport.com`: it is now `abc-cargo-engage-demo`.
+
+### 9.4 For the next update
+
+Run `tools/deploy-demo.ps1` again. It pulls the latest, refuses anything stale,
+dry-runs, and deploys only on `DEPLOY DEMO`.
 
 The standing hold on everything else — Meta, the WABA, the live numbers,
 Freshworks, the remote database — remains in force. This approval covers the

@@ -15,7 +15,14 @@ demonstration, hosted**. The production values — phone number IDs, Meta
 credentials — will be supplied separately at go-live. Parts A to C below cover
 production and can wait.
 
-## 0.1 It is already hosted — but it is out of date
+## 0.1 It is hosted — and as of 9 October 2026, current
+
+> **Update, 9 October 2026:** the Head of IT redeployed the demonstration and
+> switched the hostname to `abc-cargo-engage-demo`. The table below describes
+> the state _before_ that redeploy and is kept as the record of why it was
+> needed. See `docs/demo-deployment.md` §9.
+
+### Before the redeploy
 
 The demonstration Worker `abc-cargo-engage-demo` is deployed on
 `engage.abccargosupport.com`, behind Cloudflare Access. It was deployed from
