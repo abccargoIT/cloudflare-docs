@@ -129,11 +129,25 @@ export function inlineModules(root, modules, rebuildCommand) {
 			minify: false,
 		});
 
-		const engine = [
-			INTERFACE_GUARD,
-			"",
-			result.outputFiles[0].text.trim(),
-		].join("\n");
+		// esbuild labels the entry module with its path, and that path is a
+		// fresh random temp directory on every build. Left in, it made every
+		// rebuild differ from the committed page by one comment line, so "is
+		// the committed build current?" could never be answered by a clean
+		// diff, and a deploy script checking for uncommitted changes would
+		// stop for no real reason. The label is replaced with a stable one.
+		//
+		// The whole comment is normalised, not just the directory: esbuild
+		// writes the path relative to the project, so the number of "../" in
+		// front of it depends on where the clone sits. A build on a Windows
+		// laptop and a build here would otherwise still differ.
+		const bundled = result.outputFiles[0].text
+			.trim()
+			.replace(
+				/\/\/ [^\n]*abc-engage-build-[A-Za-z0-9]+[\\/]entry\.ts/g,
+				"// <build>/entry.ts",
+			);
+
+		const engine = [INTERFACE_GUARD, "", bundled].join("\n");
 
 		const banner = [
 			"/*",

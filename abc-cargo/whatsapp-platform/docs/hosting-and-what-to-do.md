@@ -8,6 +8,88 @@
 
 ---
 
+# PART 0 — The demonstration, live (what was actually asked)
+
+The Head of IT clarified on 9 October 2026: "live" here means **the
+demonstration, hosted**. The production values — phone number IDs, Meta
+credentials — will be supplied separately at go-live. Parts A to C below cover
+production and can wait.
+
+## 0.1 It is already hosted — but it is out of date
+
+The demonstration Worker `abc-cargo-engage-demo` is deployed on
+`engage.abccargosupport.com`, behind Cloudflare Access. It was deployed from
+commit `c0bb19c` on 8 October.
+
+**Five commits have landed since, and none of them is on the hosted demo:**
+
+| Commit    | What the hosted demo is missing                                          |
+| --------- | ------------------------------------------------------------------------ |
+| `0fc94ed` | Access exemption procedure (document only)                               |
+| `91dfd0e` | Per-team service targets, cross-region transfer, CSAT, bot deflection    |
+| `c9d3ed4` | **The red, white and black palette**, charts, report library, CSV export |
+| `6a0075c` | Bot fallback, flow cloning, **the service-clock fix**                    |
+| `3a88c08` | This plan (document only)                                                |
+
+So anyone opening the hosted demo today sees the old colours, no charts, and
+the service clock that marks tickets late too early. That is very probably why
+the work has looked unfinished from the outside: the repository has moved on
+and the hosted page has not.
+
+## 0.2 What to host — nothing new
+
+No new resource, no new cost, no plan change. The same demo-only Worker is
+redeployed with the current page. Verified by a dry run on 9 October 2026:
+
+|                          |                                                               |
+| ------------------------ | ------------------------------------------------------------- |
+| Worker                   | `abc-cargo-engage-demo` (unchanged)                           |
+| Upload                   | 330 KiB, 86 KiB gzipped (was 246 / 62)                        |
+| Bindings                 | **One** — `DEPLOY_NOTE`. No database, bucket, queue or secret |
+| Can it reach a customer? | **No.** It holds no credentials of any kind                   |
+
+## 0.3 What to do
+
+Run `tools/deploy-demo.ps1` from the project folder, in a Windows PowerShell
+console (not ISE):
+
+```txt
+cd <your clone>\abc-cargo\whatsapp-platform
+powershell.exe -ExecutionPolicy Bypass -File .\tools\deploy-demo.ps1
+```
+
+It checks the folder, the branch and that you have no uncommitted work; pulls
+the latest with `--ff-only`; refuses to deploy anything older than `6a0075c`;
+dry-runs; shows what is live now so it can be put back; and deploys only after
+you type `DEPLOY DEMO`. It touches nothing but the demo page.
+
+**Rollback**, if the new page looks wrong:
+
+```txt
+npx wrangler rollback --name abc-cargo-engage-demo -m "Revert demo"
+```
+
+With no version id it returns to the version that was live before.
+
+The script was written to Windows PowerShell 5.1 rules and checked for
+5.1-incompatible syntax and non-ASCII characters, but **it has not been
+executed** — there is no PowerShell in the environment it was written in. If
+any step stops, send IT the output.
+
+## 0.4 Letting management see it
+
+The demo sits behind Cloudflare Access, so a viewer must be allowed by its
+policy. To show it to management, add their email addresses (or an
+`@abccargo.ae` rule, if everyone should see it) to the Allow policy on the
+`engage.abccargosupport.com` Access application, in **Zero Trust → Access
+controls → Applications**.
+
+That is a change to a production access policy, so it is the Head of IT's to
+make. It does not need the webhook exemption in Part C — that is for Meta's
+servers at cutover, not for people.
+
+---
+
 ## 1. Executive summary
 
 Engage needs **one Cloudflare account on the Workers Paid plan**, costing a
