@@ -1074,6 +1074,8 @@
  *   src/bots/validate.ts
  *   src/bots/parse.ts
  *   src/bots/runtime.ts
+ *   src/bots/escalation.ts
+ *   src/bots/clone.ts
  *   src/bots/templates.ts
  *   src/bots/preview.ts
  *   src/broadcasts/types.ts
@@ -1139,7 +1141,7 @@ var ENGINE = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../../../../../tmp/abc-engage-build-8wEkFz/entry.ts
+  // ../../../../../tmp/abc-engage-build-JOZOcO/entry.ts
   var entry_exports = {};
   __export(entry_exports, {
     ACTIVITY_KINDS: () => ACTIVITY_KINDS,
@@ -1153,6 +1155,7 @@ var ENGINE = (() => {
     CSAT_MIN: () => CSAT_MIN,
     CUSTOMER_STAGES: () => CUSTOMER_STAGES,
     CUSTOMER_STAGE_LABELS: () => CUSTOMER_STAGE_LABELS,
+    DEFAULT_FALLBACK_MINUTES: () => DEFAULT_FALLBACK_MINUTES,
     DEFAULT_THRESHOLDS: () => DEFAULT_THRESHOLDS,
     DEFAULT_TICKET_TARGETS: () => DEFAULT_TICKET_TARGETS,
     DEFAULT_TRACKING_PATTERN: () => DEFAULT_TRACKING_PATTERN,
@@ -1194,6 +1197,7 @@ var ENGINE = (() => {
     TICKET_PRIORITIES: () => TICKET_PRIORITIES,
     TICKET_STATUSES: () => TICKET_STATUSES,
     TICKET_TYPES: () => TICKET_TYPES,
+    TIER2_AFTER_MINUTES: () => TIER2_AFTER_MINUTES,
     TRACKING_MAX_DIGITS: () => TRACKING_MAX_DIGITS,
     TRACKING_MIN_DIGITS: () => TRACKING_MIN_DIGITS,
     TRANSPORT_MODES: () => TRANSPORT_MODES,
@@ -1201,6 +1205,7 @@ var ENGINE = (() => {
     abandonmentHotspots: () => abandonmentHotspots,
     addBusinessMinutes: () => addBusinessMinutes,
     advances: () => advances,
+    applyFallback: () => applyFallback,
     asksForAPerson: () => asksForAPerson,
     assertChannelUnchanged: () => assertChannelUnchanged,
     assertLeadTransition: () => assertLeadTransition,
@@ -1210,6 +1215,7 @@ var ENGINE = (() => {
     buildAutoReply: () => buildAutoReply,
     buildRef: () => buildRef,
     buildStarterFlow: () => buildStarterFlow,
+    businessMinutesBetween: () => businessMinutesBetween,
     canAccessRegion: () => canAccessRegion,
     canAdminister: () => canAdminister,
     canAdvanceLead: () => canAdvanceLead,
@@ -1236,6 +1242,7 @@ var ENGINE = (() => {
     canViewDashboard: () => canViewDashboard,
     canViewReports: () => canViewReports,
     checkAdministratorRemains: () => checkAdministratorRemains,
+    checkFallback: () => checkFallback,
     checkLocation: () => checkLocation,
     checkMedia: () => checkMedia,
     checkNotSelfDemotion: () => checkNotSelfDemotion,
@@ -1247,6 +1254,8 @@ var ENGINE = (() => {
     classifyIntent: () => classifyIntent,
     classifyRef: () => classifyRef,
     classifySession: () => classifySession,
+    cloneFlowToRegion: () => cloneFlowToRegion,
+    cloneNeedsReview: () => cloneNeedsReview,
     compileAudience: () => compileAudience,
     countOnlineIn: () => countOnlineIn,
     coversRegion: () => coversRegion,
@@ -1870,6 +1879,7 @@ var ENGINE = (() => {
         return new Date(cursor.getTime() + remaining * MINUTE);
       }
       remaining -= availableToday;
+      cursor = new Date(cursor.getTime() + availableToday * MINUTE);
       cursor = advanceToNextOpen(cursor, closeAt, openAt);
       if (remaining > dayCapacity * MAX_DAYS_SCANNED) break;
     }
@@ -2623,8 +2633,8 @@ var ENGINE = (() => {
         );
       }
     }
-    const windowOpen = !!input.windowExpiresAt && Date.parse(input.windowExpiresAt) > now.getTime();
-    if (windowOpen) return { send: true, channel: "free_text" };
+    const windowOpen2 = !!input.windowExpiresAt && Date.parse(input.windowExpiresAt) > now.getTime();
+    if (windowOpen2) return { send: true, channel: "free_text" };
     if (input.templateAvailable) return { send: true, channel: "template" };
     return refuse(
       "no_template_outside_window",
@@ -4289,6 +4299,293 @@ var ENGINE = (() => {
     return first ? `${type}: ${first.slice(0, 120)}` : `${type} raised on WhatsApp`;
   }
 
+  // src/bots/escalation.ts
+  var MINUTE2 = 6e4;
+  var DAY_MINUTES3 = 1440;
+  var MAX_DAYS_SCANNED2 = 400;
+  var DEFAULT_FALLBACK_MINUTES = 10;
+  var TIER2_AFTER_MINUTES = 120;
+  function checkFallback(input) {
+    const { session, step, region, now } = input;
+    const idle = (reason, silentMinutes2 = 0, remainingMinutes = 0) => ({
+      escalate: false,
+      tier: "tier1",
+      queue: null,
+      silentMinutes: silentMinutes2,
+      remainingMinutes,
+      templateOnly: false,
+      reason
+    });
+    if (session.endedAt !== null || session.endedReason !== null) {
+      return idle("already_ended");
+    }
+    if (session.stepId === null) return idle("already_ended");
+    const waiting = step === null || step.kind === "ask" || step.kind === "menu";
+    if (!waiting) return idle("not_waiting");
+    const silentMinutes = businessMinutesBetween(
+      region,
+      new Date(Date.parse(session.updatedAt)),
+      now
+    );
+    const wallClockHours = (now.getTime() - Date.parse(session.updatedAt)) / 36e5;
+    if (wallClockHours >= SESSION_TTL_HOURS) {
+      return idle("session_expired", silentMinutes);
+    }
+    const threshold = resolveFallbackMinutes(step, input.fallbackMinutes);
+    const templateOnly = !windowOpen(input.windowExpiresAt, now);
+    if (input.escalatedAt) {
+      if (input.escalatedTier === "tier2") return idle("already_ended");
+      const heldMinutes = businessMinutesBetween(
+        region,
+        new Date(Date.parse(input.escalatedAt)),
+        now
+      );
+      if (heldMinutes >= TIER2_AFTER_MINUTES) {
+        return {
+          escalate: true,
+          tier: "tier2",
+          queue: tier2Queue(region, step),
+          silentMinutes,
+          remainingMinutes: 0,
+          templateOnly,
+          reason: "tier1_held_too_long"
+        };
+      }
+      return idle("waiting", silentMinutes, TIER2_AFTER_MINUTES - heldMinutes);
+    }
+    if (silentMinutes < threshold) {
+      return idle("waiting", silentMinutes, threshold - silentMinutes);
+    }
+    return {
+      escalate: true,
+      tier: "tier1",
+      queue: step && step.kind === "menu" ? null : queueFor(step),
+      silentMinutes,
+      remainingMinutes: 0,
+      templateOnly,
+      reason: "silent_too_long"
+    };
+  }
+  function applyFallback(session, decision, now) {
+    if (!decision.escalate) return { session, effects: [] };
+    const ended = {
+      ...session,
+      stepId: null,
+      endedAt: now.toISOString(),
+      endedReason: "handover",
+      updatedAt: now.toISOString()
+    };
+    return {
+      session: ended,
+      effects: [
+        {
+          kind: "handover",
+          queue: decision.queue,
+          reason: "handover",
+          // The answers already collected travel with it, so the agent
+          // does not open by asking the customer the same questions.
+          slots: { ...session.slots }
+        }
+      ]
+    };
+  }
+  function resolveFallbackMinutes(step, override) {
+    const fromStep = step && (step.kind === "ask" || step.kind === "menu") ? step.fallbackMinutes : void 0;
+    const candidate = fromStep ?? override ?? DEFAULT_FALLBACK_MINUTES;
+    if (!Number.isFinite(candidate) || candidate <= 0) {
+      return DEFAULT_FALLBACK_MINUTES;
+    }
+    return Math.round(candidate);
+  }
+  function queueFor(step) {
+    if (step && step.kind === "handover") return step.queue ?? null;
+    return null;
+  }
+  function tier2Queue(region, step) {
+    const named = step && step.kind === "handover" ? step.queue : null;
+    return named ?? `${region.id}-tier2`;
+  }
+  function windowOpen(expiresAt, now) {
+    if (!expiresAt) return false;
+    const t = Date.parse(expiresAt);
+    return Number.isFinite(t) && t > now.getTime();
+  }
+  function businessMinutesBetween(region, from, to) {
+    if (!(from instanceof Date) || !(to instanceof Date)) return 0;
+    if (!Number.isFinite(from.getTime()) || !Number.isFinite(to.getTime())) {
+      return 0;
+    }
+    if (to.getTime() <= from.getTime()) return 0;
+    const { days, start, end } = region.businessHours;
+    if (days.length === 0) return 0;
+    const openAt = toMinutes(start);
+    const closeAt = toMinutes(end);
+    if (closeAt <= openAt) return 0;
+    let total = 0;
+    let cursor = new Date(from.getTime());
+    for (let guard = 0; guard <= MAX_DAYS_SCANNED2; guard++) {
+      if (cursor.getTime() >= to.getTime()) break;
+      const { weekday, minutes } = localClock(cursor, region.timezone);
+      if (!days.includes(weekday)) {
+        cursor = nextLocalMidnight(cursor, minutes);
+        continue;
+      }
+      const openInstant = cursor.getTime() + (openAt - minutes) * MINUTE2;
+      const closeInstant = cursor.getTime() + (closeAt - minutes) * MINUTE2;
+      const segmentStart = Math.max(
+        openInstant,
+        cursor.getTime(),
+        from.getTime()
+      );
+      const segmentEnd = Math.min(closeInstant, to.getTime());
+      if (segmentEnd > segmentStart) {
+        total += (segmentEnd - segmentStart) / MINUTE2;
+      }
+      cursor = nextLocalMidnight(cursor, minutes);
+    }
+    return Math.floor(total);
+  }
+  function nextLocalMidnight(cursor, localMinutes) {
+    return new Date(cursor.getTime() + (DAY_MINUTES3 - localMinutes) * MINUTE2);
+  }
+
+  // src/bots/clone.ts
+  var CURRENCIES = ["AED", "SAR", "GBP", "USD", "OMR"];
+  function cloneFlowToRegion(flow, fromRegion, toRegion, options = {}) {
+    if (flow.regionId !== fromRegion.id) {
+      return {
+        ok: false,
+        error: `flow ${flow.id} belongs to region ${flow.regionId}, not ${fromRegion.id}`
+      };
+    }
+    if (fromRegion.id === toRegion.id) {
+      return { ok: false, error: "a flow cannot be cloned onto its own region" };
+    }
+    if (flow.steps.length === 0) {
+      return { ok: false, error: "the flow has no steps to clone" };
+    }
+    const warnings = [];
+    const steps = flow.steps.map(
+      (step) => cloneStep(step, fromRegion, toRegion, warnings)
+    );
+    if (fromRegion.language !== toRegion.language) {
+      warnings.push({
+        stepId: null,
+        code: "language_differs",
+        message: `${fromRegion.label} is configured for ${fromRegion.language} and ${toRegion.label} for ${toRegion.language}; the text is not translated by cloning`
+      });
+    }
+    const clone = {
+      id: options.newId ?? `${flow.id}-${toRegion.id}`,
+      regionId: toRegion.id,
+      name: options.name ?? `${flow.name} (${toRegion.label})`,
+      // A clone starts at version 1 in its new region: it shares no history
+      // with the original, and carrying the version over would make two
+      // unrelated flows look like the same one at the same revision.
+      version: 1,
+      // Never published. See the file comment.
+      status: "draft",
+      entryStepId: flow.entryStepId,
+      steps
+    };
+    return { ok: true, flow: clone, warnings, validation: validateFlow(clone) };
+  }
+  function cloneStep(step, fromRegion, toRegion, warnings) {
+    const copy = structuredClone(step);
+    if (copy.kind === "handover" && copy.queue) {
+      copy.queue = remapQueue(
+        copy.queue,
+        fromRegion,
+        toRegion,
+        copy.id,
+        warnings
+      );
+    }
+    for (const text of textsOf2(copy)) {
+      inspectText(text, copy.id, fromRegion, toRegion, warnings);
+    }
+    return copy;
+  }
+  function remapQueue(queue, fromRegion, toRegion, stepId, warnings) {
+    if (queue === fromRegion.id) {
+      warnings.push({
+        stepId,
+        code: "queue_remapped",
+        message: `queue "${queue}" became "${toRegion.id}"; check that desk exists in ${toRegion.label}`
+      });
+      return toRegion.id;
+    }
+    const prefix = `${fromRegion.id}-`;
+    if (queue.startsWith(prefix)) {
+      const remapped = `${toRegion.id}-${queue.slice(prefix.length)}`;
+      warnings.push({
+        stepId,
+        code: "queue_remapped",
+        message: `queue "${queue}" became "${remapped}"; check that desk exists in ${toRegion.label}`
+      });
+      return remapped;
+    }
+    warnings.push({
+      stepId,
+      code: "queue_unrecognised",
+      message: `queue "${queue}" does not name a region, so it was left as it is \u2014 it will route ${toRegion.label} customers to wherever that queue lives`
+    });
+    return queue;
+  }
+  function textsOf2(step) {
+    const out = [];
+    if ("text" in step && typeof step.text === "string") out.push(step.text);
+    if ("retryText" in step && typeof step.retryText === "string") {
+      out.push(step.retryText);
+    }
+    if (step.kind === "menu") {
+      for (const option of step.options) out.push(option.label);
+    }
+    return out;
+  }
+  function inspectText(text, stepId, fromRegion, toRegion, warnings) {
+    const seen = new Set(
+      warnings.filter((w) => w.stepId === stepId).map((w) => w.code)
+    );
+    const add = (code, message) => {
+      if (seen.has(code)) return;
+      seen.add(code);
+      warnings.push({ stepId, code, message });
+    };
+    const digits = fromRegion.displayNumber.replace(/\D/g, "");
+    if (digits && text.replace(/\D/g, "").includes(digits)) {
+      add(
+        "mentions_source_number",
+        `mentions ${fromRegion.displayNumber}, which is ${fromRegion.label}'s number`
+      );
+    }
+    for (const code of CURRENCIES) {
+      if (new RegExp(`\\b${code}\\b`).test(text)) {
+        add("mentions_currency", `quotes a price in ${code}`);
+        break;
+      }
+    }
+    if (/\b([01]?\d|2[0-3]):[0-5]\d\b/.test(text) || /\b(?:am|pm)\b/i.test(text)) {
+      add(
+        "mentions_hours",
+        `mentions a time of day; ${toRegion.label} is open ${toRegion.businessHours.start}-${toRegion.businessHours.end} on a different week`
+      );
+    }
+    const names = [fromRegion.label, fromRegion.timezone.split("/").pop() ?? ""].filter(Boolean).map((n) => n.replace(/_/g, " "));
+    for (const name of names) {
+      if (new RegExp(`\\b${escapeRegExp(name)}\\b`, "i").test(text)) {
+        add("mentions_region_name", `mentions "${name}"`);
+        break;
+      }
+    }
+  }
+  function escapeRegExp(value) {
+    return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  }
+  function cloneNeedsReview(result) {
+    return !result.validation.ok || result.warnings.length > 0;
+  }
+
   // src/bots/templates.ts
   function buildStarterFlow(region) {
     const steps = [
@@ -5155,7 +5452,7 @@ var ENGINE = (() => {
 					const raw = window.localStorage.getItem(STORAGE_KEY);
 					if (!raw) return null;
 					const parsed = JSON.parse(raw);
-					return parsed && parsed.version === 4 ? parsed : null;
+					return parsed && parsed.version === 5 ? parsed : null;
 				} catch {
 					return null;
 				}
@@ -5299,7 +5596,7 @@ var ENGINE = (() => {
 			function seed() {
 				const t = (iso) => iso;
 				const s = {
-					version: 4,
+					version: 5,
 					regionId: "uae",
 					view: "inbox",
 					selectedConversationId: null,
@@ -5419,6 +5716,8 @@ var ENGINE = (() => {
 					// real 41% once abandonment is counted honestly in the denominator.
 					botSessions: seedBotSessions(),
 					dailyVolume: seedDailyVolume(),
+					// Which region the Bot screen is previewing a clone into.
+					cloneTarget: null,
 					inboxFilter: "all",
 					selectedCustomerId: null,
 					botScript: null,
@@ -7613,6 +7912,80 @@ var ENGINE = (() => {
 				 * against each other, and where they do not correspond it says so
 				 * rather than inventing a block.
 				 */
+				/*
+				 * Three sessions sitting at the same waiting step, silent for
+				 * different lengths of time. The decisions are the platform's
+				 * — ENGINE.checkFallback — not the screen's, so the middle row
+				 * stops counting when the region closes.
+				 */
+				const waitingStep = flow.steps.find(
+					(st) => st.kind === "ask" || st.kind === "menu",
+				);
+				/*
+				 * The explanation is DERIVED from the decision rather than
+				 * written beside it. A static note contradicted the live answer
+				 * the moment the clock moved after hours: the row read "past
+				 * it, goes to the desk" while the decision correctly read
+				 * "wait 10m", because out of hours no business minutes had
+				 * elapsed. A caption that can disagree with the thing it
+				 * captions is worse than no caption.
+				 */
+				const FALLBACK_NOTES = {
+					waiting: "still inside the threshold",
+					silent_too_long:
+						"past it — goes to the regional desk with the answers so far",
+					tier1_held_too_long: "Tier 1 has held it too long; Tier 2 takes it",
+					not_waiting: "not a step a customer is answering",
+					already_ended: "already handed over or finished",
+					session_expired:
+						"older than the service window; expired, not escalated",
+					customer_replied: "the customer came back",
+				};
+				const fallbackScenarios = [
+					{ label: "4 minutes ago", minutes: 4 },
+					{ label: "20 minutes ago", minutes: 20 },
+					{ label: "3 hours ago", minutes: 180 },
+				].map((sc) => {
+					const since = new Date(
+						now().getTime() - sc.minutes * 60000,
+					).toISOString();
+					const session = {
+						flowId: flow.id,
+						flowVersion: flow.version,
+						stepId: waitingStep ? waitingStep.id : null,
+						slots: { reference: "ABC-UAE-088210" },
+						invalidReplies: 0,
+						turns: 2,
+						startedAt: since,
+						updatedAt: since,
+						endedAt: null,
+						endedReason: null,
+					};
+					const decision = ENGINE.checkFallback({
+						session,
+						step: waitingStep ?? null,
+						region,
+						windowExpiresAt: new Date(
+							now().getTime() + 6 * 3600000,
+						).toISOString(),
+						now: now(),
+					});
+					return {
+						label: sc.label,
+						since,
+						decision,
+						note: FALLBACK_NOTES[decision.reason] ?? decision.reason,
+					};
+				});
+
+				/* The clone, if a destination has been picked. */
+				const cloneTarget = state.cloneTarget
+					? REGIONS.find((r) => r.id === state.cloneTarget)
+					: null;
+				const cloneOutcome = cloneTarget
+					? ENGINE.cloneFlowToRegion(flow, region, cloneTarget)
+					: null;
+
 				const BLOCK_NAMES = {
 					message: "Send message",
 					ask: "Ask question",
@@ -7635,10 +8008,16 @@ var ENGINE = (() => {
 										: step.kind === "create"
 											? step.create
 											: "";
+						// A waiting step is the only kind a fallback applies to.
+						const fallback =
+							step.kind === "ask" || step.kind === "menu"
+								? `fallback ${step.fallbackMinutes ?? ENGINE.DEFAULT_FALLBACK_MINUTES}m`
+								: "";
 						return `<div style="display:flex;gap:8px;align-items:baseline;padding:5px 0;border-top:1px solid var(--rule-soft)">
 							<span class="pill" style="min-width:140px">${esc(BLOCK_NAMES[step.kind] || step.kind)}</span>
 							<span class="mono" style="font-size:11.5px;color:var(--ink-3)">${esc(step.id)}</span>
 							<span class="muted" style="font-size:11.5px">${esc(detail)}</span>
+							${fallback ? `<span class="mono muted" style="font-size:11px;margin-left:auto">${esc(fallback)}</span>` : ""}
 						</div>`;
 					})
 					.join("");
@@ -7664,13 +8043,130 @@ var ENGINE = (() => {
 						<h2>Blocks in this flow</h2>
 						${blocks}
 						<p class="muted" style="font-size:12px;margin-top:10px">
-							The wireframe's palette also has <strong>Assign to group</strong>
-							and a <strong>fallback after 10 minutes</strong> to a second
-							tier, and a <strong>clone flow to another region</strong>
-							action. None of the three is built: the runtime hands over to a
-							queue but does not choose a group, has no timed fallback, and
-							flows are per region with no copy between them.
+							The wireframe's palette also has <strong>Assign to group</strong>,
+							a <strong>fallback after 10 minutes</strong> to a second tier, and
+							a <strong>clone flow to another region</strong> action. The
+							fallback and the clone are built — both are below.
+							<strong>Assign to group is not:</strong> the runtime hands over to
+							a queue but does not choose which group inside it, because who
+							gets what is a routing rule ABC Cargo has not written down yet,
+							and a button that picks arbitrarily is worse than no button.
 						</p>
+						<p class="muted" style="font-size:12px;margin-top:6px">
+							A waiting step shows its fallback below. Where a step sets none,
+							the platform default of
+							${ENGINE.DEFAULT_FALLBACK_MINUTES} minutes applies — the
+							wireframe's figure.
+						</p>
+					</section>
+
+					<section class="card">
+						<h2>Fallback and escalation <small>wireframe 1f, "fallback after 10m"</small></h2>
+						<p class="muted" style="margin:2px 0 10px">
+							A customer who stops replying used to sit at the question until
+							the session expired a day later and nobody looked at it. Now a
+							waiting step gives up after a set number of minutes and hands
+							the conversation to a person, carrying the answers already
+							collected so the agent does not re-ask them.
+						</p>
+						<div class="tablewrap"><table>
+							<thead><tr><th>Silent since</th><th>Business minutes</th><th>Decision</th><th>Then</th></tr></thead>
+							<tbody>
+								${fallbackScenarios
+									.map(
+										(s) => `<tr>
+									<td>${esc(s.label)}<div class="mono muted" style="font-size:11px">${esc(localDateTime(s.since, region.id))}</div></td>
+									<td class="mono">${s.decision.silentMinutes}</td>
+									<td>${
+										s.decision.escalate
+											? `<span class="pill pill-warn">escalate · ${esc(s.decision.tier)}</span>`
+											: `<span class="pill pill-open">wait ${s.decision.remainingMinutes}m</span>`
+									}</td>
+									<td class="muted" style="font-size:12px">${esc(s.note)}</td>
+								</tr>`,
+									)
+									.join("")}
+							</tbody>
+						</table></div>
+						<p class="muted" style="font-size:12px;margin-top:10px">
+							<strong>The timer runs in business minutes, not wall-clock.</strong>
+							A question asked five minutes before closing does not escalate
+							into an empty office at midnight; the clock pauses and resumes
+							when ${esc(region.label)} opens. Use
+							<strong>Jump to after hours</strong> in the top bar to watch the
+							middle row stop counting.
+						</p>
+						<p class="muted" style="font-size:12px;margin-top:6px">
+							A rescued conversation ends as a <strong>handover</strong>, not an
+							expiry, so it counts as escalated rather than abandoned on the
+							Reports screen. That moves numbers between buckets on purpose:
+							the bot no longer gets credit for losing somebody quietly.
+							Tier 2 is reached only after Tier 1 has held it
+							${ENGINE.TIER2_AFTER_MINUTES} business minutes, and there is no
+							tier 3 to invent.
+						</p>
+					</section>
+
+					<section class="card">
+						<h2>Clone this flow to another region</h2>
+						<p class="muted" style="margin:2px 0 10px">
+							The wireframe offers this as one button. It cannot be one, and
+							the table says why: the clone arrives as a <strong>draft</strong>
+							with everything that stops being true in the destination listed
+							for a person to read.
+						</p>
+						<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+							${REGIONS.filter((r) => r.id !== region.id)
+								.map(
+									(r) =>
+										`<button type="button" class="ghost" data-clone="${esc(r.id)}" aria-pressed="${state.cloneTarget === r.id}">
+											to ${esc(r.label)}
+										</button>`,
+								)
+								.join("")}
+						</div>
+						${
+							cloneOutcome === null
+								? `<p class="muted">Pick a destination to see what cloning would flag.</p>`
+								: cloneOutcome.ok === false
+									? `<p class="muted" style="color:var(--brand-ink)">Refused: ${esc(cloneOutcome.error)}</p>`
+									: `<div class="tablewrap"><table>
+											<thead><tr><th>Step</th><th>What</th><th>Detail</th></tr></thead>
+											<tbody>
+												${
+													cloneOutcome.warnings.length
+														? cloneOutcome.warnings
+																.map(
+																	(w) => `<tr>
+															<td class="mono">${esc(w.stepId ?? "flow")}</td>
+															<td><span class="pill ${w.code.startsWith("queue") ? "pill-critical" : "pill-warn"}">${esc(w.code.replace(/_/g, " "))}</span></td>
+															<td class="muted" style="font-size:12px">${esc(w.message)}</td>
+														</tr>`,
+																)
+																.join("")
+														: `<tr><td colspan="3" class="muted">Nothing flagged — unusual, and worth re-reading anyway.</td></tr>`
+												}
+											</tbody>
+										</table></div>
+										<p class="muted" style="font-size:12px;margin-top:10px">
+											Clone would be saved as
+											<span class="mono">${esc(cloneOutcome.flow.id)}</span>,
+											version ${cloneOutcome.flow.version},
+											status <strong>${esc(cloneOutcome.flow.status)}</strong>,
+											and ${cloneOutcome.validation.ok ? "passes" : "fails"} the
+											publish checks.
+											${ENGINE.cloneNeedsReview(cloneOutcome) ? "<strong>Needs a human before it goes live.</strong>" : ""}
+										</p>
+										<p class="muted" style="font-size:12px;margin-top:6px">
+											The one in red is the one that matters. A handover queue
+											naming the source region is remapped, because a cloned
+											flow that still points at the Dubai desk puts
+											${esc(regionLabel(state.cloneTarget ?? ""))} customers in a
+											queue nobody there is watching — a silent mis-route, which
+											is the worst kind. A queue that names no region is left
+											alone and flagged rather than guessed at.
+										</p>`
+						}
 					</section>
 
 					<div class="grid2">
@@ -9145,13 +9641,21 @@ var ENGINE = (() => {
 
 			document.addEventListener("click", (event) => {
 				const t = event.target.closest(
-					"[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend],[data-inbox-filter],[data-contact],[data-contact-back],[data-export]",
+					"[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend],[data-inbox-filter],[data-contact],[data-contact-back],[data-export],[data-clone]",
 				);
 				if (t) {
 					if (t.dataset.region) {
 						state.regionId = t.dataset.region;
 						state.selectedConversationId = null;
 						lastTrace = null;
+						save();
+						renderApp();
+						return;
+					}
+					if (t.dataset.clone) {
+						// Toggle, so a second click clears the preview.
+						state.cloneTarget =
+							state.cloneTarget === t.dataset.clone ? null : t.dataset.clone;
 						save();
 						renderApp();
 						return;

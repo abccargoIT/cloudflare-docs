@@ -54,6 +54,8 @@ const MODULES = [
 	"src/bots/validate.ts",
 	"src/bots/parse.ts",
 	"src/bots/runtime.ts",
+	"src/bots/escalation.ts",
+	"src/bots/clone.ts",
 	"src/bots/templates.ts",
 	"src/bots/preview.ts",
 	"src/broadcasts/types.ts",

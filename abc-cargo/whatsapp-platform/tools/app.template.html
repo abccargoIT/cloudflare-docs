@@ -1225,7 +1225,7 @@
 					const raw = window.localStorage.getItem(STORAGE_KEY);
 					if (!raw) return null;
 					const parsed = JSON.parse(raw);
-					return parsed && parsed.version === 4 ? parsed : null;
+					return parsed && parsed.version === 5 ? parsed : null;
 				} catch {
 					return null;
 				}
@@ -1369,7 +1369,7 @@
 			function seed() {
 				const t = (iso) => iso;
 				const s = {
-					version: 4,
+					version: 5,
 					regionId: "uae",
 					view: "inbox",
 					selectedConversationId: null,
@@ -1489,6 +1489,8 @@
 					// real 41% once abandonment is counted honestly in the denominator.
 					botSessions: seedBotSessions(),
 					dailyVolume: seedDailyVolume(),
+					// Which region the Bot screen is previewing a clone into.
+					cloneTarget: null,
 					inboxFilter: "all",
 					selectedCustomerId: null,
 					botScript: null,
@@ -3683,6 +3685,80 @@
 				 * against each other, and where they do not correspond it says so
 				 * rather than inventing a block.
 				 */
+				/*
+				 * Three sessions sitting at the same waiting step, silent for
+				 * different lengths of time. The decisions are the platform's
+				 * — ENGINE.checkFallback — not the screen's, so the middle row
+				 * stops counting when the region closes.
+				 */
+				const waitingStep = flow.steps.find(
+					(st) => st.kind === "ask" || st.kind === "menu",
+				);
+				/*
+				 * The explanation is DERIVED from the decision rather than
+				 * written beside it. A static note contradicted the live answer
+				 * the moment the clock moved after hours: the row read "past
+				 * it, goes to the desk" while the decision correctly read
+				 * "wait 10m", because out of hours no business minutes had
+				 * elapsed. A caption that can disagree with the thing it
+				 * captions is worse than no caption.
+				 */
+				const FALLBACK_NOTES = {
+					waiting: "still inside the threshold",
+					silent_too_long:
+						"past it — goes to the regional desk with the answers so far",
+					tier1_held_too_long: "Tier 1 has held it too long; Tier 2 takes it",
+					not_waiting: "not a step a customer is answering",
+					already_ended: "already handed over or finished",
+					session_expired:
+						"older than the service window; expired, not escalated",
+					customer_replied: "the customer came back",
+				};
+				const fallbackScenarios = [
+					{ label: "4 minutes ago", minutes: 4 },
+					{ label: "20 minutes ago", minutes: 20 },
+					{ label: "3 hours ago", minutes: 180 },
+				].map((sc) => {
+					const since = new Date(
+						now().getTime() - sc.minutes * 60000,
+					).toISOString();
+					const session = {
+						flowId: flow.id,
+						flowVersion: flow.version,
+						stepId: waitingStep ? waitingStep.id : null,
+						slots: { reference: "ABC-UAE-088210" },
+						invalidReplies: 0,
+						turns: 2,
+						startedAt: since,
+						updatedAt: since,
+						endedAt: null,
+						endedReason: null,
+					};
+					const decision = ENGINE.checkFallback({
+						session,
+						step: waitingStep ?? null,
+						region,
+						windowExpiresAt: new Date(
+							now().getTime() + 6 * 3600000,
+						).toISOString(),
+						now: now(),
+					});
+					return {
+						label: sc.label,
+						since,
+						decision,
+						note: FALLBACK_NOTES[decision.reason] ?? decision.reason,
+					};
+				});
+
+				/* The clone, if a destination has been picked. */
+				const cloneTarget = state.cloneTarget
+					? REGIONS.find((r) => r.id === state.cloneTarget)
+					: null;
+				const cloneOutcome = cloneTarget
+					? ENGINE.cloneFlowToRegion(flow, region, cloneTarget)
+					: null;
+
 				const BLOCK_NAMES = {
 					message: "Send message",
 					ask: "Ask question",
@@ -3705,10 +3781,16 @@
 										: step.kind === "create"
 											? step.create
 											: "";
+						// A waiting step is the only kind a fallback applies to.
+						const fallback =
+							step.kind === "ask" || step.kind === "menu"
+								? `fallback ${step.fallbackMinutes ?? ENGINE.DEFAULT_FALLBACK_MINUTES}m`
+								: "";
 						return `<div style="display:flex;gap:8px;align-items:baseline;padding:5px 0;border-top:1px solid var(--rule-soft)">
 							<span class="pill" style="min-width:140px">${esc(BLOCK_NAMES[step.kind] || step.kind)}</span>
 							<span class="mono" style="font-size:11.5px;color:var(--ink-3)">${esc(step.id)}</span>
 							<span class="muted" style="font-size:11.5px">${esc(detail)}</span>
+							${fallback ? `<span class="mono muted" style="font-size:11px;margin-left:auto">${esc(fallback)}</span>` : ""}
 						</div>`;
 					})
 					.join("");
@@ -3734,13 +3816,130 @@
 						<h2>Blocks in this flow</h2>
 						${blocks}
 						<p class="muted" style="font-size:12px;margin-top:10px">
-							The wireframe's palette also has <strong>Assign to group</strong>
-							and a <strong>fallback after 10 minutes</strong> to a second
-							tier, and a <strong>clone flow to another region</strong>
-							action. None of the three is built: the runtime hands over to a
-							queue but does not choose a group, has no timed fallback, and
-							flows are per region with no copy between them.
+							The wireframe's palette also has <strong>Assign to group</strong>,
+							a <strong>fallback after 10 minutes</strong> to a second tier, and
+							a <strong>clone flow to another region</strong> action. The
+							fallback and the clone are built — both are below.
+							<strong>Assign to group is not:</strong> the runtime hands over to
+							a queue but does not choose which group inside it, because who
+							gets what is a routing rule ABC Cargo has not written down yet,
+							and a button that picks arbitrarily is worse than no button.
 						</p>
+						<p class="muted" style="font-size:12px;margin-top:6px">
+							A waiting step shows its fallback below. Where a step sets none,
+							the platform default of
+							${ENGINE.DEFAULT_FALLBACK_MINUTES} minutes applies — the
+							wireframe's figure.
+						</p>
+					</section>
+
+					<section class="card">
+						<h2>Fallback and escalation <small>wireframe 1f, "fallback after 10m"</small></h2>
+						<p class="muted" style="margin:2px 0 10px">
+							A customer who stops replying used to sit at the question until
+							the session expired a day later and nobody looked at it. Now a
+							waiting step gives up after a set number of minutes and hands
+							the conversation to a person, carrying the answers already
+							collected so the agent does not re-ask them.
+						</p>
+						<div class="tablewrap"><table>
+							<thead><tr><th>Silent since</th><th>Business minutes</th><th>Decision</th><th>Then</th></tr></thead>
+							<tbody>
+								${fallbackScenarios
+									.map(
+										(s) => `<tr>
+									<td>${esc(s.label)}<div class="mono muted" style="font-size:11px">${esc(localDateTime(s.since, region.id))}</div></td>
+									<td class="mono">${s.decision.silentMinutes}</td>
+									<td>${
+										s.decision.escalate
+											? `<span class="pill pill-warn">escalate · ${esc(s.decision.tier)}</span>`
+											: `<span class="pill pill-open">wait ${s.decision.remainingMinutes}m</span>`
+									}</td>
+									<td class="muted" style="font-size:12px">${esc(s.note)}</td>
+								</tr>`,
+									)
+									.join("")}
+							</tbody>
+						</table></div>
+						<p class="muted" style="font-size:12px;margin-top:10px">
+							<strong>The timer runs in business minutes, not wall-clock.</strong>
+							A question asked five minutes before closing does not escalate
+							into an empty office at midnight; the clock pauses and resumes
+							when ${esc(region.label)} opens. Use
+							<strong>Jump to after hours</strong> in the top bar to watch the
+							middle row stop counting.
+						</p>
+						<p class="muted" style="font-size:12px;margin-top:6px">
+							A rescued conversation ends as a <strong>handover</strong>, not an
+							expiry, so it counts as escalated rather than abandoned on the
+							Reports screen. That moves numbers between buckets on purpose:
+							the bot no longer gets credit for losing somebody quietly.
+							Tier 2 is reached only after Tier 1 has held it
+							${ENGINE.TIER2_AFTER_MINUTES} business minutes, and there is no
+							tier 3 to invent.
+						</p>
+					</section>
+
+					<section class="card">
+						<h2>Clone this flow to another region</h2>
+						<p class="muted" style="margin:2px 0 10px">
+							The wireframe offers this as one button. It cannot be one, and
+							the table says why: the clone arrives as a <strong>draft</strong>
+							with everything that stops being true in the destination listed
+							for a person to read.
+						</p>
+						<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+							${REGIONS.filter((r) => r.id !== region.id)
+								.map(
+									(r) =>
+										`<button type="button" class="ghost" data-clone="${esc(r.id)}" aria-pressed="${state.cloneTarget === r.id}">
+											to ${esc(r.label)}
+										</button>`,
+								)
+								.join("")}
+						</div>
+						${
+							cloneOutcome === null
+								? `<p class="muted">Pick a destination to see what cloning would flag.</p>`
+								: cloneOutcome.ok === false
+									? `<p class="muted" style="color:var(--brand-ink)">Refused: ${esc(cloneOutcome.error)}</p>`
+									: `<div class="tablewrap"><table>
+											<thead><tr><th>Step</th><th>What</th><th>Detail</th></tr></thead>
+											<tbody>
+												${
+													cloneOutcome.warnings.length
+														? cloneOutcome.warnings
+																.map(
+																	(w) => `<tr>
+															<td class="mono">${esc(w.stepId ?? "flow")}</td>
+															<td><span class="pill ${w.code.startsWith("queue") ? "pill-critical" : "pill-warn"}">${esc(w.code.replace(/_/g, " "))}</span></td>
+															<td class="muted" style="font-size:12px">${esc(w.message)}</td>
+														</tr>`,
+																)
+																.join("")
+														: `<tr><td colspan="3" class="muted">Nothing flagged — unusual, and worth re-reading anyway.</td></tr>`
+												}
+											</tbody>
+										</table></div>
+										<p class="muted" style="font-size:12px;margin-top:10px">
+											Clone would be saved as
+											<span class="mono">${esc(cloneOutcome.flow.id)}</span>,
+											version ${cloneOutcome.flow.version},
+											status <strong>${esc(cloneOutcome.flow.status)}</strong>,
+											and ${cloneOutcome.validation.ok ? "passes" : "fails"} the
+											publish checks.
+											${ENGINE.cloneNeedsReview(cloneOutcome) ? "<strong>Needs a human before it goes live.</strong>" : ""}
+										</p>
+										<p class="muted" style="font-size:12px;margin-top:6px">
+											The one in red is the one that matters. A handover queue
+											naming the source region is remapped, because a cloned
+											flow that still points at the Dubai desk puts
+											${esc(regionLabel(state.cloneTarget ?? ""))} customers in a
+											queue nobody there is watching — a silent mis-route, which
+											is the worst kind. A queue that names no region is left
+											alone and flagged rather than guessed at.
+										</p>`
+						}
 					</section>
 
 					<div class="grid2">
@@ -5215,13 +5414,21 @@
 
 			document.addEventListener("click", (event) => {
 				const t = event.target.closest(
-					"[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend],[data-inbox-filter],[data-contact],[data-contact-back],[data-export]",
+					"[data-region],[data-view],[data-conv],[data-sample],[data-lead],[data-quote],[data-quotemove],[data-ticket],[data-booking],[data-logcall],[data-open-conv],[data-demote],[data-suspend],[data-inbox-filter],[data-contact],[data-contact-back],[data-export],[data-clone]",
 				);
 				if (t) {
 					if (t.dataset.region) {
 						state.regionId = t.dataset.region;
 						state.selectedConversationId = null;
 						lastTrace = null;
+						save();
+						renderApp();
+						return;
+					}
+					if (t.dataset.clone) {
+						// Toggle, so a second click clears the preview.
+						state.cloneTarget =
+							state.cloneTarget === t.dataset.clone ? null : t.dataset.clone;
 						save();
 						renderApp();
 						return;

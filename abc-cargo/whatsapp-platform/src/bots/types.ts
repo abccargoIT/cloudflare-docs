@@ -64,6 +64,13 @@ export type BotStep =
 			expect?: AnswerShape;
 			/** Sent when the answer is the wrong shape. */
 			retryText?: string;
+			/**
+			 * Business minutes of customer silence before the conversation goes
+			 * to a person. Omitted means the platform default. Counted on the
+			 * region's own calendar, so it pauses overnight — see
+			 * `bots/escalation.ts`.
+			 */
+			fallbackMinutes?: number;
 			next: string;
 	  }
 	| {
@@ -72,6 +79,8 @@ export type BotStep =
 			text: string;
 			options: MenuOption[];
 			retryText?: string;
+			/** As for `ask`. */
+			fallbackMinutes?: number;
 	  }
 	| {
 			id: string;

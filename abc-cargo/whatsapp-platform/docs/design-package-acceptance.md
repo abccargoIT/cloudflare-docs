@@ -160,8 +160,16 @@ readable as a record rather than quietly shrinking.
    editable and not persisted. See
    `docs/targets-transfer-and-measurement.md` §6 and §8.
 8. **Bot builder screen** with blocks, "fallback after 10m" and "clone flow to
-   another region". The runtime takes all of this; there is no builder UI, and
-   the fallback-to-Tier-2 escalation is not in the runtime yet.
+   another region". ~~There is no builder UI, and the fallback-to-Tier-2
+   escalation is not in the runtime yet.~~ **Built on 9 October 2026** —
+   `src/bots/escalation.ts` and `src/bots/clone.ts`, both on the Bot screen.
+   The fallback runs in business minutes so it pauses overnight, and ends the
+   session as a handover rather than an expiry. Cloning remaps handover queues
+   that name the source region and reports everything that cannot be fixed
+   automatically, arriving as a draft. **"Assign to group" is still not
+   built** — the routing rule does not exist yet. The builder is read-only:
+   no editing, no saving, no drag-and-drop canvas. See
+   `docs/bot-fallback-and-cloning.md` §3, §4 and §6.
 9. **Branded login screen.** The build puts Cloudflare Access in front
    instead — stronger, but there is no ABC Cargo-branded sign-in page.
 10. **Security, backup, API keys, personalisation, mobile layout.** All in the

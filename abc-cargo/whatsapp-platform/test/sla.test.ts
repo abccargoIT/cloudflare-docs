@@ -139,3 +139,62 @@ test("breach detection reads the sign of the remaining time", () => {
 	assert.equal(isBreached("2026-09-14T07:00:00Z", now), false);
 	assert.equal(remainingMs("2026-09-14T07:00:00Z", now), 3_600_000);
 });
+
+/* ------------------------------------------------- crossing a closing time */
+
+/*
+ * These cover a defect found on 9 October 2026 by round-tripping
+ * addBusinessMinutes against businessMinutesBetween: a target that used up
+ * the rest of the day and then needed more advanced the cursor from the wrong
+ * base, so every due date crossing a close landed hours too early. 780
+ * minutes landed correctly at 23:00 and 781 landed at 19:01 the same evening.
+ */
+
+test("one minute more of target never moves a due date earlier", () => {
+	// The cleanest statement of the defect: the function must be monotonic.
+	const from = new Date("2026-09-14T06:00:00Z"); // Monday 10:00 Dubai
+	let previous = addBusinessMinutes(uae, from, 1).getTime();
+	for (let minutes = 2; minutes <= 2000; minutes += 1) {
+		const current = addBusinessMinutes(uae, from, minutes).getTime();
+		assert.ok(current >= previous, `+${minutes} landed before +${minutes - 1}`);
+		previous = current;
+	}
+});
+
+test("a target that exactly fills the day lands at closing time", () => {
+	// Monday 10:00 Dubai, eight hours left before 18:00.
+	const due = addBusinessMinutes(uae, new Date("2026-09-14T06:00:00Z"), 480);
+	assert.equal(due.toISOString(), "2026-09-14T14:00:00.000Z", "Monday 18:00");
+});
+
+test("a target one minute past the day rolls to the next opening", () => {
+	const due = addBusinessMinutes(uae, new Date("2026-09-14T06:00:00Z"), 481);
+	assert.equal(
+		due.toISOString(),
+		"2026-09-15T04:01:00.000Z",
+		"Tuesday 08:01 Dubai, not Monday afternoon",
+	);
+});
+
+test("a 24-hour target on a 10-hour calendar takes more than two days", () => {
+	// The case that matters operationally: the default resolution target for
+	// a billing or documentation ticket. 480 minutes left on Monday, a full
+	// 600 on Tuesday, the remaining 360 on Wednesday morning.
+	const due = addBusinessMinutes(
+		uae,
+		new Date("2026-09-14T06:00:00Z"),
+		24 * 60,
+	);
+	assert.equal(
+		due.toISOString(),
+		"2026-09-16T10:00:00.000Z",
+		"Wednesday 14:00",
+	);
+});
+
+test("a target spanning the weekend skips the closed days", () => {
+	// Thursday 2026-09-17 17:00 Dubai (13:00Z), one hour before closing.
+	// Friday and Saturday are closed, so the second hour falls on Sunday.
+	const due = addBusinessMinutes(uae, new Date("2026-09-17T13:00:00Z"), 120);
+	assert.equal(due.toISOString(), "2026-09-20T05:00:00.000Z", "Sunday 09:00");
+});

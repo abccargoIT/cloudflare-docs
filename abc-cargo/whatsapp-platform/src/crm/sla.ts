@@ -129,7 +129,16 @@ export function addBusinessMinutes(
 			return new Date(cursor.getTime() + remaining * MINUTE);
 		}
 		remaining -= availableToday;
-		// Move to closing time, then on to the next opening.
+		// Move to closing time FIRST, then on to the next opening.
+		//
+		// `advanceToNextOpen` measures from wherever the cursor actually is,
+		// so handing it `closeAt` while the cursor still sat at the current
+		// time advanced by far too little: a target of 781 minutes landed at
+		// 19:01 the same evening while 780 landed correctly at 23:00, so one
+		// extra minute of target moved the due date four hours earlier. Every
+		// due date that crossed a close was too early, which shows up as
+		// tickets breaching before they are actually late.
+		cursor = new Date(cursor.getTime() + availableToday * MINUTE);
 		cursor = advanceToNextOpen(cursor, closeAt, openAt);
 
 		if (remaining > dayCapacity * MAX_DAYS_SCANNED) break;
